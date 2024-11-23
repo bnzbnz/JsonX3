@@ -60,7 +60,7 @@ type
     property Val: string read GetValue write Setvalue;
     property V: string read GetValue write Setvalue;
   end;
-  TJX3Num = class(TJX3Number);
+  TJX3Num = TJX3Number;
 
 implementation
 uses SysUTils, StrUtils, System.Generics.Collections;

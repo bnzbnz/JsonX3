@@ -88,7 +88,6 @@ begin
   if not Assigned(AJObj.Pairs[0].JsonValue) then begin setNull(True); Exit end;
   if AJObj.Pairs[0].JsonValue.Null then begin setNull(True); Exit end;;
 
-
   if TJSONArray(AJObj.Pairs[0].JsonValue) is TJSONArray then
   for LEle in TJSONArray(AJObj.Pairs[0].JsonValue) do
   begin
