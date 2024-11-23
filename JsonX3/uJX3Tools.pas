@@ -20,7 +20,7 @@ type
     class function  CallMethod(AMethod: string; AObj: TObject; const AArgs: array of TValue): TValue;  overload; static;
     class procedure BreakPoint(AMsg: string = ''; ABreak: Boolean= True); static;
     class procedure RaiseException(AMsg: string); static;
-    class function  FormatJSON(json: string): string; static;
+    class function  FormatJSON(json: string; Indentation: Integer = 4): string; static;
     class function  EscapeJSONStr(AStr: string): string; static;
     class function  NameDecode(const ToDecode: string): string; static;
     class function  NameEncode(const ToEncode: string): string; static;
@@ -87,12 +87,12 @@ begin
     end;
 end;
 
-class function TJX3Tools.FormatJSON(json: string): string;
+class function TJX3Tools.FormatJSON(json: string; Indentation: Integer): string;
 var
   TmpJson: TJsonObject;
 begin
   TmpJson := TJSONObject.ParseJSONValue(json) as TJSONObject;
-  Result := TJSONAncestor(TmpJson).Format();
+  Result := TJSONAncestor(TmpJson).Format(Indentation);
   FreeAndNil(TmpJson);
 end;
 
