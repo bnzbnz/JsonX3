@@ -6,13 +6,9 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Memo.Types,
   FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo, FMX.StdCtrls
-  , System.Generics.Defaults
-  , System.Generics.Collections
   , uJX3Number
   , uJX3Boolean
   , uJX3String
-  , uJX3List
-  , uJX3Dictionary
   , uJX3Object
   , uJX3Tools
   ;
@@ -52,7 +48,6 @@ var
   Form4: TForm4;
 
 implementation
-uses System.Diagnostics;
 
 {$R *.fmx}
 
