@@ -1,0 +1,174 @@
+unit uJX3Tools;
+
+interface
+uses
+    RTTI
+  , Classes
+  , TypInfo
+  ;
+
+const
+  cCommaDelimiter = #0;
+
+type
+
+  TJS3Option  = (joNullToEmpty, joNoBracket, joRaiseException, JoRaiseOnMissingField);
+  TJX3Options = set of TJS3Option;
+
+  TJX3Tools = record
+    class function  GetRTTIMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField; static;
+    class function  CallMethod(AMethod: string; AObj: TObject; const AArgs: array of TValue): TValue;  overload; static;
+    class procedure BreakPoint(AMsg: string = ''; ABreak: Boolean= True); static;
+    class procedure RaiseException(AMsg: string); static;
+    class function  FormatJSON(json: string): string; static;
+    class function  EscapeJSONStr(AStr: string): string; static;
+    class function  NameDecode(const ToDecode: string): string; static;
+    class function  NameEncode(const ToEncode: string): string; static;
+  end;
+
+implementation
+uses
+    SysUtils
+  , System.Character
+  , JSON
+  , REST.Json
+  , uJX3Rtti
+  {$IF defined(DEBUG) and defined(MSWINDOWS)}
+  , Windows
+  {$ENDIF}
+  ;
+
+{$IF defined(DEBUG) and defined(MSWINDOWS)}
+procedure X64BRK ; assembler;
+asm
+  int 3; // Press F7 to access the error message
+end;
+{$ENDIF}
+
+class procedure TJX3Tools.BreakPoint(AMsg: string = ''; ABreak: Boolean= True);
+begin
+  {$IF defined(DEBUG) and defined(MSWINDOWS)}
+    {$IF defined(CPUX86)}
+      OutputDebugString(PChar(AMsg));
+      if ABreak then
+        asm int 3; end;
+      AMsg := AMsg; // << Error Message Here
+    {$ENDIF}
+    {$IF defined(CPUX64)}
+      OutputDebugString(PChar(AMsg));
+      if ABreak then
+      X64BRK;
+      AMsg := AMsg; // << Error Message Here
+    {$ENDIF}
+  {$ELSE}
+     raise Exception.Create(Msg);
+  {$ENDIF}
+end;
+
+class procedure TJX3Tools.RaiseException(AMsg: string);
+begin
+  {$IF defined(DEBUG) and defined(MSWINDOWS)}
+    OutputDebugString(PChar('LMR: TJX3: ' + AMsg));
+ {$ELSE}
+    Raise Exception.Create(AMsg) at ReturnAddress;
+ {$ENDIF}
+end;
+
+class function TJX3Tools.CallMethod(AMethod: string; AObj: TObject; const AArgs: array of TValue): TValue;
+var
+  LMeth: TRttiMethod;
+begin
+  Result := TValue.Empty;
+  for LMeth in JX3GetMethods(AObj) do
+    if LMeth.Name = AMethod then
+    begin
+      Result := LMeth.Invoke(AObj, AArgs).AsType<TValue>(True);
+      Break;
+    end;
+end;
+
+class function TJX3Tools.FormatJSON(json: string): string;
+var
+  TmpJson: TJsonObject;
+begin
+  TmpJson := TJSONObject.ParseJSONValue(json) as TJSONObject;
+  Result := TJSONAncestor(TmpJson).Format();
+  FreeAndNil(TmpJson);
+end;
+
+class function TJX3Tools.GetRTTIMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField;
+var
+  LField: TRTTIField;
+  LFields: TArray<TRttiField>;
+begin
+  Result := Nil;
+  LFields := JX3GetFields(AObj);
+  for LField in LFields do
+    if (LField.FieldType.TypeKind in [AClass]) and (Lfield.Name = AMemberName) and (LField.Visibility = AVisibility) then
+    begin
+      Result := LField;
+      Break;
+    end;
+end;
+
+class function TJX3Tools.EscapeJSONStr(AStr: string): string;
+var
+  LP: PChar;
+  LEndP: PChar;
+begin
+  Result := '';
+  LP := PChar(Pointer(AStr));
+  LEndP := LP + Length(AStr);
+  while LP < LendP do
+  begin
+    case LP^ of
+      #0 .. #31, '\', '"':
+        Result := Result + '\' + LP^;
+      else
+        Result := Result + LP^;
+    end;
+    Inc(LP);
+  end;
+end;
+
+class function TJX3Tools.NameDecode(const ToDecode: string): string;
+var
+  Index: Integer;
+  CharCode: Integer;
+begin;
+  Result := ToDecode;
+  if ToDecode[1] <> '_'  then Exit;
+
+  Result := ''; Index := 2;
+  while (Index <= Length(ToDecode)) do
+    begin
+      if (ToDecode[Index] = '_') and TryStrToInt('$' + Copy(ToDecode, Index + 1, 2), CharCode) then
+      begin
+        Result := Result + Chr(CharCode);
+        Inc(Index, 3);
+      end
+        else
+      begin
+        Result := Result + ToDecode[Index];
+        Inc(Index, 1);
+      end;
+    end;
+end;
+
+class function TJX3Tools.NameEncode(const ToEncode: string): string;
+var
+  Encoded: Boolean;
+begin
+  Result := ''; Encoded := False;
+  for var i := 1 to Length(ToEncode) do
+    if ToEncode[i].IsLetterOrDigit then
+      Result := Result + ToEncode[i]
+    else begin
+      Encoded := True;
+      Result := Result + '_' + Format('%2x', [Ord(ToEncode[i])]);
+    end;
+  if Encoded then
+    Result := '_' + Result;
+end;
+
+end.
