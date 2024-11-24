@@ -159,7 +159,7 @@ end;
 procedure TJX3Number.SetNull(ANull: Boolean);
 begin
   FNull := ANull;
-  if ANull then FValue := '0';
+  if ANull then FValue := '';
 end;
 
 procedure TJX3Number.SetValue(AValue: string);

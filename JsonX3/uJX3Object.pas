@@ -11,7 +11,7 @@ type
     destructor      Destroy; override;
 
     function        JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
-    function        ToJSON(AOptions: TJX3Options = []): string;
+    function        ToJSON(AOptions: TJX3Options = [joNullToEmpty]): string;
     procedure       JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
 
     class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []): T;
@@ -159,7 +159,7 @@ begin
   end;
 end;
 
-function TJX3Object.ToJSON(AOptions: TJX3Options = []): string;
+function TJX3Object.ToJSON(AOptions: TJX3Options): string;
 begin
   try
     Result := JSONSerialize('', Nil, AOptions).AsString;
