@@ -45,8 +45,8 @@ var
 begin
   Memo1.Lines.Clear;
 
-  Obj := TJSObject.Create;      //  Again, we dont have to take care of the stringlist creation, TJX3Object handles it for us!
-
+  Obj := TJSObject.Create;      // Again, we dont have to take care of the stringlist creation, TJX3Object handles it for us!
+                                // It will call Create() and  then JSONInit
   Obj.StringList.Add('A');
   Obj.StringList.Add('B');
   Obj.StringList.Add('C');
@@ -56,18 +56,26 @@ begin
   Json := Obj.ToJson;
 
   // Formatted Json
-  Memo1.lines.add('Formatted:');
-  Memo1.lines.add(TJX3Tools.FormatJSON(Json));
+  Memo1.lines.add('List Raw:');
+  Memo1.lines.add(Json);
 
   Obj.StringList.Strings[0] := '>>';
   Obj.StringList.Strings[2] := '<<';
   Json := Obj.ToJson;
 
-  // Formatted Json
+  // Updated and Formatted Json
   Memo1.lines.add('');
   Memo1.lines.add('Updated and Formatted:');
-  Memo1.lines.add(TJX3Tools.FormatJSON(Json));
+  Memo1.lines.add(Json);
 
+  NewObj := Obj.Clone<TJSObject>;
+
+  // Cloned, updated and Formatted Json
+  Memo1.lines.add('');
+  Memo1.lines.add('Cloned and Formatted:');
+  Memo1.lines.add(Json);
+
+  NewObj.Free;
   Obj.Free;
 end;
 
