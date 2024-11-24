@@ -21,12 +21,13 @@ type
     function    JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
     procedure   JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
 
-    function          GetNull: Boolean;
-    procedure         SetNull(ANull: Boolean);
-    class function  C: TJX3List<T>;
+    function        GetNull: Boolean;
+    procedure       SetNull(ANull: Boolean);
     function        First:T;
     function        Last: T;
+    class function  C: TJX3List<T>;
     class function  CAdd(AValue: T): TJX3List<T>;
+    class function  CAddRange(const AValues: array of T): TJX3List<T>; overload;
     function        Clone(AOptions: TJX3Options = [joNullToEmpty]): TJX3List<T>;
   end;
   TJX3StrList = class(TJX3List<TJX3String>);
@@ -46,6 +47,12 @@ class function TJX3List<T>.CAdd(AValue: T): TJX3List<T>;
 begin
   Result := TJX3List<T>.Create;
   Result.Add(AValue);
+end;
+
+class function TJX3List<T>.CAddRange(const AValues: array of T): TJX3List<T>;
+begin
+  Result := TJX3List<T>.Create;
+  Result.AddRange(AValues);
 end;
 
 function TJX3List<T>.GetNull: Boolean;
@@ -145,15 +152,24 @@ end;
 function TJX3List<T>.Clone(AOptions: TJX3Options): TJX3List<T>;
 var
   LJson: TValue;
+  LVal: TJSONValue;
   LObj: TJSONObject;
 begin
+  LVal := Nil;
   LObj := Nil;
-  Result := TJX3List<T>.Create;
-  LJson := TJX3Tools.CallMethod('JSONSerialize', Self, ['', Nil, TValue.From<TJX3Options>(AOptions)]);
-  if not LJson.IsEmpty then LObj := TJSONObject.ParseJSONValue(LJson.AsString, True, False ) as TJSONObject;
-  LJson.Empty;
-  TJX3Tools.CallMethod( 'JSONDeserialize', Result, [LObj, Nil, TValue.From<TJX3Options>(AOptions)]);
-  LObj.Free;
+  try
+    Result := TJX3List<T>.Create;
+    LJson := TJX3Tools.CallMethod('JSONSerialize', Self, ['', Nil, TValue.From<TJX3Options>(AOptions)]);
+    if not LJson.IsEmpty then LVal := TJSONObject.ParseJSONValue(LJson.AsString, True, True ) as TJSONValue;
+    LJson.Empty;
+    LVal.Owned := False;
+    LObj := TJSONObject.Create(TJSONPair.Create('', LVal));
+    TJX3Tools.CallMethod( 'JSONDeserialize', Result, [LObj, Nil, TValue.From<TJX3Options>(AOptions)]);
+  finally
+    LObj.Free;
+    LVal.Owned := True;
+    LVal.Free;
+  end;
 end;
 
 end.

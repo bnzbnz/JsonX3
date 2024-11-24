@@ -1,4 +1,4 @@
-unit uJX3Dictionary;
+﻿unit uJX3Dictionary;
 
 interface
 uses
@@ -22,6 +22,10 @@ type
     procedure SetNull(ANull: Boolean);
     property  IsNull: Boolean read GetNull write SetNull;
 
+    class function  C: TJX3Dic<V>;
+    class function  CAdd(AKey: string; AValue: V): TJX3Dic<V>;
+    class function  CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
+
     function  Clone(AOptions: TJX3Options = [joNullToEmpty]): TJX3Dic<V>;
   end;
 
@@ -37,6 +41,21 @@ uses
   , uJX3Object
   ;
 
+class function TJX3Dic<V>.CAdd(AKey: string; AValue: V): TJX3Dic<V>;
+begin
+  Result := TJX3Dic<V>.Create;
+  Result.Add(AKey, AValue);
+end;
+
+class function TJX3Dic<V>.CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
+var
+  RCnt: Integer;
+begin
+  Result := TJX3Dic<V>.Create;
+  for RCnt := 0  to Length(AKeys) -1 do
+    Result.Add(AKeys[RCnt], AValues[RCnt]);
+end;
+
 constructor TJX3Dic<V>.Create;
 begin
   inherited Create([doOwnsValues]);
@@ -50,6 +69,11 @@ end;
 procedure TJX3Dic<V>.SetNull(ANull: Boolean);
 begin
   Clear;
+end;
+
+class function TJX3Dic<V>.C: TJX3Dic<V>;
+begin
+  Result := TJX3Dic<V>.Create;
 end;
 
 function TJX3Dic<V>.JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
@@ -126,12 +150,15 @@ var
   LObj: TJSONObject;
 begin
   LObj := Nil;
-  Result := TJX3Dic<V>.Create;
-  LJson := TJX3Tools.CallMethod('JSONSerialize', Self, ['', Nil, TValue.From<TJX3Options>(AOptions)]);
-  if not LJson.IsEmpty then LObj := TJSONObject.ParseJSONValue(LJson.AsString, True, False ) as TJSONObject;
-  LJson.Empty;
-  TJX3Tools.CallMethod( 'JSONDeserialize', Result, [LObj, Nil, TValue.From<TJX3Options>(AOptions) ]);
-  LObj.Free;
+  try
+    Result := TJX3Dic<V>.Create;
+    LJson := TJX3Tools.CallMethod('JSONSerialize', Self, ['', Nil, TValue.From<TJX3Options>(AOptions)]);
+    if not LJson.IsEmpty then LObj := TJSONObject.ParseJSONValue(LJson.AsString, True, True ) as TJSONObject;
+    LJson.Empty;
+    TJX3Tools.CallMethod( 'JSONDeserialize', Result, [LObj, Nil, TValue.From<TJX3Options>(AOptions)]);
+  finally
+    LObj.Free;
+  end;
 end;
 
 end.
