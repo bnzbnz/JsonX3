@@ -12,7 +12,7 @@ const
 
 type
 
-  TJS3Option  = (joNullToEmpty, joNoBracket, joRaiseException, JoRaiseOnMissingField);
+  TJS3Option  = (joNullToEmpty, joNoBracket, joRaiseException, joRaiseOnMissingField, joDisableNameEncoding);
   TJX3Options = set of TJS3Option;
 
   JX3Name = class(TCustomAttribute)
@@ -25,7 +25,7 @@ type
 
   TJX3Tools = record
     class function  GetRTTIMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField; static;
-    class function  CallMethod(AMethod: string; AObj: TObject; const AArgs: array of TValue): TValue;  overload; static;
+    class function  CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;  overload; static;
     class procedure BreakPoint(AMsg: string = ''; ABreak: Boolean= True); static;
     class procedure RaiseException(AMsg: string); static;
     class function  FormatJSON(json: string; Indentation: Integer = 4): string; static;
@@ -69,7 +69,7 @@ begin
       AMsg := AMsg; // << Error Message Here
     {$ENDIF}
   {$ELSE}
-     raise Exception.Create(Msg);
+     raise Exception.Create(AMsg);
   {$ENDIF}
 end;
 
@@ -82,7 +82,7 @@ begin
  {$ENDIF}
 end;
 
-class function TJX3Tools.CallMethod(AMethod: string; AObj: TObject; const AArgs: array of TValue): TValue;
+class function TJX3Tools.CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
 var
   LMeth: TRttiMethod;
 begin
@@ -112,7 +112,7 @@ begin
   Result := Nil;
   LFields := JX3GetFields(AObj);
   for LField in LFields do
-    if (LField.FieldType.TypeKind in [AClass]) and (Lfield.Name = AMemberName) and (LField.Visibility = AVisibility) then
+    if (LField.FieldType.TypeKind in [AClass]) and (LField.Name = AMemberName) and (LField.Visibility = AVisibility) then
     begin
       Result := LField;
       Break;

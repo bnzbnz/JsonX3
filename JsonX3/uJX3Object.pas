@@ -51,7 +51,7 @@ begin
       LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
       LField.SetValue(Self, LNewObj);
       LMethod := LInstance.GetMethod('JSONInit');
-      if LMethod <> nil then LMethod.Invoke(LNewObj,[]);
+      if LMethod <> nil then LMethod.Invoke(LNewObj, []);
     end;
   end;
 end;
@@ -92,7 +92,10 @@ begin
   for LField in LFields do
     if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility = mvPublic) then
     begin
-      LPart := TJX3Tools.CallMethod('JSONSerialize', LField.GetValue(Self).AsObject, [TJX3Tools.NameDecode(LField.Name), LField,TValue.From<TJX3Options>(AOptions)]);
+      if joDisableNameEncoding in AOptions then
+        LPart := TJX3Tools.CallMethod('JSONSerialize', LField.GetValue(Self).AsObject, [LField.Name, LField,TValue.From<TJX3Options>(AOptions)])
+      else
+        LPart := TJX3Tools.CallMethod('JSONSerialize', LField.GetValue(Self).AsObject, [TJX3Tools.NameDecode(LField.Name), LField,TValue.From<TJX3Options>(AOptions)]);
       if not LPart.IsEmpty then LParts.Add(LPart.AsString);
       Continue;
     end;
@@ -127,16 +130,17 @@ begin
       LObj := (LPair.JsonValue as TJSONObject)
     else
       LObj :=  TJSONObject.Create(LPair);
-
-    LField := TJX3Tools.GetRTTIMember(Self, TJX3Tools.NameEncode(Lpair.JsonString.Value), tkClass, mvPublic);
+    if joDisableNameEncoding in AOptions then
+      LField := TJX3Tools.GetRTTIMember(Self, Lpair.JsonString.Value, tkClass, mvPublic)
+    else
+      LField := TJX3Tools.GetRTTIMember(Self, TJX3Tools.NameEncode(Lpair.JsonString.Value), tkClass, mvPublic);
     if LField = Nil then
     begin
       if JoRaiseOnMissingField in AOptions then
         TJX3Tools.RaiseException( Format('Missing Field : %s', [TJX3Tools.NameEncode(Lpair.JsonString.Value)]));
     end else
       TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [LObj, LField, TValue.From<TJX3Options>(AOptions)]);
-
-    if  (Assigned(LObj)) and not (LPair.JsonValue is TJSONObject) then FreeAndNil(LObj);
+    if (Assigned(LObj)) and not (LPair.JsonValue is TJSONObject) then FreeAndNil(LObj);
     LPair.JsonValue.Owned := True;
     LPair.Owned := True;
   end;

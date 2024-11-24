@@ -42,7 +42,7 @@ type
   end;
 
 
-  TFaspectValues = class(TJX3Object)
+  TaspectValues = class(TJX3Object)
     localizedValue: TJX3String;
     valueConstraints: TJX3List<TFvalueConstraint>;
   end;
@@ -68,7 +68,7 @@ type
   TcategoryAspect = class(TJX3Object)
     localizedAspectName: TJX3String;
     aspectConstraint: TaspectConstraint;
-    aspectValues: TJX3List<TFaspectValues>;
+    aspectValues: TJX3List<TaspectValues>;
   end;
 
   TcategoryAspects = class(TJX3Object)
@@ -111,7 +111,7 @@ begin
 
   Memo1.lines.add(''); LWatch := TStopWatch.StartNew;
   Memo1.lines.add('Convert Json String to JSX3 Objects :');
-    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr);
+    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [joNullToEmpty, joDisableNameEncoding]);
   Memo1.lines.add(Format('  Processing duration %d ms', [LWatch.ElapsedMilliseconds]));
 
   Count := 0;
@@ -124,7 +124,7 @@ begin
 
   Memo1.lines.add(''); LWatch := TStopWatch.StartNew;
   Memo1.lines.add('Revert JSX3 Objects to Json String :');
-    LJsonStr := LJObj.ToJson( [joNullToEmpty]);
+    LJsonStr := LJObj.ToJson([joNullToEmpty, joDisableNameEncoding]);
   Memo1.lines.add(Format('  Processing duration %d ms', [LWatch.ElapsedMilliseconds]));
 
   Memo1.lines.add(''); LWatch := TStopWatch.StartNew;

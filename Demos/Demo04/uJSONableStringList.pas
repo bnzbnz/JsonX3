@@ -23,10 +23,13 @@ implementation
 
 procedure TJSONableStringList.JSONInit;
 begin
+  Clear;
+  OwnsObjects := False;
 end;
 
 procedure TJSONableStringList.JSONExit;
 begin
+  Clear;
 end;
 
 function TJSONableStringList.JSONSerialize(AFieldName: string; AField: TRttiField; AOptions: TJX3Options): TValue;

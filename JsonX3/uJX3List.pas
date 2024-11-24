@@ -115,7 +115,7 @@ begin
        LNewObj := T.Create;
        Add(LNewObj);
        LEle.Owned := False;
-       LObj := TJSONOBject.Create(TJSONPair.Create('', LEle));
+       LObj := TJSONObject.Create(TJSONPair.Create('', LEle));
        TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ LObj, AField, TValue.From<TJX3Options>(AOptions) ] );
        LObj.Free;
        LEle.Owned := True;
