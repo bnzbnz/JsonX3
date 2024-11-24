@@ -11,25 +11,25 @@ uses
 type
 
   TObjectDictionary<V> = class(System.Generics.Collections.TObjectDictionary<string,V>);
-  TJX3ObjectDictionary<V:class, constructor> = class(TObjectDictionary<V>)
+  TJX3Dic<V:class, constructor> = class(TObjectDictionary<V>)
   public
     constructor Create;
 
-    function    JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
-    procedure   JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+    function  JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
+    procedure JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
 
     function  GetNull: Boolean;
     procedure SetNull(ANull: Boolean);
     property  IsNull: Boolean read GetNull write SetNull;
+
+    function  Clone(AOptions: TJX3Options = [joNullToEmpty]): TJX3Dic<V>;
   end;
-  TJX3Dic<Obj:class, constructor> = class(TJX3ObjectDictionary<Obj>);
 
 implementation
 uses
   Classes
   , Sysutils
   , StrUTils
-  , windows
   , uJX3String
   , uJX3Number
   , uJX3List
@@ -37,24 +37,22 @@ uses
   , uJX3Object
   ;
 
-{ TJX3Dictionar<K, V> }
-
-constructor TJX3ObjectDictionary<V>.Create;
+constructor TJX3Dic<V>.Create;
 begin
   inherited Create([doOwnsValues]);
 end;
 
-function TJX3ObjectDictionary<V>.GetNull: Boolean;
+function TJX3Dic<V>.GetNull: Boolean;
 begin
   Result := Count = 0;
 end;
 
-procedure TJX3ObjectDictionary<V>.SetNull(ANull: Boolean);
+procedure TJX3Dic<V>.SetNull(ANull: Boolean);
 begin
   Clear;
 end;
 
-function TJX3ObjectDictionary<V>.JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
+function TJX3Dic<V>.JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
 var
   LParts: TStringList;
   LPart: TValue;
@@ -88,7 +86,7 @@ begin
   LParts.Free;
 end;
 
-procedure TJX3ObjectDictionary<V>.JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+procedure TJX3Dic<V>.JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
 var
   LPair: TJSONPair;
   LObj: TJSONObject;
@@ -120,6 +118,20 @@ begin
     LPair.JsonValue.Owned := True;
 
   end;
+end;
+
+function TJX3Dic<V>.Clone(AOptions: TJX3Options = [joNullToEmpty]): TJX3Dic<V>;
+var
+  LJson: TValue;
+  LObj: TJSONObject;
+begin
+  LObj := Nil;
+  Result := TJX3Dic<V>.Create;
+  LJson := TJX3Tools.CallMethod('JSONSerialize', Self, ['', Nil, TValue.From<TJX3Options>(AOptions)]);
+  if not LJson.IsEmpty then LObj := TJSONObject.ParseJSONValue(LJson.AsString, True, False ) as TJSONObject;
+  LJson.Empty;
+  TJX3Tools.CallMethod( 'JSONDeserialize', Result, [LObj, Nil, TValue.From<TJX3Options>(AOptions) ]);
+  LObj.Free;
 end;
 
 end.

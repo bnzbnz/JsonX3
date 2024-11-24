@@ -7,6 +7,7 @@ uses
   , RTTI
   , uJX3Tools
   , uJX3String
+  , uJX3Boolean
   , uJX3Number
   ;
 
@@ -20,25 +21,32 @@ type
     function    JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
     procedure   JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
 
-    function    GetNull: Boolean;
-    procedure   SetNull(ANull: Boolean);
-    class function C: TJX3List<T>;
-    function First: T;
-    function Last: T;
+    function          GetNull: Boolean;
+    procedure         SetNull(ANull: Boolean);
+    class function  C: TJX3List<T>;
+    function        First:T;
+    function        Last: T;
+    class function  CAdd(AValue: T): TJX3List<T>;
+    function        Clone(AOptions: TJX3Options = [joNullToEmpty]): TJX3List<T>;
   end;
   TJX3StrList = class(TJX3List<TJX3String>);
   TJX3NumList = class(TJX3List<TJX3Number>);
+  TJX3BoolList = class(TJX3List<TJX3Boolean>);
 
   implementation
 uses
   Classes
   , SysUtils
-  , uJX3Boolean
   , StrUtils
-  , winAPI.Windows
+  , uJX3Object
   , TypInfo
   ;
 
+class function TJX3List<T>.CAdd(AValue: T): TJX3List<T>;
+begin
+  Result := TJX3List<T>.Create;
+  Result.Add(AValue);
+end;
 
 function TJX3List<T>.GetNull: Boolean;
 begin
@@ -132,6 +140,20 @@ end;
 function TJX3List<T>.Last: T;
 begin
   Result := Self[Count - 1];
+end;
+
+function TJX3List<T>.Clone(AOptions: TJX3Options): TJX3List<T>;
+var
+  LJson: TValue;
+  LObj: TJSONObject;
+begin
+  LObj := Nil;
+  Result := TJX3List<T>.Create;
+  LJson := TJX3Tools.CallMethod('JSONSerialize', Self, ['', Nil, TValue.From<TJX3Options>(AOptions)]);
+  if not LJson.IsEmpty then LObj := TJSONObject.ParseJSONValue(LJson.AsString, True, False ) as TJSONObject;
+  LJson.Empty;
+  TJX3Tools.CallMethod( 'JSONDeserialize', Result, [LObj, Nil, TValue.From<TJX3Options>(AOptions)]);
+  LObj.Free;
 end;
 
 end.
