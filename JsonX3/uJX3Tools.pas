@@ -15,6 +15,14 @@ type
   TJS3Option  = (joNullToEmpty, joNoBracket, joRaiseException, JoRaiseOnMissingField);
   TJX3Options = set of TJS3Option;
 
+  JX3Name = class(TCustomAttribute)
+  public
+    Name: string;
+    constructor Create(const AName: string);
+  end;
+
+  JX3DoNotManage = class(TCustomAttribute);
+
   TJX3Tools = record
     class function  GetRTTIMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField; static;
     class function  CallMethod(AMethod: string; AObj: TObject; const AArgs: array of TValue): TValue;  overload; static;
@@ -169,6 +177,11 @@ begin
     end;
   if Encoded then
     Result := '_' + Result;
+end;
+
+constructor JX3Name.Create(const AName: string);
+begin
+  Name := AName;
 end;
 
 end.
