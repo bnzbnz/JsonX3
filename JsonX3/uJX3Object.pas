@@ -41,7 +41,10 @@ begin
   LFields := JX3GetFields(Self);
   for LField in LFields do
   begin
-    if (LField.FieldType.TypeKind = tkClass) then
+    if  (LField.FieldType.TypeKind in [tkClass])
+        and (LField.Visibility in [mvPublic, mvPublished])
+        and (JX3GetFieldAttribute(LField, JX3DoNotManage) = Nil)
+    then
     begin
       LInstance := LField.FieldType.AsInstance;
       LMethod := LInstance.GetMethod('Create');
@@ -62,7 +65,10 @@ var
 begin
   LFields := JX3GetFields(Self);
   for LField in LFields do
-    if LField.FieldType.TypeKind in [tkClass] then
+    if  (LField.FieldType.TypeKind in [tkClass])
+        and (LField.Visibility in [mvPublic, mvPublished])
+        and (JX3GetFieldAttribute(LField, JX3DoNotManage) = Nil)
+    then
     begin
       LObj := LField.GetValue(Self).AsObject;
       LMethod := LField.FieldType.GetMethod('JSONExit');
