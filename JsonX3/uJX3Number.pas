@@ -4,15 +4,6 @@ interface
 uses RTTI, JSON, uJX3Tools;
 
 type
-  (*
-     /// <returns>double</returns>
-    function GetAsDouble: Double;
-
-    /// <summary> Returns the currency representation of the number </summary>
-    /// <returns>currency</returns>
-    function GetAsCurrency: Currency;
-
- *)
 
   TJX3Number = class(TObject)
   private
