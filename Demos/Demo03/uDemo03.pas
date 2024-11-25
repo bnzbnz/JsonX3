@@ -71,7 +71,7 @@ begin
   Demo.X.Add(TJX3Str.C('EEZZ'));
   Demo.X.Add(TJX3Str.C('OOOO'));
 
-  // TJX3Dic<TJX3Num> :  Array<number>
+  // TJX3Dic<TJX3Num> :  Dictionary<string, number> (JSON only allows strings as keys)
   Demo.Y.Add('Value1', TJX3Num.CInt(10111));
   Demo.Y.Add('Value2', TJX3Num.CInt64(12222));
 

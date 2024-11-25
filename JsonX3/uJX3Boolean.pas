@@ -11,8 +11,8 @@ type
     FValue: Boolean;
   public
     constructor Create;
-    procedure JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
-    function JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
+    procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil);
+    function JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil): TValue;
     function GetNull: Boolean;
     procedure SetNull(ANull: Boolean);
     function GetValue: Boolean;
@@ -28,11 +28,12 @@ type
 implementation
 uses SysUtils, System.Generics.Collections;
 
-procedure TJX3Boolean.JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+procedure TJX3Boolean.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock);
 var
   LJPair: TJSONPair;
 begin
-  LJPair := AJObj.Pairs[0];
+  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
+  LJPair := AInfoBlock.Obj.Pairs[0];
   if not Assigned(LJPair) then
   begin
     SetNull(True);
@@ -45,18 +46,19 @@ begin
     SetValue(LJPair.JsonValue.toString.ToBoolean());
 end;
 
-function TJX3Boolean.JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
+function TJX3Boolean.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock): TValue;
 const
   BStrL: array[Boolean] of string = ('false','true');
 begin
+  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
   if FNull then
   begin
-    if joNullToEmpty in AOptions then Exit(TValue.Empty);
-    if AFieldName.IsEmpty then Exit('null');
-    Exit(Format('"%s":null', [AFieldName]))
+    if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
+    if AInfoBlock.FieldName.IsEmpty then Exit('null');
+    Exit(Format('"%s":null', [AInfoBlock.FieldName]))
   end;
-  if AFieldName.IsEmpty then Exit(BStrL[FValue]);
-  Result := Format('"%s":%s', [AFieldName, BStrL[FValue]])
+  if AInfoBlock.FieldName.IsEmpty then Exit(BStrL[FValue]);
+  Result := Format('"%s":%s', [AInfoBlock.FieldName, BStrL[FValue]])
 end;
 
 constructor TJX3Boolean.Create;

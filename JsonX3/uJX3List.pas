@@ -18,8 +18,8 @@ type
     constructor Create;
     destructor  Destroy; override;
 
-    function    JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
-    procedure   JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+    function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil): TValue;
+    procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock =Nil);
 
     function        GetNull: Boolean;
     procedure       SetNull(ANull: Boolean);
@@ -65,59 +65,73 @@ begin
   Clear;
 end;
 
-function TJX3List<T>.JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
+function TJX3List<T>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock): TValue;
 var
   LParts: TStringList;
   LPart: TValue;
   LRes: string;
   LEle:  T;
+  LInfoBlock: TJX3InfoBlock;
 begin
+  if Assigned(AStatBlock) then Inc(AStatBlock.ListsCount);
+
   if Self.Count = 0 then
   begin
-    if joNullToEmpty in AOptions then Exit(TValue.Empty);
-    if AFieldName.IsEmpty then EXit('null');
-    Exit(Format('"%s":null', [AFieldName]));
+    if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
+    if AInfoBlock.FieldName.IsEmpty then EXit('null');
+    Exit(Format('"%s":null', [AInfoBlock.FieldName]));
   end;
   LParts := TStringList.Create(#0, cCommaDelimiter, [soStrictDelimiter]);
+  LParts.Capacity := Self.Count;
   for LEle in Self do
   begin
-    LPart := TJX3Tools.CallMethod('JSONSerialize', LEle, ['', AField, TValue.From<TJX3Options>(AOptions)]);
-     if not LPart.IsEmpty then LParts.Add(LPart.AsString);
+    LInfoBlock := TJX3InfoBlock.Create(Nil, '', AInfoBlock.Field, AInfoBlock.Options);
+    if not Assigned(AStatBlock) then
+      LPart := TJX3Tools.CallMethod('JSONSerialize', LEle, [TValue.From<TJX3InfoBlock>(LInfoBlock), Nil])
+    else
+      LPart := TJX3Tools.CallMethod('JSONSerialize', LEle, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3StatBlock>(AStatBlock)]);
+    if not LPart.IsEmpty then LParts.Add(LPart.AsString);
+    LInfoBlock.Free;
   end;
   LRes := LParts.DelimitedText.Replace(cCommaDelimiter, ',');
-  if AFieldNAme.IsEmpty then
+  if AInfoBlock.FieldName.IsEmpty then
     Result := '['+ LRes + ']'
   else
-    Result := '"' + AFieldName + '":['+ LRes + ']';
+    Result := '"' + AInfoBlock.FieldName + '":['+ LRes + ']';
   LParts.Free;
 end;
 
-procedure TJX3List<T>.JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+procedure TJX3List<T>.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock);
 var
   LEle: TJSONValue;
   LNewObj: TObject;
-  LObj: TJSONObject;
+  LInfoBlock: TJX3InfoBlock;
 begin
-  if not Assigned(AJObj) then begin setNull(True); Exit end;;
-  if AJObj.Count = 0 then begin setNull(True); Exit end;;
-  if not Assigned(AJObj.Pairs[0].JsonValue) then begin setNull(True); Exit end;
-  if AJObj.Pairs[0].JsonValue.Null then begin setNull(True); Exit end;;
+  if Assigned(AStatBlock) then Inc(AStatBlock.ListsCount);
 
-  if TJSONArray(AJObj.Pairs[0].JsonValue) is TJSONArray then
-  for LEle in TJSONArray(AJObj.Pairs[0].JsonValue) do
+  if not Assigned(AInfoBlock.Obj) then begin setNull(True); Exit end;;
+  if AInfoBlock.Obj.Count = 0 then begin setNull(True); Exit end;;
+  if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin setNull(True); Exit end;
+  if AInfoBlock.Obj.Pairs[0].JsonValue.Null then begin setNull(True); Exit end;;
+
+  if TJSONArray(AInfoBlock.Obj.Pairs[0].JsonValue) is TJSONArray then
+  for LEle in TJSONArray(AInfoBlock.Obj.Pairs[0].JsonValue) do
   begin
     if LELe is TJSONObject then
     begin
        LNewObj := T.Create;
        Add(LNewObj);
-       TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ LEle, AField, TValue.From<TJX3Options>(AOptions) ] );
+       LInfoBlock := TJX3InfoBlock.Create(LEle as TJSONObject, AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.Options);
+       TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3StatBlock>(AStatBlock) ] );
+       LInfoBlock.Free;
     end else begin
        LNewObj := T.Create;
        Add(LNewObj);
        LEle.Owned := False;
-       LObj := TJSONObject.Create(TJSONPair.Create('', LEle));
-       TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ LObj, AField, TValue.From<TJX3Options>(AOptions) ] );
-       LObj.Free;
+       LInfoBlock := TJX3InfoBlock.Create(TJSONObject.Create(TJSONPair.Create('', LEle)),  AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.Options);
+       TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3StatBlock>(AStatBlock) ] );
+       LInfoBlock.Obj.Free;
+       LInfoBlock.Free;
        LEle.Owned := True;
     end;
   end;

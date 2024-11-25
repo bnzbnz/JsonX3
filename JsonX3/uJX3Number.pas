@@ -12,8 +12,8 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    function JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
-    procedure JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+    function JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil): TValue;
+    procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil);
     function GetNull: Boolean;
     procedure SetNull(ANull: Boolean);
     function GetInt: Integer;
@@ -56,30 +56,32 @@ type
 implementation
 uses SysUTils, StrUtils, System.Generics.Collections;
 
-function TJX3Number.JSONSerialize(AFieldName: string = ''; AField: TRttiField = nil; AOptions: TJX3Options = []): TValue;
+function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock): TValue;
 var
   LJValue:  TJSONString;
 begin
+  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
   if FNull then
   begin
-    if joNullToEmpty in AOptions then Exit(TValue.Empty);
-    if AFieldName.IsEmpty then Exit('null');
-    Exit(Format('"%s":null', [AFieldName]))
+    if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
+    if AInfoBlock.FieldName.IsEmpty then Exit('null');
+    Exit(Format('"%s":null', [AInfoBlock.FieldName]))
   end;
   LJValue := TJSONString.Create(FValue);
   try
-    if AFieldName.IsEmpty then Exit(LJValue.Value);
-    Exit(Format('"%s":%s', [AFieldName, LJValue.Value]));
+    if AInfoBlock.FieldName.IsEmpty then Exit(LJValue.Value);
+    Exit(Format('"%s":%s', [AInfoBlock.FieldName, LJValue.Value]));
   finally
     LJValue.Free;
   end;
 end;
 
-procedure TJX3Number.JSONDeserialize(AJObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+procedure TJX3Number.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock);
 var
   LJPair: TJSONPair;
 begin
-  LJPair := AJObj.Pairs[0];
+  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
+  LJPair := AInfoBlock.Obj.Pairs[0];
   if not Assigned(LJPair) then
   begin
     SetNull(True);

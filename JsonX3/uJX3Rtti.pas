@@ -23,7 +23,6 @@ var
   _RTTIAttrsCacheDic: TDictionary<TRTTIField, TCustomAttribute>;
   _RTTIInstCacheDic: TDictionary<TRTTIField, TRttiInstanceType>;
   _RTTIctx: TRttiContext;
-  _FielddLock : TCriticalSection;
 
 {$ELSE}
 var
@@ -145,12 +144,10 @@ initialization
   _RTTIMethsCacheDic := TDictionary<TClass, TArray<TRttiMEthod>>.Create;
   _RTTIAttrsCacheDic := TDictionary<TRTTIField, TCustomAttribute>.Create;
   _RTTIInstCacheDic := TDictionary<TRTTIField, TRttiInstanceType>.Create;
-  _FielddLock := TCriticalSection.Create;
 
 {$ENDIF}
 finalization
 {$IFDEF JX3RTTICACHE}
-  _FielddLock.Free;
   _RTTIInstCacheDic.Free;
   _RTTIAttrsCacheDic.Free;
   _RTTIMethsCacheDic.Free;
