@@ -1,7 +1,10 @@
 unit uJX3Object;
 
 interface
-uses uJX3Tools, JSON, RTTI;
+uses
+  JSON,
+  RTTI,
+  uJX3Tools;
 
 type
 
@@ -32,11 +35,11 @@ uses
 
 constructor TJX3Object.Create;
 var
-  LFields: TArray<TRttiField>;
-  LField: TRTTIField;
-  LInstance: TRttiInstanceType;
-  LMethod: TRTTIMEthod;
-  LNewObj: TOBject;
+  LFields:    TArray<TRttiField>;
+  LField:     TRTTIField;
+  LInstance:  TRttiInstanceType;
+  LMethod:    TRTTIMEthod;
+  LNewObj:    TOBject;
 begin
   inherited;
   LFields := JX3GetFields(Self);
@@ -59,10 +62,10 @@ end;
 
 destructor TJX3Object.Destroy;
 var
-  LField: TRTTIField;
-  LFields: TArray<TRttiField>;
-  LObj: TOBject;
-  LMethod: TRTTIMEthod;
+  LField:   TRTTIField;
+  LFields:  TArray<TRttiField>;
+  LObj:     TOBject;
+  LMethod:  TRTTIMEthod;
 begin
   LFields := JX3GetFields(Self);
   for LField in LFields do
@@ -81,11 +84,11 @@ end;
 
 function TJX3Object.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock): TValue;
 var
-  LField: TRTTIField;
-  LFields: TArray<TRTTIField>;
-  LParts: TStringList;
-  LPart: TValue;
-  LRes: string;
+  LField:     TRTTIField;
+  LFields:    TArray<TRTTIField>;
+  LParts:     TStringList;
+  LPart:      TValue;
+  LRes:       string;
   LInfoBlock: TJX3InfoBlock;
 begin
   Result := '';

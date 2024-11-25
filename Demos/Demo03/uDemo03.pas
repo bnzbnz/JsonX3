@@ -59,7 +59,6 @@ var
   Demo, NewDemo, CloneDemo: TObjectDemo;
   Json: string;
   s: TJX3List<TJX3Str>;
-  p: TJX3List<TPrimitives>;
 begin
   Memo1.Lines.Clear;
 
