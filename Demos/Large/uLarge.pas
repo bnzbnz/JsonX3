@@ -126,7 +126,7 @@ begin
   // Using Stats :
   LStats := TJX3StatBlock.Create;
   Memo1.lines.add(''); LWatch := TStopWatch.StartNew;
-  Memo1.lines.add('Revert JSX3 Objects to Json String :');
+  Memo1.lines.add('Revert JSX3 Objects to Json String (using Stats) :');
     LJsonStr := LJObj.ToJson([joNullToEmpty, joDisableNameEncoding], LStats);
   Memo1.lines.add(Format('  Processing duration %d ms', [LStats.ProcessingTimeMS]));
   LStats.Free;

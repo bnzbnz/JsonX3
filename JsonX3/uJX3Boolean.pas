@@ -1,7 +1,11 @@
 unit uJX3Boolean;
 
 interface
-uses RTTI, JSON, uJX3Tools;
+uses
+    JSON
+  , RTTI
+  , uJX3Tools
+  ;
 
 type
 
@@ -26,7 +30,10 @@ type
   TJX3Bool = class(TJX3Boolean);
 
 implementation
-uses SysUtils, System.Generics.Collections;
+uses
+    SysUtils
+  , System.Generics.Collections
+  ;
 
 procedure TJX3Boolean.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock);
 var
