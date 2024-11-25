@@ -59,7 +59,7 @@ begin
   Primitives.e.Currency := 22.22;
 
   // Raw Json
-  Json := Primitives.ToJson;
+  Json := Primitives.ToJson([]);
   Memo1.lines.add('Raw Original Object:');
   Memo1.lines.add(Json);
 
@@ -75,7 +75,7 @@ begin
   // Serializing the New Object
   Memo1.lines.add('');
   Json := NewPrimitives.ToJson([joNullToEmpty]);
-  Memo1.lines.add('New Optimized Object:');
+  Memo1.lines.add('New Cloned Object:');
   Memo1.lines.add(Json);
 
   // Checking Values

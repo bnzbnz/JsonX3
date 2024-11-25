@@ -98,6 +98,7 @@ var
   LJsonStr: string;
   LWatch: TStopWatch;
   Count: Integer;
+  LStats : TJX3StatBlock;
 begin
   Memo1.Lines.Clear;
 
@@ -122,10 +123,13 @@ begin
   Memo1.lines.add('');
   Memo1.lines.add('==>>' + Count.ToString + ' Aspect Values !!!');
 
+  // Using Stats :
+  LStats := TJX3StatBlock.Create;
   Memo1.lines.add(''); LWatch := TStopWatch.StartNew;
   Memo1.lines.add('Revert JSX3 Objects to Json String :');
-    LJsonStr := LJObj.ToJson([joNullToEmpty, joDisableNameEncoding]);
-  Memo1.lines.add(Format('  Processing duration %d ms', [LWatch.ElapsedMilliseconds]));
+    LJsonStr := LJObj.ToJson([joNullToEmpty, joDisableNameEncoding], LStats);
+  Memo1.lines.add(Format('  Processing duration %d ms', [LStats.ProcessingTimeMS]));
+  LStats.Free;
 
   Memo1.lines.add(''); LWatch := TStopWatch.StartNew;
   Memo1.lines.add('Free Json Object :');

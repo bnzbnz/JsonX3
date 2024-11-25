@@ -5,6 +5,7 @@ uses
     RTTI
   , Classes
   , TypInfo
+  , JSON
   ;
 
 const
@@ -24,7 +25,7 @@ type
   JX3DoNotManage = class(TCustomAttribute);
 
   TJX3Tools = record
-    class function  GetRTTIMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField; static;
+    class function  GetRttiMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField; static;
     class function  CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;  overload; static;
     class procedure BreakPoint(AMsg: string = ''; ABreak: Boolean= True); static;
     class procedure RaiseException(AMsg: string); static;
@@ -34,11 +35,29 @@ type
     class function  NameEncode(const ToEncode: string): string; static;
   end;
 
+  TJX3InfoBlock = class
+    Obj: TJSONObject;
+    FieldName: string;
+    Field: TRttiField;
+    Options: TJX3Options;
+    constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
+  end;
+
+  TJX3StatBlock = class
+    ProcessingTimeMS: Int64;
+    PrimitivesCount: Int64;
+    ListsCount: Int64;
+    DicsCount: Int64;
+
+    User1: TValue;
+    User2: TValue;
+    procedure Clear;
+  end;
+
 implementation
 uses
     SysUtils
   , System.Character
-  , JSON
   , REST.Json
   , uJX3Rtti
   {$IF defined(DEBUG) and defined(MSWINDOWS)}
@@ -104,7 +123,7 @@ begin
   FreeAndNil(TmpJson);
 end;
 
-class function TJX3Tools.GetRTTIMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField;
+class function TJX3Tools.GetRttiMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField;
 var
   LField: TRTTIField;
   LFields: TArray<TRttiField>;
@@ -182,6 +201,27 @@ end;
 constructor JX3Name.Create(const AName: string);
 begin
   Name := AName;
+end;
+
+constructor TJX3InfoBlock.Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField;
+  AOptions: TJX3Options);
+begin
+  Obj := AObj;
+  FieldName := AFieldName;
+  Field := AField;
+  Options := AOptions;
+end;
+
+{ TJX3StatBlock }
+
+procedure TJX3StatBlock.Clear;
+begin
+  ProcessingTimeMS  := 0;
+  PrimitivesCount   := 0;
+  ListsCount        := 0;
+  DicsCount         := 0;
+  User1             := TValue.Empty;
+  User2             := TValue.Empty;
 end;
 
 end.

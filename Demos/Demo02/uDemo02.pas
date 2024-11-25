@@ -60,7 +60,7 @@ begin
 
   // PLease note that JSX3 owns all objects !
   // It handles construction and destruction of them for you...
-  // You may add any number of classes.
+  // You may add any number of inner/classes.
 
   Demo := TInnerObjectDemo.Create;
   Demo.S.V := '~~😃~~'; // UTF8 Support
@@ -68,7 +68,7 @@ begin
   Demo.SubClass.PClass.Bool.V := True;
 
   // Raw Json
-  Json := Demo.ToJson;
+  Json := Demo.ToJson([]);
   Memo1.lines.add('Raw Original Object:');
   Memo1.lines.add(Json);
 
