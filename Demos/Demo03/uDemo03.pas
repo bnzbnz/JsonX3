@@ -122,7 +122,7 @@ begin
   }
 
   // Raw Json
-  Json := Demo.ToJson;
+  Json := Demo.ToJson([]);
   Memo1.lines.add('Raw Original Object:');
   Memo1.lines.add(Json);
 

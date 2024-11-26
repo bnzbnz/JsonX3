@@ -58,7 +58,7 @@ begin
     Exit(Format('"%s":null', [AInfoBlock.FieldName]))
   end;
   if AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(FValue) + '"');
-  Exit(Format('"%s":%s', [AInfoBlock.FieldName,  '"' + TJX3Tools.EscapeJSONStr(FValue) + '"']));
+  Result := Format('"%s":%s', [AInfoBlock.FieldName,  '"' + TJX3Tools.EscapeJSONStr(FValue) + '"']);
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock);
@@ -67,6 +67,15 @@ var
 begin
   if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
+  if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull))  then
+  begin
+    SetValue(LJPair.JsonValue.Value);
+    Exit;
+  end else begin
+    SetNull(True);
+    Exit;
+  end;
+
   if not Assigned(LJPair) then
   begin
     SetNull(True);
@@ -75,10 +84,12 @@ begin
   if LJPair.null then
   begin
     SetNull(True);
+    Exit;
   end else
   if LJPair.JsonValue is TJSONNull then
   begin
     SetNull(True);
+    Exit;
   end else
   begin
     SetValue(LJPair.JsonValue.Value);

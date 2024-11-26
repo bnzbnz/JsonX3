@@ -60,7 +60,7 @@ function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3Sta
 var
   LJValue:  TJSONString;
 begin
-  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
+  if Assigned(AStatBlock) then Inc(AStatBlock.NumCount);
   if FNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -80,18 +80,12 @@ procedure TJX3Number.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
+  if Assigned(AStatBlock) then Inc(AStatBlock.NumCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
-  if not Assigned(LJPair) then
-  begin
+  if (Assigned(LJPair) and (not LJPair.null)) and (not (LJPair.JsonValue is TJSONNull))   then
+    SetValue(LJPair.JsonValue.ToString)
+  else
     SetNull(True);
-    Exit;
-  end;
-  if LJPair.null then
-  begin
-    SetNull(True);
-  end else
-    SetValue(LJPair.JSonValue.ToString);
 end;
 
 constructor TJX3Number.Create;

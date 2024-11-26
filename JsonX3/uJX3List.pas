@@ -86,10 +86,7 @@ begin
   for LEle in Self do
   begin
     LInfoBlock := TJX3InfoBlock.Create(Nil, '', AInfoBlock.Field, AInfoBlock.Options);
-    if not Assigned(AStatBlock) then
-      LPart := TJX3Tools.CallMethod('JSONSerialize', LEle, [TValue.From<TJX3InfoBlock>(LInfoBlock), Nil])
-    else
-      LPart := TJX3Tools.CallMethod('JSONSerialize', LEle, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3StatBlock>(AStatBlock)]);
+    LPart := TJX3Tools.CallMethod('JSONSerialize', LEle, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3StatBlock>(AStatBlock)]);
     if not LPart.IsEmpty then LParts.Add(LPart.AsString);
     LInfoBlock.Free;
   end;
