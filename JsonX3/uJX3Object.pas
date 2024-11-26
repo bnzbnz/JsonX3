@@ -54,7 +54,7 @@ begin
       LMethod := LInstance.GetMethod('Create');
       LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
       LField.SetValue(Self, LNewObj);
-      LMethod := LInstance.GetMethod('JSONInit');
+      LMethod := JX3GetMethod(LInstance, 'JSONInit');
       if LMethod <> nil then LMethod.Invoke(LNewObj, []);
     end;
   end;
@@ -75,8 +75,8 @@ begin
     then
     begin
       LObj := LField.GetValue(Self).AsObject;
-      LMethod := LField.FieldType.GetMethod('JSONExit');
-      if LMethod <> nil then LMethod.Invoke(LObj, []);
+      LMethod := JX3GetMethod(LField.FieldType.AsInstance, 'JSONExit');
+      if  LMethod <> nil then LMethod.Invoke(LObj, []);
       FreeAndNil(LObj);
     end;
   inherited;
@@ -102,7 +102,6 @@ begin
         LInfoBlock := TJX3InfoBlock.Create(Nil, LField.Name, LField, AInfoBlock.Options)
       else
         LInfoBlock := TJX3InfoBlock.Create(Nil, TJX3Tools.NameDecode(LField.Name), LField, AInfoBlock.Options);
-
       LPart :=  TJX3Tools.CallMethod(
             'JSONSerialize'
           , LField.GetValue(Self).AsObject
@@ -111,7 +110,6 @@ begin
               , TValue.From<TJX3StatBlock>(AStatBlock)
             ]
       );
-
       if not LPart.IsEmpty then LParts.Add(LPart.AsString);
       LInfoBlock.Free;
       Continue;
@@ -184,7 +182,14 @@ begin
                       , AOptions
                     );
       if not Assigned(LInfoBlock.Obj) then TJX3Tools.RaiseException('TJX3Object.FromJSON: Erroneous JSON string');
-      TJX3Tools.CallMethod('JSONDeserialize', Result, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3StatBlock>(AStatBlock)]);
+      TJX3Tools.CallMethod(
+          'JSONDeserialize'
+        , Result
+        , [
+              TValue.From<TJX3InfoBlock>(LInfoBlock)
+            , TValue.From<TJX3StatBlock>(AStatBlock)
+          ]
+      );
       LInfoBlock.Obj.Free;
     except
       on Ex: Exception do

@@ -12,6 +12,8 @@ uses
 function  JX3GetFields(aObj: TObject): TArray<TRTTIField>;
 function  JX3GetProps(aObj: TObject): TArray<TRTTIProperty>;
 function  JX3GetMethods(aObj: TObject): TArray<TRTTIMethod>;
+function  JX3GetMethod(aObj: TObject; const AName: string): TRTTIMethod; overload;
+function  JX3GetMethod(AInstance: TRttiInstanceType; const AName: string): TRTTIMethod overload;
 function  JX3GetFieldAttribute(Field: TRTTIField; AttrClass: TClass): TCustomAttribute;
 function  JX3GetFieldInstance(Field: TRTTIField) : TRttiInstanceType;
 
@@ -20,6 +22,8 @@ var
   _RTTIFieldsCacheDic: TDictionary<TClass, TArray<TRttiField>>;
   _RTTIPropsCacheDic: TDictionary<TClass, TArray<TRTTIProperty>>;
   _RTTIMethsCacheDic: TDictionary<TClass, TArray<TRTTIMethod>>;
+  _RTTIInsMethsCacheDic: TDictionary<TRttiInstanceType, TRTTIMethod>;
+  _RTTIObjMethsCacheDic: TDictionary<string, TRttiMEthod>;
   _RTTIAttrsCacheDic: TDictionary<TRTTIField, TCustomAttribute>;
   _RTTIInstCacheDic: TDictionary<TRTTIField, TRttiInstanceType>;
   _RTTIctx: TRttiContext;
@@ -91,6 +95,28 @@ begin
 end;
 {$ENDIF}
 
+function JX3GetMethod(AObj: TObject; const AName: string): TRTTIMethod;
+begin
+  Result := _RTTIctx.GetType(aObj.ClassType).GetMethod(AName);
+end;
+
+function JX3GetMethod(AInstance: TRttiInstanceType; const AName: string): TRTTIMethod;
+{$IFDEF JX3RTTICACHE}
+begin
+  MonitorEnter(_RTTIInsMethsCacheDic);
+  if not _RTTIInsMethsCacheDic.TryGetValue(AInstance, Result) then
+  begin
+    Result := AInstance.GetMethod(AName);
+    _RTTIInsMethsCacheDic.Add(AInstance, Result);
+  end;
+  MonitorExit(_RTTIInsMethsCacheDic);
+end;
+{$ELSE}
+begin
+  Result :=  AInstance.GetMethod(AName);
+end;
+{$IFEND}
+
 function JX3GetFieldAttribute(Field: TRTTIField; AttrClass: TClass): TCustomAttribute;
 
   function GetRTTIFieldAttribute(RTTIField: TRTTIField; AttrClass: TClass): TCustomAttribute; inline;
@@ -142,16 +168,20 @@ initialization
   _RTTIFieldsCacheDic := TDictionary<TClass, TArray<TRttiField>>.Create;
   _RTTIPropsCacheDic := TDictionary<TClass, TArray<TRttiProperty>>.Create;
   _RTTIMethsCacheDic := TDictionary<TClass, TArray<TRttiMEthod>>.Create;
+  _RTTIObjMethsCacheDic := TDictionary<string, TRttiMEthod>.Create;
   _RTTIAttrsCacheDic := TDictionary<TRTTIField, TCustomAttribute>.Create;
   _RTTIInstCacheDic := TDictionary<TRTTIField, TRttiInstanceType>.Create;
+  _RTTIInsMethsCacheDic := TDictionary<TRttiInstanceType, TRTTIMethod>.Create;
 
 {$ENDIF}
 finalization
 {$IFDEF JX3RTTICACHE}
+  _RTTIInsMethsCacheDic.Free;
   _RTTIInstCacheDic.Free;
   _RTTIAttrsCacheDic.Free;
   _RTTIMethsCacheDic.Free;
   _RTTIPropsCacheDic.Free;
   _RTTIFieldsCacheDic.Free;
+  _RTTIObjMethsCacheDic.Free;
 {$ENDIF}
 end.

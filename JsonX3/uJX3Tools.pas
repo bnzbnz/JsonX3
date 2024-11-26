@@ -28,9 +28,9 @@ type
     class function  GetRttiMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField; static;
     class function  CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;  overload; static;
     class procedure BreakPoint(AMsg: string = ''; ABreak: Boolean= True); static;
-    class procedure RaiseException(AMsg: string); static;
-    class function  FormatJSON(json: string; Indentation: Integer = 4): string; static;
-    class function  EscapeJSONStr(AStr: string): string; static;
+    class procedure RaiseException(const AMsg: string); static;
+    class function  FormatJSON(const json: string; Indentation: Integer = 4): string; static;
+    class function  EscapeJSONStr(const AStr: string): string; static;
     class function  NameDecode(const ToDecode: string): string; static;
     class function  NameEncode(const ToEncode: string): string; static;
   end;
@@ -49,6 +49,9 @@ type
     ListsCount: Int64;
     DicsCount: Int64;
 
+    BooleanCount: Int64;
+    NumCount: Int64;
+    
     User1: TValue;
     User2: TValue;
     procedure Clear;
@@ -92,7 +95,7 @@ begin
   {$ENDIF}
 end;
 
-class procedure TJX3Tools.RaiseException(AMsg: string);
+class procedure TJX3Tools.RaiseException(const AMsg: string);
 begin
   {$IF defined(DEBUG) and defined(MSWINDOWS)}
     OutputDebugString(PChar('LMR: TJX3: ' + AMsg));
@@ -105,16 +108,14 @@ class function TJX3Tools.CallMethod(const AMethod: string; const AObj: TObject; 
 var
   LMeth: TRttiMethod;
 begin
-  Result := TValue.Empty;
-  for LMeth in JX3GetMethods(AObj) do
-    if LMeth.Name = AMethod then
-    begin
-      Result := LMeth.Invoke(AObj, AArgs).AsType<TValue>(True);
-      Break;
-    end;
+  LMeth := JX3GetMethod(AObj, AMethod);
+  if LMeth <> Nil then
+    Result := LMeth.Invoke(AObj, AArgs).AsType<TValue>(True)
+  else
+    Result := TValue.Empty;
 end;
 
-class function TJX3Tools.FormatJSON(json: string; Indentation: Integer): string;
+class function TJX3Tools.FormatJSON(const json: string; Indentation: Integer): string;
 var
   TmpJson: TJsonObject;
 begin
@@ -138,7 +139,7 @@ begin
     end;
 end;
 
-class function TJX3Tools.EscapeJSONStr(AStr: string): string;
+class function TJX3Tools.EscapeJSONStr(const AStr: string): string;
 var
   LP: PChar;
   LEndP: PChar;
@@ -163,9 +164,7 @@ var
   Index: Integer;
   CharCode: Integer;
 begin;
-  Result := ToDecode;
-  if ToDecode[1] <> '_'  then Exit;
-
+  if ToDecode[1] <> '_'  then Exit(ToDecode);
   Result := ''; Index := 2;
   while (Index <= Length(ToDecode)) do
     begin
@@ -220,6 +219,8 @@ begin
   PrimitivesCount   := 0;
   ListsCount        := 0;
   DicsCount         := 0;
+  BooleanCount      := 0;
+  NumCount          := 0;
   User1             := TValue.Empty;
   User2             := TValue.Empty;
 end;

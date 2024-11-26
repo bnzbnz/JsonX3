@@ -11,23 +11,23 @@ type
 
   TJX3Boolean = class(TObject)
   private
-    FNull: Boolean;
+    FNull:  Boolean;
     FValue: Boolean;
   public
     constructor Create;
-    procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil);
-    function JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil): TValue;
-    function GetNull: Boolean;
-    procedure SetNull(ANull: Boolean);
-    function GetValue: Boolean;
-    procedure SetValue(Value: Boolean);
-    class function C: TJX3Boolean;
-    property IsNull: Boolean read GetNull write SetNull;
-    property N: Boolean read GetNull write SetNull;
-    property Value: Boolean read GetValue write Setvalue;
-    property V: Boolean read GetValue write Setvalue;
+    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil);
+    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil): TValue;
+    function        GetNull: Boolean;
+    procedure       SetNull(ANull: Boolean);
+    function        GetValue: Boolean;
+    procedure       SetValue(Value: Boolean);
+    class function  C(AValue: Boolean = False): TJX3Boolean;
+    property        IsNull: Boolean read GetNull write SetNull;
+    property        N: Boolean read GetNull write SetNull;
+    property        Value: Boolean read GetValue write Setvalue;
+    property        V: Boolean read GetValue write Setvalue;
   end;
-  TJX3Bool = class(TJX3Boolean);
+  TJX3Bool = TJX3Boolean;
 
 implementation
 uses
@@ -39,25 +39,19 @@ procedure TJX3Boolean.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
+  if Assigned(AStatBlock) then Inc(AStatBlock.BooleanCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
-  if not Assigned(LJPair) then
-  begin
+  if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull))  then
+    SetValue(LJPair.JsonValue.toString.ToBoolean())
+  else
     SetNull(True);
-    Exit;
-  end else
-  if LJPair.JSOnValue.null then
-  begin
-    SetNull(True);
-  end else
-    SetValue(LJPair.JsonValue.toString.ToBoolean());
 end;
 
 function TJX3Boolean.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock): TValue;
 const
   BStrL: array[Boolean] of string = ('false','true');
 begin
-  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
+  if Assigned(AStatBlock) then Inc(AStatBlock.BooleanCount);
   if FNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -75,9 +69,10 @@ begin
   FValue := False;
 end;
 
-class function TJX3Boolean.C: TJX3Boolean;
+class function TJX3Boolean.C(AValue: Boolean = False): TJX3Boolean;
 begin
   Result := TJX3Boolean.Create;
+  Result.SetValue(AValue);
 end;
 
 function TJX3Boolean.GetNull: Boolean;
