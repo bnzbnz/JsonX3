@@ -50,7 +50,7 @@ end;
 
 function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.PrimitivesCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
   if FNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -65,7 +65,7 @@ procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.PrimitivesCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull))  then
   begin

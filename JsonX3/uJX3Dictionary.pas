@@ -1,4 +1,4 @@
-﻿unit uJX3Dictionary;
+unit uJX3Dictionary;
 
 interface
 uses
@@ -85,7 +85,7 @@ var
   LObj: TObject;
   LInfoBlock: TJX3InfoBlock;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.DicsCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
   if GetNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -128,7 +128,7 @@ var
   LInfoBlock: TJX3InfoBlock;
 begin
 
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.DicsCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
 
   if not Assigned(AInfoBlock.Obj) then begin setNull(True); Exit end;;
   if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin setNull(True); Exit end;

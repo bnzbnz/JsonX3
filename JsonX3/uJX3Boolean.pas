@@ -39,7 +39,7 @@ procedure TJX3Boolean.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJ
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.BooleanCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.BooleanCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull))  then
     SetValue(LJPair.JsonValue.toString.ToBoolean())
@@ -51,7 +51,7 @@ function TJX3Boolean.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3I
 const
   BStrL: array[Boolean] of string = ('false','true');
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.BooleanCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.BooleanCount);
   if FNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
