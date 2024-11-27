@@ -10,15 +10,15 @@ type
 
   TJX3Object = class(TObject)
   public
-    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil): TValue;
-    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil);
+    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
     constructor     Create;
     destructor      Destroy; override;
 
-    class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AStatBlock: TJX3StatBlock = Nil): T;
-    function        ToJSON(AOptions: TJX3Options = [joNullToEmpty]; AStatBlock: TJX3StatBlock = Nil): string;
-    function        CLone<T:class, constructor>(AOptions: TJX3Options = []; AStatBlock: TJX3StatBlock = Nil): T;
+    class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+    function        ToJSON(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): string;
+    function        CLone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
   end;
   TJX3Obj = TJX3Object;
 
@@ -82,7 +82,7 @@ begin
   inherited;
 end;
 
-function TJX3Object.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock): TValue;
+function TJX3Object.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
   LField:     TRTTIField;
   LFields:    TArray<TRTTIField>;
@@ -107,7 +107,7 @@ begin
           , LField.GetValue(Self).AsObject
           , [
                 TValue.From<TJX3InfoBlock>(LInfoBlock)
-              , TValue.From<TJX3StatBlock>(AStatBlock)
+              , TValue.From<TJX3InOutBlock>(AInOutBlock)
             ]
       );
       if not LPart.IsEmpty then LParts.Add(LPart.AsString);
@@ -131,7 +131,7 @@ begin
   LParts.Free;
 end;
 
-procedure TJX3Object.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock);
+procedure TJX3Object.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LField: TRTTIField;
   LPair: TJSONPAir;
@@ -156,7 +156,7 @@ begin
         TJX3Tools.RaiseException( Format('Missing Field : %s', [TJX3Tools.NameEncode(Lpair.JsonString.Value)]));
     end else begin
       LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, AInfoBlock.Options);
-      TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3StatBlock>(AStatBlock)]);
+      TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
       LInfoBlock.Free;
     end;
     if (Assigned(LObj)) and not (LPair.JsonValue is TJSONObject) then FreeAndNil(LObj);
@@ -165,14 +165,14 @@ begin
   end;
 end;
 
-class function TJX3Object.FromJSON<T>(AJson: string; AOptions: TJX3Options; AStatBlock: TJX3StatBlock): T;
+class function TJX3Object.FromJSON<T>(AJson: string; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): T;
 var
   LInfoBlock: TJX3InfoBlock;
   LWatch: TStopWatch;
 begin
   LInfoBlock := Nil;
   try
-    if Assigned(AStatBlock) then LWatch := TStopWatch.StartNew;
+    if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     Result := T.Create;
     try
       LInfoBlock := TJX3InfoBlock.Create(
@@ -187,7 +187,7 @@ begin
         , Result
         , [
               TValue.From<TJX3InfoBlock>(LInfoBlock)
-            , TValue.From<TJX3StatBlock>(AStatBlock)
+            , TValue.From<TJX3InOutBlock>(AInOutBlock)
           ]
       );
       LInfoBlock.Obj.Free;
@@ -199,22 +199,22 @@ begin
       end;
     end;
   finally
-    if Assigned(AStatBlock) then AStatBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+    if Assigned(AInOutBlock) then AInOutBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
     LInfoBlock.Free;
   end;
 end;
 
-function TJX3Object.ToJSON(AOptions: TJX3Options; AStatBlock: TJX3StatBlock): string;
+function TJX3Object.ToJSON(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): string;
 var
   LInfoBlock: TJX3InfoBlock;
   LWatch: TStopWatch;
 begin
   LInfoBlock := Nil;
   try
-    if Assigned(AStatBlock) then LWatch := TStopWatch.StartNew;
+    if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     try
       LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, AOptions);
-      Result := JSONSerialize(LInfoBlock, AStatBlock).AsString;
+      Result := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
     except
       on Ex: Exception do
       begin
@@ -223,18 +223,18 @@ begin
       end;
     end;
   finally
-    if Assigned(AStatBlock) then AStatBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+    if Assigned(AInOutBlock) then AInOutBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
     LInfoBlock.Free;
   end;
 end;
 
-function TJX3Object.Clone<T>(AOptions: TJX3Options; AStatBlock: TJX3StatBlock): T;
+function TJX3Object.Clone<T>(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): T;
 var
   LWatch: TStopWatch;
 begin
-  if Assigned(AStatBlock) then LWatch := TStopWatch.StartNew;
-  Result := Self.FromJSON<T>(Self.ToJSON(AOptions), AOptions, AStatBlock);
-  if Assigned(AStatBlock) then AStatBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+  if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  Result := Self.FromJSON<T>(Self.ToJSON(AOptions), AOptions, AInOutBlock);
+  if Assigned(AInOutBlock) then AInOutBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
 end.

@@ -12,8 +12,8 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    function JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil): TValue;
-    procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil);
+    function JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function GetNull: Boolean;
     procedure SetNull(ANull: Boolean);
     function GetInt: Integer;
@@ -56,11 +56,11 @@ type
 implementation
 uses SysUTils, StrUtils, System.Generics.Collections;
 
-function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock): TValue;
+function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
   LJValue:  TJSONString;
 begin
-  if Assigned(AStatBlock) then Inc(AStatBlock.NumCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.NumCount);
   if FNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -76,11 +76,11 @@ begin
   end;
 end;
 
-procedure TJX3Number.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock);
+procedure TJX3Number.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AStatBlock) then Inc(AStatBlock.NumCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.NumCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair) and (not LJPair.null)) and (not (LJPair.JsonValue is TJSONNull))   then
     SetValue(LJPair.JsonValue.ToString)

@@ -15,8 +15,8 @@ type
     FNull:  Boolean;
   public
     constructor     Create;
-    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil): TValue;
-    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock = Nil);
+    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function        GetNull: Boolean;
     procedure       SetNull(ANull: Boolean);
     function        GetValue: string;
@@ -48,9 +48,9 @@ begin
   FNull := True;
 end;
 
-function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock): TValue;
+function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 begin
-  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.PrimitivesCount);
   if FNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -61,11 +61,11 @@ begin
   Result := Format('"%s":%s', [AInfoBlock.FieldName,  '"' + TJX3Tools.EscapeJSONStr(FValue) + '"']);
 end;
 
-procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AStatBlock: TJX3StatBlock);
+procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AStatBlock) then Inc(AStatBlock.PrimitivesCount);
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.PrimitivesCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull))  then
   begin

@@ -43,7 +43,7 @@ type
     constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
   end;
 
-  TJX3StatBlock = class
+  TJX3InOutBlock = class
     ProcessingTimeMS: Int64;
     PrimitivesCount: Int64;
     ListsCount: Int64;
@@ -51,7 +51,7 @@ type
 
     BooleanCount: Int64;
     NumCount: Int64;
-    
+
     User1: TValue;
     User2: TValue;
     procedure Clear;
@@ -213,7 +213,7 @@ end;
 
 { TJX3StatBlock }
 
-procedure TJX3StatBlock.Clear;
+procedure TJX3InOutBlock.Clear;
 begin
   ProcessingTimeMS  := 0;
   PrimitivesCount   := 0;
