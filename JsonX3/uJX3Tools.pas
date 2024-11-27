@@ -43,18 +43,22 @@ type
     constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
   end;
 
-  TJX3InOutBlock = class
+  TJX3InOutStats = class
     ProcessingTimeMS: Int64;
     PrimitivesCount: Int64;
     ListsCount: Int64;
     DicsCount: Int64;
-
     BooleanCount: Int64;
     NumCount: Int64;
+    procedure Clear;
+  end;
 
+  TJX3InOutBlock = class
+    Stats: TJX3InOutStats;
     User1: TValue;
     User2: TValue;
-    procedure Clear;
+    constructor Create;
+    destructor Destroy; override;
   end;
 
 implementation
@@ -213,7 +217,7 @@ end;
 
 { TJX3StatBlock }
 
-procedure TJX3InOutBlock.Clear;
+procedure TJX3InOutStats.Clear;
 begin
   ProcessingTimeMS  := 0;
   PrimitivesCount   := 0;
@@ -221,8 +225,21 @@ begin
   DicsCount         := 0;
   BooleanCount      := 0;
   NumCount          := 0;
-  User1             := TValue.Empty;
-  User2             := TValue.Empty;
+end;
+
+constructor TJX3InOutBlock.Create;
+begin
+  inherited;
+  Stats := TJX3InOutStats.Create;
+  Stats.Clear;
+  User1 := TValue.Empty;
+  User2 := TValue.Empty;
+end;
+
+destructor TJX3InOutBlock.Destroy;
+begin
+  Stats.Free;
+  inherited;
 end;
 
 end.

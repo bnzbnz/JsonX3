@@ -110,7 +110,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LJsonStr : string;
     LWatch : TStopWatch;
     Count : Integer;
-    LStats : TJX3StatBlock;
+    LInOut : TJX3InOutBlock;
   begin
     Memo1.Lines.Clear;
 
@@ -140,15 +140,15 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( '==>>' + Count.toString + ' Aspect Values !!!' );
 
     // Using Stats :
-    LStats := TJX3StatBlock.Create;
+    LInOut := TJX3InOutBlock.Create;
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;
     Memo1.Lines.add( 'Revert JSX3 Objects to Json String (using Stats) :' );
     LJsonStr := LJObj.ToJson( [ joNullToEmpty, joDisableNameEncoding ],
-      LStats );
+      LInOut );
     Memo1.Lines.add( Format( '  Processing duration %d ms',
-      [ LStats.ProcessingTimeMS ] ) );
-    LStats.Free;
+      [ LInOut.Stats.ProcessingTimeMS ] ) );
+    LInOut.Free;
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;

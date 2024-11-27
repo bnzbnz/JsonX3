@@ -199,7 +199,7 @@ begin
       end;
     end;
   finally
-    if Assigned(AInOutBlock) then AInOutBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+    if Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
     LInfoBlock.Free;
   end;
 end;
@@ -223,7 +223,7 @@ begin
       end;
     end;
   finally
-    if Assigned(AInOutBlock) then AInOutBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+    if Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
     LInfoBlock.Free;
   end;
 end;
@@ -234,7 +234,7 @@ var
 begin
   if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
   Result := Self.FromJSON<T>(Self.ToJSON(AOptions), AOptions, AInOutBlock);
-  if Assigned(AInOutBlock) then AInOutBlock.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+  if Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
 end.

@@ -73,8 +73,7 @@ var
   LEle:  T;
   LInfoBlock: TJX3InfoBlock;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.ListsCount);
-
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.ListsCount);
   if Self.Count = 0 then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -92,9 +91,9 @@ begin
   end;
   LRes := LParts.DelimitedText.Replace(cCommaDelimiter, ',');
   if AInfoBlock.FieldName.IsEmpty then
-    Result := '['+ LRes + ']'
+    Result := '[' + LRes + ']'
   else
-    Result := '"' + AInfoBlock.FieldName + '":['+ LRes + ']';
+    Result := '"' + AInfoBlock.FieldName + '":[' + LRes + ']';
   LParts.Free;
 end;
 
@@ -104,13 +103,11 @@ var
   LNewObj: TObject;
   LInfoBlock: TJX3InfoBlock;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.ListsCount);
-
+  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.ListsCount);
   if not Assigned(AInfoBlock.Obj) then begin setNull(True); Exit end;;
   if AInfoBlock.Obj.Count = 0 then begin setNull(True); Exit end;;
   if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin setNull(True); Exit end;
   if AInfoBlock.Obj.Pairs[0].JsonValue.Null then begin setNull(True); Exit end;;
-
   if TJSONArray(AInfoBlock.Obj.Pairs[0].JsonValue) is TJSONArray then
   for LEle in TJSONArray(AInfoBlock.Obj.Pairs[0].JsonValue) do
   begin
