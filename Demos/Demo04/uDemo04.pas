@@ -46,7 +46,7 @@ begin
   Memo1.Lines.Clear;
 
   Obj := TJSObject.Create;      // Again, we dont have to take care of the stringlist creation, TJX3Object handles it for us!
-                                // It will call Create() and  then JSONInit
+                                // It will call Create() and then JSONInit
   Obj.StringList.Add('A');
   Obj.StringList.Add('B');
   Obj.StringList.Add('C');
