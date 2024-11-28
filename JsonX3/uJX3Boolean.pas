@@ -39,27 +39,38 @@ procedure TJX3Boolean.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJ
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.BooleanCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.BooleanCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull))  then
-    SetValue(LJPair.JsonValue.toString.ToBoolean())
-  else
-    SetNull(True);
+    SetValue(LJPair.JsonValue.value.ToBoolean)
+  else begin
+    if Assigned(AInfoBlock.AttrDefault)  then
+      SetValue(AInfoBlock.AttrDefault.Value.ToBoolean)
+    else
+      SetNull(True);
+  end;
 end;
 
 function TJX3Boolean.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 const
   BStrL: array[Boolean] of string = ('false','true');
+var
+  Value: Boolean;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.BooleanCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.BooleanCount);
+  Value := FValue;
   if FNull then
   begin
-    if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-    if AInfoBlock.FieldName.IsEmpty then Exit('null');
-    Exit(Format('"%s":null', [AInfoBlock.FieldName]))
-  end;
-  if AInfoBlock.FieldName.IsEmpty then Exit(BStrL[FValue]);
-  Result := Format('"%s":%s', [AInfoBlock.FieldName, BStrL[FValue]])
+    if Assigned(AInfoBlock.AttrDefault) then
+      Value := AInfoBlock.AttrDefault.Value.ToBoolean
+    else begin
+      if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
+      if AInfoBlock.FieldName.IsEmpty then Exit('null');
+      Exit(Format('"%s":null', [AInfoBlock.FieldName]))
+    end;
+  end;;
+  if AInfoBlock.FieldName.IsEmpty then Exit(BStrL[Value]);
+  Result := Format('"%s":%s', [AInfoBlock.FieldName, BStrL[Value]])
 end;
 
 constructor TJX3Boolean.Create;

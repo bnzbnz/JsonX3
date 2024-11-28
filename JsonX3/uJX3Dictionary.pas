@@ -85,7 +85,7 @@ var
   LObj: TObject;
   LInfoBlock: TJX3InfoBlock;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
   if GetNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -100,7 +100,7 @@ begin
     var LVal := Lkp.Key;
     if Assigned(LObj) then
     begin
-      LInfoBlock := TJX3InfoBlock.Create(Nil, LVal, AInfoBlock.Field, AInfoBlock.Options);
+      LInfoBlock := TJX3InfoBlock.Create(Nil, LVal, AInfoBlock.Field, AInfoBlock.AttrDefault, AInfoBlock.Options);
       LPart :=  TJX3Tools.CallMethod(
                   'JSONSerialize'
                 , LObj
@@ -128,7 +128,7 @@ var
   LInfoBlock: TJX3InfoBlock;
 begin
 
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
 
   if not Assigned(AInfoBlock.Obj) then begin setNull(True); Exit end;;
   if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin setNull(True); Exit end;
@@ -140,7 +140,7 @@ begin
     Add(LPair.JsonString.value, LNewObj);
     LPair.JsonValue.Owned := False;
     LPair.Owned := False;
-    LInfoBlock := TJX3InfoBlock.Create(TJSONObject.Create(LPair), AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.Options);
+    LInfoBlock := TJX3InfoBlock.Create(TJSONObject.Create(LPair), AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.AttrDefault, AInfoBlock.Options);
     TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
     LInfoBlock.Obj.Free;
     LInfoBlock.Free;
@@ -157,7 +157,7 @@ begin
   LInfoBlock := Nil;
   try
     Result := TJX3Dic<V>.Create;
-    LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, AOptions);
+    LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, Nil, AOptions);
     LJson := TJX3Tools.CallMethod('JSONSerialize', Self, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
     if not LJson.IsEmpty then LInfoBlock.Obj := TJSONObject.ParseJSONValue(LJson.AsString, True, True) as TJSONObject;
     LJson.Empty;

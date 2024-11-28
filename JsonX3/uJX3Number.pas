@@ -59,15 +59,21 @@ uses SysUTils, StrUtils, System.Generics.Collections;
 function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
   LJValue:  TJSONString;
+  Value: string;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.NumCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.NumCount);
+  Value := FValue;
   if FNull then
   begin
-    if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-    if AInfoBlock.FieldName.IsEmpty then Exit('null');
-    Exit(Format('"%s":null', [AInfoBlock.FieldName]))
+    if Assigned(AInfoBlock.AttrDefault) then
+      Value := AInfoBlock.AttrDefault.Value
+    else begin
+      if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
+      if AInfoBlock.FieldName.IsEmpty then Exit('null');
+      Exit(Format('"%s":null', [AInfoBlock.FieldName]))
+    end;
   end;
-  LJValue := TJSONString.Create(FValue);
+  LJValue := TJSONString.Create(Value);
   try
     if AInfoBlock.FieldName.IsEmpty then Exit(LJValue.Value);
     Exit(Format('"%s":%s', [AInfoBlock.FieldName, LJValue.Value]));
@@ -80,19 +86,27 @@ procedure TJX3Number.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.NumCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.NumCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
-  if (Assigned(LJPair) and (not LJPair.null)) and (not (LJPair.JsonValue is TJSONNull))   then
-    SetValue(LJPair.JsonValue.ToString)
-  else
-    SetNull(True);
+  if (Assigned(LJPair) and (not LJPair.null)) and (not (LJPair.JsonValue is TJSONNull)) then
+    SetValue(LJPair.JsonValue.Value)
+  else begin
+    if Assigned(AInfoBlock.AttrDefault)  then
+    begin
+      SetValue(AInfoBlock.AttrDefault.Value)
+    end else
+      if Assigned(AInfoBlock.AttrDefault)  then
+        SetValue(AInfoBlock.AttrDefault.Value)
+      else
+        SetNull(True);
+  end;
 end;
 
 constructor TJX3Number.Create;
 begin
   inherited;
   FNull := True;
-  FValue := '0';
+  FValue := '';
 end;
 
 destructor TJX3Number.Destroy;

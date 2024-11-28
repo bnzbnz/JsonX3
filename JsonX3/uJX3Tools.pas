@@ -13,13 +13,27 @@ const
 
 type
 
-  TJS3Option  = (joNullToEmpty, joNoBracket, joRaiseException, joRaiseOnMissingField, joDisableNameEncoding);
+  TJS3Option  = (
+        joNullToEmpty
+      , joNoBracket
+      , joRaiseException
+      , joRaiseOnMissingField
+      , joDisableNameEncoding
+      , joEnableDefaults
+      , joStats
+  );
   TJX3Options = set of TJS3Option;
 
   JX3Name = class(TCustomAttribute)
   public
     Name: string;
     constructor Create(const AName: string);
+  end;
+
+  JX3Default = class(TCustomAttribute)
+  public
+    Value: string;
+    constructor Create(const AValue: string);
   end;
 
   JX3DoNotManage = class(TCustomAttribute);
@@ -39,8 +53,9 @@ type
     Obj: TJSONObject;
     FieldName: string;
     Field: TRttiField;
+    AttrDefault: JX3Default;
     Options: TJX3Options;
-    constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
+    constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AAttrDefault: JX3Default; AOptions: TJX3Options);
   end;
 
   TJX3InOutStats = class
@@ -206,13 +221,20 @@ begin
   Name := AName;
 end;
 
-constructor TJX3InfoBlock.Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField;
+constructor JX3Default.Create(const AValue: string);
+begin
+  Value := AValue;
+end;
+
+
+constructor TJX3InfoBlock.Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AAttrDefault: JX3Default;
   AOptions: TJX3Options);
 begin
   Obj := AObj;
   FieldName := AFieldName;
   Field := AField;
   Options := AOptions;
+  AttrDefault := AAttrDefault;
 end;
 
 { TJX3StatBlock }
@@ -241,5 +263,8 @@ begin
   Stats.Free;
   inherited;
 end;
+
+{ JX2Default }
+
 
 end.

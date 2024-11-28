@@ -99,9 +99,9 @@ begin
     if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility = mvPublic) then
     begin
       if joDisableNameEncoding in AInfoBlock.Options then
-        LInfoBlock := TJX3InfoBlock.Create(Nil, LField.Name, LField, AInfoBlock.Options)
+        LInfoBlock := TJX3InfoBlock.Create(Nil, LField.Name, LField, Nil, AInfoBlock.Options)
       else
-        LInfoBlock := TJX3InfoBlock.Create(Nil, TJX3Tools.NameDecode(LField.Name), LField, AInfoBlock.Options);
+        LInfoBlock := TJX3InfoBlock.Create(Nil, TJX3Tools.NameDecode(LField.Name), LField, JX3Default(JX3GetFieldAttribute(LField, JX3Default)), AInfoBlock.Options);
       LPart :=  TJX3Tools.CallMethod(
             'JSONSerialize'
           , LField.GetValue(Self).AsObject
@@ -137,31 +137,43 @@ var
   LPair: TJSONPAir;
   LObj: TJSONObject;
   LInfoBlock: TJX3InfoBlock;
+  lName: string;
 begin
-  for Lpair in AInfoBlock.Obj do
+  for LField in JX3GetFields(Self) do
   begin
-    LPair.Owned := False;
-    LPair.JsonValue.Owned := False;
-    if (LPair.JsonValue is TJSONObject) then
-      LObj := (LPair.JsonValue as TJSONObject)
-    else
-      LObj :=  TJSONObject.Create(LPair);
-    if joDisableNameEncoding in AInfoBlock.Options then
-      LField := TJX3Tools.GetRttiMember(Self, Lpair.JsonString.Value, tkClass, mvPublic)
-    else
-      LField := TJX3Tools.GetRttiMember(Self, TJX3Tools.NameEncode(Lpair.JsonString.Value), tkClass, mvPublic);
-    if LField = Nil then
+    LName :=  TJX3Tools.NameDecode(LField.Name);
+    LPair := AInfoBlock.Obj.Get(LName);
+    if LPair <> Nil then
     begin
-      if JoRaiseOnMissingField in AInfoBlock.Options then
-        TJX3Tools.RaiseException( Format('Missing Field : %s', [TJX3Tools.NameEncode(Lpair.JsonString.Value)]));
-    end else begin
-      LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, AInfoBlock.Options);
+      LPair.Owned := False;
+      LPair.JsonValue.Owned := False;
+      if (LPair.JsonValue is TJSONObject) then
+        LObj := (LPair.JsonValue as TJSONObject)
+      else
+      LObj :=  TJSONObject.Create(LPair);
+      LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, Nil, AInfoBlock.Options);
       TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
       LInfoBlock.Free;
+      if (Assigned(LObj)) and not (LPair.JsonValue is TJSONObject) then FreeAndNil(LObj);
+      LPair.JsonValue.Owned := True;
+      LPair.Owned := True;
+    end else begin
+      if joEnableDefaults in AInfoBlock.Options then
+      begin
+        var LAttr := JX3Default(JX3GetFieldAttribute(LField, JX3Default));
+        if Assigned(LAttr) then
+        begin
+          LObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
+          LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, LAttr, AInfoBlock.Options);
+          TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
+          LInfoBlock.Free;
+          LObj.Free;
+          Continue;
+        end;
+      end;
+      if (JoRaiseOnMissingField in AInfoBlock.Options)  then
+        TJX3Tools.RaiseException( Format('Missing Field : %s', [TJX3Tools.NameEncode(LField.Name)]));
     end;
-    if (Assigned(LObj)) and not (LPair.JsonValue is TJSONObject) then FreeAndNil(LObj);
-    LPair.JsonValue.Owned := True;
-    LPair.Owned := True;
   end;
 end;
 
@@ -179,6 +191,7 @@ begin
                         TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject
                       , ''
                       , Nil
+                      , Nil
                       , AOptions
                     );
       if not Assigned(LInfoBlock.Obj) then TJX3Tools.RaiseException('TJX3Object.FromJSON: Erroneous JSON string');
@@ -194,12 +207,11 @@ begin
     except
       on Ex: Exception do
       begin
-        FreeAndNil(Result);
         if joRaiseException in AOptions then Raise Ex;
       end;
     end;
   finally
-    if Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+    if (joStats in LInfoBlock.Options) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
     LInfoBlock.Free;
   end;
 end;
@@ -213,7 +225,7 @@ begin
   try
     if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     try
-      LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, AOptions);
+      LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, Nil,  AOptions);
       Result := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
     except
       on Ex: Exception do
@@ -223,7 +235,7 @@ begin
       end;
     end;
   finally
-    if Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+    if (joStats in LInfoBlock.Options) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
     LInfoBlock.Free;
   end;
 end;
