@@ -39,6 +39,7 @@ uses
     SysUtils
   , StrUtils
   , System.Generics.Collections
+  , uJX3Rtti
   ;
 
 constructor TJX3String.Create;
@@ -49,50 +50,40 @@ begin
 end;
 
 function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+var
+  Value: string;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
+  Value := FValue;
   if FNull then
   begin
-    if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-    if AInfoBlock.FieldName.IsEmpty then Exit('null');
-    Exit(Format('"%s":null', [AInfoBlock.FieldName]))
+    if Assigned(AInfoBlock.AttrDefault) then
+      Value := AInfoBlock.AttrDefault.Value
+    else begin
+      if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
+      if AInfoBlock.FieldName.IsEmpty then Exit('null');
+      Exit(Format('"%s":null', [AInfoBlock.FieldName]))
+    end;
   end;
-  if AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(FValue) + '"');
-  Result := Format('"%s":%s', [AInfoBlock.FieldName,  '"' + TJX3Tools.EscapeJSONStr(FValue) + '"']);
+  if AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(Value) + '"');
+  Result := Format('"%s":%s', [AInfoBlock.FieldName,  '"' + TJX3Tools.EscapeJSONStr(Value) + '"']);
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LJPair: TJSONPair;
 begin
-  if Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
-  if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull))  then
+  if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull)) then
   begin
     SetValue(LJPair.JsonValue.Value);
     Exit;
   end else begin
-    SetNull(True);
-    Exit;
-  end;
-
-  if not Assigned(LJPair) then
-  begin
-    SetNull(True);
-    Exit;
-  end else
-  if LJPair.null then
-  begin
-    SetNull(True);
-    Exit;
-  end else
-  if LJPair.JsonValue is TJSONNull then
-  begin
-    SetNull(True);
-    Exit;
-  end else
-  begin
-    SetValue(LJPair.JsonValue.Value);
+    if Assigned(AInfoBlock.AttrDefault)  then
+      SetValue(AInfoBlock.AttrDefault.Value)
+    else
+      SetNull(True);
   end;
 end;
 

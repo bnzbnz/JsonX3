@@ -32,7 +32,7 @@ type
     c: TJX3Num; // as UInt
     d: TJX3Num; // as Int64
     e: TJX3Num; // as UInt64
-    Null: TJX3Str;
+    NullStr: TJX3Str;
     // ...
   end;
 
@@ -52,11 +52,12 @@ begin
 
   Primitives := TPrimitives.Create;
   Primitives.Str.Value := 'testing 😜';  // or Primitives.Str.V :=
-  Primitives.Bool.V := True;             // <--^
+  //Primitives.Bool.V := True;             // <--^
   Primitives.b.Int := -999;
-  Primitives.c.UInt64 := 999;
+  //Primitives.c.UInt64 := 999;
   Primitives.d.Double := 2.2;
   Primitives.e.Currency := 22.22;
+  //Primitives.NullStr.V := 'TEST';
 
   // Raw Json
   Json := Primitives.ToJson([]);
@@ -65,16 +66,16 @@ begin
 
   //Optimized Json
   Memo1.lines.add('');
-  Json := Primitives.ToJson([joNullToEmpty]);
+  Json := Primitives.ToJson([joNullToEmpty, joEnableDefaults]);
   Memo1.lines.add('Optimized Original Object:');
   Memo1.lines.add(Json);
 
   // Converting back to a Primitives Object;
-  NewPrimitives := TJX3Object.FromJSON<TPrimitives>(Json);
+  NewPrimitives := TJX3Object.FromJSON<TPrimitives>(Json, [joEnableDefaults]);
 
   // Serializing the New Object
   Memo1.lines.add('');
-  Json := NewPrimitives.ToJson([joNullToEmpty]);
+  Json := NewPrimitives.ToJson([joNullToEmpty, joEnableDefaults]);
   Memo1.lines.add('New Cloned Object:');
   Memo1.lines.add(Json);
 
