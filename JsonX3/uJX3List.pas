@@ -41,6 +41,7 @@ uses
   , StrUtils
   , uJX3Object
   , TypInfo
+  , uJX3Rtti
   ;
 
 class function TJX3List<T>.CAdd(AValue: T): TJX3List<T>;
@@ -84,7 +85,8 @@ begin
   LParts.Capacity := Self.Count;
   for LEle in Self do
   begin
-    LInfoBlock := TJX3InfoBlock.Create(Nil, '', AInfoBlock.Field, AInfoBlock.AttrDefault, AInfoBlock.Options);
+    LInfoBlock := TJX3InfoBlock.Create(Nil, '', AInfoBlock.Field,AInfoBlock.Options);
+    LInfoBlock.AttrDefault := AInfoBlock.AttrDefault;
     LPart := TJX3Tools.CallMethod('JSONSerialize', LEle, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
     if not LPart.IsEmpty then LParts.Add(LPart.AsString);
     LInfoBlock.Free;
@@ -115,14 +117,16 @@ begin
     begin
        LNewObj := T.Create;
        Add(LNewObj);
-       LInfoBlock := TJX3InfoBlock.Create(LEle as TJSONObject, AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.AttrDefault, AInfoBlock.Options);
+       LInfoBlock := TJX3InfoBlock.Create(LEle as TJSONObject, AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.Options);
+       LInfoBlock.AttrDefault := AInfoBlock.AttrDefault;
        TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
        LInfoBlock.Free;
     end else begin
        LNewObj := T.Create;
        Add(LNewObj);
        LEle.Owned := False;
-       LInfoBlock := TJX3InfoBlock.Create(TJSONObject.Create(TJSONPair.Create('', LEle)),  AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.AttrDefault, AInfoBlock.Options);
+       LInfoBlock := TJX3InfoBlock.Create(TJSONObject.Create(TJSONPair.Create('', LEle)),  AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.Options);
+       LInfoBlock.AttrDefault := AInfoBlock.AttrDefault;
        TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
        LInfoBlock.Obj.Free;
        LInfoBlock.Free;

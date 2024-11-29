@@ -98,10 +98,9 @@ begin
   for LField in LFields do
     if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility = mvPublic) then
     begin
-      if joDisableNameEncoding in AInfoBlock.Options then
-        LInfoBlock := TJX3InfoBlock.Create(Nil, LField.Name, LField, Nil, AInfoBlock.Options)
-      else
-        LInfoBlock := TJX3InfoBlock.Create(Nil, TJX3Tools.NameDecode(LField.Name), LField, JX3Default(JX3GetFieldAttribute(LField, JX3Default)), AInfoBlock.Options);
+      LInfoBlock := TJX3InfoBlock.Create(Nil, LField.Name, LField, AInfoBlock.Options);
+      if (joEnableDefaults in AInfoBlock.Options) then LInfoBlock.AttrDefault := JX3Default(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Default));
+      if (joDisableNameEncoding in AInfoBlock.Options) then LInfoBlock.AttrDisableNameEncoding := JX3DisableNameEncoding(uJX3Rtti.JX3GetFieldAttribute(LField, JX3DisableNameEncoding));
       LPart :=  TJX3Tools.CallMethod(
             'JSONSerialize'
           , LField.GetValue(Self).AsObject
@@ -151,7 +150,9 @@ begin
         LObj := (LPair.JsonValue as TJSONObject)
       else
       LObj :=  TJSONObject.Create(LPair);
-      LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, Nil, AInfoBlock.Options);
+      LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, AInfoBlock.Options);
+      LInfoBlock.AttrDefault := AInfoBlock.AttrDefault;
+      LInfoBlock.AttrDisableNameEncoding := AInfoBlock.AttrDisableNameEncoding;
       TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
       LInfoBlock.Free;
       if (Assigned(LObj)) and not (LPair.JsonValue is TJSONObject) then FreeAndNil(LObj);
@@ -164,7 +165,9 @@ begin
         if Assigned(LAttr) then
         begin
           LObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
-          LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, LAttr, AInfoBlock.Options);
+          if (joEnableDefaults in AInfoBlock.Options) then LInfoBlock.AttrDefault := JX3Default(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Default));
+          if (joDisableNameEncoding in AInfoBlock.Options) then LInfoBlock.AttrDisableNameEncoding := JX3DisableNameEncoding(uJX3Rtti.JX3GetFieldAttribute(LField, JX3DisableNameEncoding));
+          LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, AInfoBlock.Options);
           TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
           LInfoBlock.Free;
           LObj.Free;
@@ -190,7 +193,6 @@ begin
       LInfoBlock := TJX3InfoBlock.Create(
                         TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject
                       , ''
-                      , Nil
                       , Nil
                       , AOptions
                     );
@@ -225,7 +227,7 @@ begin
   try
     if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     try
-      LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, Nil,  AOptions);
+      LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, AOptions);
       Result := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
     except
       on Ex: Exception do
