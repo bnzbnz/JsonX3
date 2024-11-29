@@ -36,7 +36,9 @@ type
     constructor Create(const AValue: string);
   end;
 
-  JX3DoNotManage = class(TCustomAttribute);
+  JX3DoNotManage  = class(TCustomAttribute);
+
+  JX3DisableNameEncoding = class(TCustomAttribute);
 
   TJX3Tools = record
     class function  GetRttiMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField; static;
@@ -53,9 +55,10 @@ type
     Obj: TJSONObject;
     FieldName: string;
     Field: TRttiField;
-    AttrDefault: JX3Default;
     Options: TJX3Options;
-    constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AAttrDefault: JX3Default; AOptions: TJX3Options);
+    AttrDefault: JX3Default;
+    AttrDisableNameEncoding: JX3DisableNameEncoding;
+    constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
   end;
 
   TJX3InOutStats = class
@@ -226,15 +229,14 @@ begin
   Value := AValue;
 end;
 
-
-constructor TJX3InfoBlock.Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AAttrDefault: JX3Default;
-  AOptions: TJX3Options);
+constructor TJX3InfoBlock.Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
 begin
   Obj := AObj;
   FieldName := AFieldName;
   Field := AField;
   Options := AOptions;
-  AttrDefault := AAttrDefault;
+  AttrDefault := Nil;;
+  AttrDisableNameEncoding := Nil;
 end;
 
 { TJX3StatBlock }
