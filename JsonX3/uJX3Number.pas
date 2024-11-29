@@ -106,7 +106,7 @@ constructor TJX3Number.Create;
 begin
   inherited;
   FNull := True;
-  FValue := '';
+  FValue := '0';
 end;
 
 destructor TJX3Number.Destroy;
@@ -169,7 +169,7 @@ end;
 procedure TJX3Number.SetNull(ANull: Boolean);
 begin
   FNull := ANull;
-  if ANull then FValue := '';
+  if ANull then FValue := '0';
 end;
 
 procedure TJX3Number.SetValue(AValue: string);
