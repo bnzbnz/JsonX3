@@ -41,6 +41,7 @@ type
   end;
   TInnerObjectDemo = class(TJX3Object)
     S: TJX3Str;
+    [JS3Required]
     SubClass: TSubClassDemo; // a class
   end;
 
@@ -66,6 +67,8 @@ begin
   Demo.S.V := '~~😃~~'; // UTF8 Support
   Demo.SubClass.X.Int := 222;
   Demo.SubClass.PClass.Bool.V := True;
+  Demo.SubClass.PClass.b.Int := 1234;
+  Demo.SubClass.PClass.d.Double := 2.22;
 
   // Raw Json
   Json := Demo.ToJson([]);
@@ -73,7 +76,7 @@ begin
   Memo1.lines.add(Json);
 
   // Optimized Json
-  Memo1.lines.add('');
+
   Json := Demo.ToJson([joNullToEmpty]);
   Memo1.lines.add('Optimized Original Object:');
   Memo1.lines.add(Json);

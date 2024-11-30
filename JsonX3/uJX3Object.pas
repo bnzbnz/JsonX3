@@ -17,7 +17,7 @@ type
     destructor      Destroy; override;
 
     class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
-    function        ToJSON(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): string;
+    function        ToJSON(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil): string;
     function        CLone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
   end;
   TJX3Obj = TJX3Object;
@@ -47,7 +47,6 @@ begin
   begin
     if  (LField.FieldType.TypeKind in [tkClass])
         and (LField.Visibility in [mvPublic, mvPublished])
-        and (JX3GetFieldAttribute(LField, JX3DoNotManage) = Nil)
     then
     begin
       LInstance := LField.FieldType.AsInstance;
@@ -71,7 +70,6 @@ begin
   for LField in LFields do
     if  (LField.FieldType.TypeKind in [tkClass])
         and (LField.Visibility in [mvPublic, mvPublished])
-        and (JX3GetFieldAttribute(LField, JX3DoNotManage) = Nil)
     then
     begin
       LObj := LField.GetValue(Self).AsObject;
@@ -175,8 +173,11 @@ begin
         Continue;
       end;
 
+      if Assigned(JS3Required(JX3GetFieldAttribute(LField, JS3Required))) then
+        TJX3Tools.RaiseException(Format('"%s" is required but not defined', [LName]));
+
       if (JoRaiseOnMissingField in AInfoBlock.Options)  then
-        TJX3Tools.RaiseException( Format('Missing Field : %s', [TJX3Tools.NameEncode(LField.Name)]));
+        TJX3Tools.RaiseException(Format('Missing Field : %s', [LName]));
     end;
   end;
 end;

@@ -17,7 +17,6 @@ type
         joNullToEmpty
       , joRaiseException
       , joRaiseOnMissingField
-      , joDisableNameEncoding
       , joStats
   );
   TJX3Options = set of TJS3Option;
@@ -34,9 +33,7 @@ type
     constructor Create(const AValue: string);
   end;
 
-  JX3DoNotManage  = class(TCustomAttribute);
-
-  JX3DisableNameEncoding = class(TCustomAttribute);
+  JS3Required  = class(TCustomAttribute);
 
   TJX3Tools = record
     class function  CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue; static;
@@ -115,7 +112,7 @@ end;
 class procedure TJX3Tools.RaiseException(const AMsg: string);
 begin
   {$IF defined(DEBUG) and defined(MSWINDOWS)}
-    OutputDebugString(PChar('LMR: TJX3: ' + AMsg));
+    BreakPoint(AMsg, False);
  {$ELSE}
     Raise Exception.Create(AMsg) at ReturnAddress;
  {$ENDIF}
@@ -165,7 +162,7 @@ var
   Index: Integer;
   CharCode: Integer;
 begin;
-  if ToDecode[1] <> '_'  then Exit(ToDecode);
+  if Pos('_', ToDecode) <> 1 then Exit(ToDecode);
   Result := ''; Index := 2;
   while (Index <= Length(ToDecode)) do
     begin
@@ -194,8 +191,7 @@ begin
       Encoded := True;
       Result := Result + '_' + Format('%2x', [Ord(ToEncode[i])]);
     end;
-  if Encoded then
-    Result := '_' + Result;
+  if Encoded then Result := '_' + Result;
 end;
 
 constructor JX3Name.Create(const AName: string);

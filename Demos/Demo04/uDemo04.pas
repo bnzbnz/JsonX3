@@ -53,7 +53,7 @@ begin
   Obj.StringList.Add('D');
 
   // Raw Json
-  Json := Obj.ToJson;
+  Json := Obj.ToJson([]);
 
   // Formatted Json
   Memo1.lines.add('List Raw:');
@@ -61,7 +61,7 @@ begin
 
   Obj.StringList.Strings[0] := '>>';
   Obj.StringList.Strings[2] := '<<';
-  Json := Obj.ToJson;
+  Json := Obj.ToJson([]);
 
   // Updated and Formatted Json
   Memo1.lines.add('');
