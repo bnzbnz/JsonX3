@@ -26,12 +26,12 @@ type
   end;
 
   TPrimitives = class(TJX3Object)
-    Str: TJX3Str;
-    Bool: TJX3Bool;
-    b: TJX3Num; // as Int
-    c: TJX3Num; // as UInt
-    d: TJX3Num; // as Int64
-    e: TJX3Num; // as UInt64
+    Str:     TJX3Str;
+    Bool:    TJX3Bool;
+    Num1:    TJX3Num; // as Int
+    Num2:    TJX3Num; // as UInt
+    Num3:    TJX3Num; // as Int64
+    Num4:    TJX3Num; // as UInt64
     NullStr: TJX3Str;
     // ...
   end;
@@ -51,13 +51,14 @@ begin
   Memo1.Lines.Clear;
 
   Primitives := TPrimitives.Create;
-  Primitives.Str.Value := 'testing 😜';  // or Primitives.Str.V :=
-  //Primitives.Bool.V := True;             // <--^
-  Primitives.b.Int := -999;
-  //Primitives.c.UInt64 := 999;
-  Primitives.d.Double := 2.2;
-  Primitives.e.Currency := 22.22;
-  //Primitives.NullStr.V := 'TEST';
+  Primitives.Str.Value := 'testing 😜';
+  Primitives.Bool.V := True;        // V being a shortcut for "Value"
+
+  Primitives.Num1.Int := -999;
+  Primitives.Num2.UInt64 := 999;
+  Primitives.Num3.Double := 2.2;
+  Primitives.Num4.Currency := 22.22;
+  // Primitives.NullStr << Null
 
   // Raw Json
   Json := Primitives.ToJson([]);
@@ -66,16 +67,16 @@ begin
 
   //Optimized Json
   Memo1.lines.add('');
-  Json := Primitives.ToJson([joNullToEmpty, joEnableDefaults]);
+  Json := Primitives.ToJson([joNullToEmpty]);
   Memo1.lines.add('Optimized Original Object:');
   Memo1.lines.add(Json);
 
   // Converting back to a Primitives Object;
-  NewPrimitives := TJX3Object.FromJSON<TPrimitives>(Json, [joEnableDefaults]);
+  NewPrimitives := TJX3Object.FromJSON<TPrimitives>(Json, []);
 
   // Serializing the New Object
   Memo1.lines.add('');
-  Json := NewPrimitives.ToJson([joNullToEmpty, joEnableDefaults]);
+  Json := NewPrimitives.ToJson([joNullToEmpty]);
   Memo1.lines.add('New Cloned Object:');
   Memo1.lines.add(Json);
 
@@ -83,8 +84,8 @@ begin
   Memo1.lines.add('');
   Memo1.lines.add('Checking the New Object Values:');
   Memo1.lines.add('Str: ' + NewPrimitives.Str.V);
-  Memo1.lines.add('UInt64: ' + NewPrimitives.c.UInt64.ToString);
-  Memo1.lines.add('Currency: ' + NewPrimitives.e.Currency.ToString);
+  Memo1.lines.add('UInt64: ' + NewPrimitives.Num2.UInt64.ToString);
+  Memo1.lines.add('Currency as double: ' + NewPrimitives.Num4.Double.ToString);
 
   // Formatted Json
   Memo1.lines.add('');

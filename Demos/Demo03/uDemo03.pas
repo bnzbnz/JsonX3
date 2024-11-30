@@ -34,7 +34,7 @@ type
     c: TJX3Num; // as UInt
     d: TJX3Num; // as Int64
     e: TJX3Num; // as UInt64
-    Null: TJX3Str;
+    NullStr: TJX3Str;
     // ...
   end;
 
@@ -93,8 +93,8 @@ begin
 
   // TJX3List<TJX3Dic<TJX3List<TPrimitives>>>  : Array<Dictionary<string, Array<TPrimitives>>> :)
   var p1 := TJX3List<TPrimitives>.CAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
-  p1.Last.Str.v := 'Boolean1';                                           // Acdess the Last item (which is the first also in this case)
-  p1.Last.Bool.v := True;
+  p1.First.Str.v := 'Boolean1';                                          // Acdess the Last item (which is the first also in this case)
+  p1.First.Bool.v := True;
   var p2 := TJX3List<TPrimitives>.CAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
   p2.Last.Str.v := 'Boolean2';
   p2.Last.Bool.v := True;
@@ -105,21 +105,6 @@ begin
 
   Demo.w.Add(d1);                                                         // Adding the Dict and its clone to the main list
   Demo.w.Add(d1.Clone);
-
-  // An other way (remove curly brackets)
-  {
-      Demo.w.Free; Demo.w := TJX3List<TJX3Dic<TJX3List<TPrimitives>>>.Create;
-
-  p := TJX3List<TPrimitives>.CAddRange([TPrimitives.Create, TPrimitives.Create]);
-  p.First.Str.V := 'string 1';
-  p.First.b.Int := 111;
-  p.Last.Str.V := 'string 2';
-  p.Last.b.Int64 := 222;
-
-  Demo.w.AddRange([TJX3Dic<TJX3List<TPrimitives>>.Create, TJX3Dic<TJX3List<TPrimitives>>.Create]);
-  Demo.w.First.Add('Dic1', p);
-  Demo.w.Last.Add('Dic2', p.Clone());
-  }
 
   // Raw Json
   Json := Demo.ToJson([]);
@@ -147,7 +132,7 @@ begin
   // Formatted Json
   Memo1.lines.add('');
   Memo1.lines.add('Formatted:');
-  Memo1.lines.add(TJX3Tools.FormatJSON(CloneDemo.ToJSON(), 8));
+  Memo1.lines.add(TJX3Tools.FormatJSON(CloneDemo.ToJSON([]), 8));
 
   CloneDemo.Free;
   NewDemo.Free;

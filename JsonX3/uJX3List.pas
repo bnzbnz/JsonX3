@@ -75,24 +75,22 @@ var
   LInfoBlock: TJX3InfoBlock;
   LName: string;
   LNameAttr:      JX3Name;
-  LNoEncodeAttr:  JX3DisableNameEncoding;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.ListsCount);
 
   LName := AInfoBlock.FieldName;
+  if Assigned(AInfoBlock) and Assigned(AInfoBlock.Field) then
+  begin
+    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    if Assigned(LNameAttr) then LName := LNameAttr.Name;
+  end;
+  LName := TJX3Tools.NameDecode(LName);
+
   if Self.Count = 0 then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
     if AInfoBlock.FieldName.IsEmpty then EXit('null');
     Exit(Format('"%s":null', [LName]));
-  end;
-
-  if Assigned(AInfoBlock) and Assigned(AInfoBlock.Field) then
-  begin
-    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
-    if Assigned(LNameAttr) then LName := LNameAttr.Name;
-    LNoEncodeAttr := JX3DisableNameEncoding(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3DisableNameEncoding));
-    if not Assigned(LNoEncodeAttr) then LName := TJX3Tools.NameDecode(LName);
   end;
 
   LParts := TStringList.Create(#0, cCommaDelimiter, [soStrictDelimiter]);

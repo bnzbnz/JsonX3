@@ -87,10 +87,10 @@ type
   end;
 
   TfetchItemAspectsContentType = class( TJX3Object )
-    public
-      categoryTreeId : TJX3String;
-      categoryTreeVersion : TJX3String;
-      categoryAspects : TJX3List< TcategoryAspects >;
+  public
+    categoryTreeId : TJX3String;
+    categoryTreeVersion : TJX3String;
+    categoryAspects : TJX3List< TcategoryAspects >;
   end;
 
 var
@@ -125,7 +125,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Convert Json String to JSX3 Objects :' );
-    LJObj := TJX3Object.FromJSON< TfetchItemAspectsContentType >( LJsonStr, [ joNullToEmpty, joDisableNameEncoding, joStats ], LStats );
+    LJObj := TJX3Object.FromJSON< TfetchItemAspectsContentType >( LJsonStr, [ joNullToEmpty, joStats ], LStats );
     Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );

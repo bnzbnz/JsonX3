@@ -87,7 +87,6 @@ var
   LInfoBlock: TJX3InfoBlock;
   LName: string;
   LNameAttr:      JX3Name;
-  LNoEncodeAttr:  JX3DisableNameEncoding;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
 
@@ -96,10 +95,9 @@ begin
     LName := AInfoBlock.Field.Name;
     LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
     if Assigned(LNameAttr) then LName := LNameAttr.Name;
-    LNoEncodeAttr := JX3DisableNameEncoding(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3DisableNameEncoding));
-    if not Assigned(LNoEncodeAttr) then LName := TJX3Tools.NameDecode(LName);
   end else
     LName := AInfoBlock.FieldName;
+  LName := TJX3Tools.NameDecode(LName);
 
   if GetNull then
   begin
