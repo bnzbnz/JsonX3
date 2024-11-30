@@ -51,27 +51,49 @@ end;
 
 function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
-  Value: string;
+  LName: string;
+  LValue: string;
+  LNameAttr:      JX3Name;
+  LNoEncodeAttr:  JX3DisableNameEncoding;
+  LDefaultAttr:   JX3Default;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
-  Value := FValue;
-  if FNull then
+
+  if Assigned(AInfoBlock.Field) then
   begin
-    if Assigned(AInfoBlock.AttrDefault) then
-      Value := AInfoBlock.AttrDefault.Value
-    else begin
+    LName := AInfoBlock.Field.Name;
+    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    if Assigned(LNameAttr) then LName := LNameAttr.Name;
+    LNoEncodeAttr := JX3DisableNameEncoding(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3DisableNameEncoding));
+    if not Assigned(LNoEncodeAttr) then LName := TJX3Tools.NameDecode(LName);
+  end else
+    LName := AInfoBlock.FieldName;
+
+  LValue := FValue;
+  if GetNull then
+  begin
+    LDefaultAttr := Nil;
+    if Assigned(AInfoBlock.Field) then
+    begin
+      LDefaultAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+      if Assigned(LDefaultAttr) then LValue := LDefaultAttr.Value;
+    end;
+    if not Assigned(LDefaultAttr) then
+    begin
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-      if AInfoBlock.FieldName.IsEmpty then Exit('null');
-      Exit(Format('"%s":null', [AInfoBlock.FieldName]))
+      if LName.IsEmpty then Exit('null');
+      Exit(Format('"%s":null', [LName]))
     end;
   end;
-  if AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(Value) + '"');
-  Result := Format('"%s":%s', [AInfoBlock.FieldName,  '"' + TJX3Tools.EscapeJSONStr(Value) + '"']);
+
+  if AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(LValue) + '"');
+  Result := Format('"%s":%s', [LName,  '"' + TJX3Tools.EscapeJSONStr(LValue) + '"']);
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LJPair: TJSONPair;
+  LDefaultAttr:   JX3Default;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
@@ -80,8 +102,9 @@ begin
     SetValue(LJPair.JsonValue.Value);
     Exit;
   end else begin
-    if Assigned(AInfoBlock.AttrDefault)  then
-      SetValue(AInfoBlock.AttrDefault.Value)
+    LDefaultAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+    if Assigned(LDefaultAttr) then
+      SetValue(LDefaultAttr.Value)
     else
       SetNull(True);
   end;

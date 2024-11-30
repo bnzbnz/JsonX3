@@ -71,7 +71,7 @@ type
   end;
 
   TcategoryAspectName = class( TJX3Object )
-    categoryId : TJX3Number;
+    categoryId : TJX3String;
     categoryName : TJX3String;
   end;
 
@@ -89,7 +89,7 @@ type
   TfetchItemAspectsContentType = class( TJX3Object )
     public
       categoryTreeId : TJX3String;
-      categoryTreeVersion : TJX3Number;
+      categoryTreeVersion : TJX3String;
       categoryAspects : TJX3List< TcategoryAspects >;
   end;
 
@@ -109,62 +109,50 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LStream : TStringStream;
     LJsonStr : string;
     LWatch : TStopWatch;
-    Count : Integer;
-    LInOut : TJX3InOutBlock;
+    LStats: TJX3InOutBlock;
   begin
     Memo1.Lines.Clear;
+    LStats := TJX3InOutBLock.Create;
 
     LWatch := TStopWatch.StartNew;
     Memo1.Lines.add( 'Loading ebay''s Aspects json file :' );
     LStream := TStringStream.Create( '', TEncoding.UTF8, True );
     LStream.LoadFromFile( 'aspects100.json' );
     LJsonStr := LStream.DataString;
-    Memo1.Lines.add( Format( '  Stream size: %s KB',
-      [ ( LStream.Size div 1024 ).toString ] ) );
+    Memo1.Lines.add( Format( '  Stream size: %s KB', [ ( LStream.Size div 1024 ).toString ] ) );
     LStream.Free;
 
     Memo1.Lines.add( '' );
-    LWatch := TStopWatch.StartNew;
+    LStats.Stats.Clear;
     Memo1.Lines.add( 'Convert Json String to JSX3 Objects :' );
-    LJObj := TJX3Object.FromJSON< TfetchItemAspectsContentType >( LJsonStr,
-      [ joNullToEmpty, joDisableNameEncoding ] );
-    Memo1.Lines.add( Format( '  Processing duration %d ms',
-      [ LWatch.ElapsedMilliseconds ] ) );
+    LJObj := TJX3Object.FromJSON< TfetchItemAspectsContentType >( LJsonStr, [ joNullToEmpty, joDisableNameEncoding, joStats ], LStats );
+    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
-    Count := 0;
-    for var LLoop1 in LJObj.categoryAspects do
-      for var LLoop2 in LLoop1.aspects do
-        for var LLoop3 in LLoop2.aspectValues do
-          Inc( Count );
     Memo1.Lines.add( '' );
-    Memo1.Lines.add( '==>>' + Count.toString + ' Aspect Values !!!' );
+    Memo1.Lines.add( '==>>' + LStats.Stats.PrimitivesCount.toString + ' Primitives Read !!!' );
+    Memo1.Lines.add( '==>>' + Trunc(LStats.Stats.PrimitivesCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
-    // Using Stats :
-    LInOut := TJX3InOutBlock.Create;
     Memo1.Lines.add( '' );
-    LWatch := TStopWatch.StartNew;
-    Memo1.Lines.add( 'Revert JSX3 Objects to Json String (using Stats) :' );
-    LJsonStr := LJObj.ToJson( [ joNullToEmpty, joDisableNameEncoding ],
-      LInOut );
-    Memo1.Lines.add( Format( '  Processing duration %d ms',
-      [ LInOut.Stats.ProcessingTimeMS ] ) );
-    LInOut.Free;
+    LStats.Stats.Clear;
+    Memo1.Lines.add( 'Revert JSX3 Objects to Json String :' );
+    LJsonStr := LJObj.ToJson( [ joNullToEmpty, joStats ], LStats );
+    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;
     Memo1.Lines.add( 'Free Json Object :' );
     LJObj.Free;
-    Memo1.Lines.add( Format( '  Processing duration %d ms',
-      [ LWatch.ElapsedMilliseconds ] ) );
+    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LWatch.ElapsedMilliseconds ] ) );
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;
     Memo1.Lines.add( 'Saving ebay''s Aspects Json file (jsx3.json) :' );
     LStream := TStringStream.Create( LJsonStr, TEncoding.UTF8, True );
     LStream.SaveToFile( ( 'jsx3.json' ) );
-    Memo1.Lines.add( Format( '  Stream size: %s KB',
-      [ ( LStream.Size div 1024 ).toString ] ) );
+    Memo1.Lines.add( Format( '  Stream size: %s KB', [ ( LStream.Size div 1024 ).toString ] ) );
     LStream.Free;
+
+    LStats.Free;
   end;
 
 end.
