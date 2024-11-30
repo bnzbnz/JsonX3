@@ -15,11 +15,9 @@ type
 
   TJS3Option  = (
         joNullToEmpty
-      , joNoBracket
       , joRaiseException
       , joRaiseOnMissingField
       , joDisableNameEncoding
-      , joEnableDefaults
       , joStats
   );
   TJX3Options = set of TJS3Option;
@@ -41,8 +39,7 @@ type
   JX3DisableNameEncoding = class(TCustomAttribute);
 
   TJX3Tools = record
-    class function  GetRttiMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField; static;
-    class function  CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;  overload; static;
+    class function  CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue; static;
     class procedure BreakPoint(AMsg: string = ''; ABreak: Boolean= True); static;
     class procedure RaiseException(const AMsg: string); static;
     class function  FormatJSON(const json: string; Indentation: Integer = 4): string; static;
@@ -56,8 +53,6 @@ type
     FieldName: string;
     Field: TRttiField;
     Options: TJX3Options;
-    AttrDefault: JX3Default;
-    AttrDisableNameEncoding: JX3DisableNameEncoding;
     constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
   end;
 
@@ -131,10 +126,9 @@ var
   LMeth: TRttiMethod;
 begin
   LMeth := JX3GetMethod(AObj, AMethod);
-  if LMeth <> Nil then
-    Result := LMeth.Invoke(AObj, AArgs).AsType<TValue>(True)
-  else
-    Result := TValue.Empty;
+  if not Assigned(LMeth) then Exit(TValue.Empty);
+  Result := LMeth.Invoke(AObj, AArgs);
+  if not Result.IsEmpty then Result := Result.AsType<TValue>(True);
 end;
 
 class function TJX3Tools.FormatJSON(const json: string; Indentation: Integer): string;
@@ -144,21 +138,6 @@ begin
   TmpJson := TJSONObject.ParseJSONValue(json) as TJSONObject;
   Result := TJSONAncestor(TmpJson).Format(Indentation);
   FreeAndNil(TmpJson);
-end;
-
-class function TJX3Tools.GetRttiMember(AObj: TObject; AMemberName: string; AClass: TTypeKind; AVisibility: TMemberVisibility ): TRTTIField;
-var
-  LField: TRTTIField;
-  LFields: TArray<TRttiField>;
-begin
-  Result := Nil;
-  LFields := JX3GetFields(AObj);
-  for LField in LFields do
-    if (LField.FieldType.TypeKind in [AClass]) and (LField.Name = AMemberName) and (LField.Visibility = AVisibility) then
-    begin
-      Result := LField;
-      Break;
-    end;
 end;
 
 class function TJX3Tools.EscapeJSONStr(const AStr: string): string;
@@ -235,8 +214,6 @@ begin
   FieldName := AFieldName;
   Field := AField;
   Options := AOptions;
-  AttrDefault := Nil;;
-  AttrDisableNameEncoding := Nil;
 end;
 
 { TJX3StatBlock }

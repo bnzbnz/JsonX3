@@ -24,7 +24,6 @@ var
   _RTTIMethsCacheDic: TDictionary<TClass, TArray<TRTTIMethod>>;
   _RTTIInsMethsCacheDic: TDictionary<TRttiInstanceType, TRTTIMethod>;
   _RTTIObjMethsCacheDic: TDictionary<string, TRttiMEthod>;
-  _RTTIAttrsCacheDic: TDictionary<NativeInt, TCustomAttribute>;
   _RTTIInstCacheDic: TDictionary<TRTTIField, TRttiInstanceType>;
   _RTTIctx: TRttiContext;
 
@@ -135,17 +134,7 @@ function JX3GetFieldAttribute(Field: TRTTIField; AttrClass: TClass): TCustomAttr
   end;
 
 begin
-{$IFDEF JX3RTTICACHE}
-  MonitorEnter(_RTTIAttrsCacheDic);
-  if not _RTTIAttrsCacheDic.TryGetValue(NativeInt(Field) xor NativeInt(@AttrClass), Result) then
-  begin
-    Result := GetRTTIFieldAttribute(Field, AttrClass);
-    _RTTIAttrsCacheDic.Add(NativeInt(Field) xor NativeInt(@AttrClass), Result);
-  end;
-  MonitorExit(_RTTIAttrsCacheDic);
-{$ELSE}
-    Result := GetRTTIFieldAttribute(Field, AttrClass);
-{$ENDIF}
+  Result := GetRTTIFieldAttribute(Field, AttrClass);
 end;
 
 function JX3GetFieldInstance(Field: TRTTIField) : TRttiInstanceType;
@@ -169,7 +158,6 @@ initialization
   _RTTIPropsCacheDic := TDictionary<TClass, TArray<TRttiProperty>>.Create;
   _RTTIMethsCacheDic := TDictionary<TClass, TArray<TRttiMEthod>>.Create;
   _RTTIObjMethsCacheDic := TDictionary<string, TRttiMEthod>.Create;
-  _RTTIAttrsCacheDic := TDictionary<NativeInt, TCustomAttribute>.Create;
   _RTTIInstCacheDic := TDictionary<TRTTIField, TRttiInstanceType>.Create;
   _RTTIInsMethsCacheDic := TDictionary<TRttiInstanceType, TRTTIMethod>.Create;
 
@@ -178,7 +166,6 @@ finalization
 {$IFDEF JX3RTTICACHE}
   _RTTIInsMethsCacheDic.Free;
   _RTTIInstCacheDic.Free;
-  _RTTIAttrsCacheDic.Free;
   _RTTIMethsCacheDic.Free;
   _RTTIPropsCacheDic.Free;
   _RTTIFieldsCacheDic.Free;

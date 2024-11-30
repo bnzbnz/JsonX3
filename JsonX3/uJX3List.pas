@@ -30,9 +30,9 @@ type
     class function  CAddRange(const AValues: array of T): TJX3List<T>; overload;
     function        Clone(AOptions: TJX3Options = [joNullToEmpty]): TJX3List<T>;
   end;
-  TJX3StrList = class(TJX3List<TJX3String>);
-  TJX3NumList = class(TJX3List<TJX3Number>);
-  TJX3BoolList = class(TJX3List<TJX3Boolean>);
+  TJX3StrList   = class(TJX3List<TJX3String>);
+  TJX3NumList   = class(TJX3List<TJX3Number>);
+  TJX3BoolList  = class(TJX3List<TJX3Boolean>);
 
   implementation
 uses
@@ -73,29 +73,43 @@ var
   LRes: string;
   LEle:  T;
   LInfoBlock: TJX3InfoBlock;
+  LName: string;
+  LNameAttr:      JX3Name;
+  LNoEncodeAttr:  JX3DisableNameEncoding;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.ListsCount);
+
+  LName := AInfoBlock.FieldName;
   if Self.Count = 0 then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
     if AInfoBlock.FieldName.IsEmpty then EXit('null');
-    Exit(Format('"%s":null', [AInfoBlock.FieldName]));
+    Exit(Format('"%s":null', [LName]));
   end;
+
+  if Assigned(AInfoBlock) and Assigned(AInfoBlock.Field) then
+  begin
+    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    if Assigned(LNameAttr) then LName := LNameAttr.Name;
+    LNoEncodeAttr := JX3DisableNameEncoding(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3DisableNameEncoding));
+    if not Assigned(LNoEncodeAttr) then LName := TJX3Tools.NameDecode(LName);
+  end;
+
   LParts := TStringList.Create(#0, cCommaDelimiter, [soStrictDelimiter]);
   LParts.Capacity := Self.Count;
   for LEle in Self do
   begin
-    LInfoBlock := TJX3InfoBlock.Create(Nil, '', AInfoBlock.Field,AInfoBlock.Options);
-    LInfoBlock.AttrDefault := AInfoBlock.AttrDefault;
+    LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, AInfoBlock.Options);
     LPart := TJX3Tools.CallMethod('JSONSerialize', LEle, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
     if not LPart.IsEmpty then LParts.Add(LPart.AsString);
     LInfoBlock.Free;
   end;
   LRes := LParts.DelimitedText.Replace(cCommaDelimiter, ',');
-  if AInfoBlock.FieldName.IsEmpty then
+
+  if LName.IsEmpty then
     Result := '[' + LRes + ']'
   else
-    Result := '"' + AInfoBlock.FieldName + '":[' + LRes + ']';
+    Result := '"' + LName + '":[' + LRes + ']';
   LParts.Free;
 end;
 
@@ -118,7 +132,6 @@ begin
        LNewObj := T.Create;
        Add(LNewObj);
        LInfoBlock := TJX3InfoBlock.Create(LEle as TJSONObject, AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.Options);
-       LInfoBlock.AttrDefault := AInfoBlock.AttrDefault;
        TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
        LInfoBlock.Free;
     end else begin
@@ -126,7 +139,6 @@ begin
        Add(LNewObj);
        LEle.Owned := False;
        LInfoBlock := TJX3InfoBlock.Create(TJSONObject.Create(TJSONPair.Create('', LEle)),  AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.Options);
-       LInfoBlock.AttrDefault := AInfoBlock.AttrDefault;
        TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
        LInfoBlock.Obj.Free;
        LInfoBlock.Free;
