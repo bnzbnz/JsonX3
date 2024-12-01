@@ -12,25 +12,26 @@ type
   TJX3String = class(TObject)
   private
     FValue: string;
-    FNull:  Boolean;
+    FIsNull:  Boolean;
+  protected
+    function        GetIsNull: Boolean;
+    procedure       SetIsNull(ANull: Boolean);
+    function        GetValue: string;
+    procedure       SetValue(AValue: string);
   public
     constructor     Create;
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    function        GetNull: Boolean;
-    procedure       SetNull(ANull: Boolean);
-    function        GetValue: string;
-    procedure       SetValue(AValue: string);
 
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
 
-    property IsNull: Boolean read GetNull write SetNull;
-    property Null: Boolean read GetNull write SetNull;
-    property N: Boolean read GetNull write SetNull;
-    property Value: string read GetValue write Setvalue;
-    property Val: string read GetValue write Setvalue;
-    property V: string read GetValue write Setvalue;
+    property IsNull:  Boolean read GetIsNull write SetIsNull;
+    property Null:    Boolean read GetIsNull write SetIsNull;
+    property N:       Boolean read GetIsNull write SetIsNull;
+    property Value:   string read GetValue write Setvalue;
+    property Val:     string read GetValue write Setvalue;
+    property V:       string read GetValue write Setvalue;
   end;
   TJX3Str = TJX3String;
 
@@ -42,13 +43,6 @@ uses
   , uJX3Rtti
   ;
 
-constructor TJX3String.Create;
-begin
-  inherited;
-  FValue := '';
-  FNull := True;
-end;
-
 function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
   LName: string;
@@ -56,7 +50,7 @@ var
   LNameAttr:      JX3Name;
   LDefaultAttr:   JX3Default;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
 
   if Assigned(AInfoBlock.Field) then
   begin
@@ -68,7 +62,7 @@ begin
   LName := TJX3Tools.NameDecode(LName);
 
   LValue := FValue;
-  if GetNull then
+  if GetIsNull then
   begin
     LDefaultAttr := Nil;
     if Assigned(AInfoBlock.Field) then
@@ -93,7 +87,7 @@ var
   LJPair:         TJSONPair;
   LDefaultAttr:   JX3Default;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull)) then
   begin
@@ -104,14 +98,20 @@ begin
     if Assigned(LDefaultAttr) then
       SetValue(LDefaultAttr.Value)
     else
-      SetNull(True);
+      SetIsNull(True);
   end;
+end;
+
+constructor TJX3String.Create;
+begin
+  inherited;
+  FValue := '';
+  FIsNull := True;
 end;
 
 class function TJX3String.C: TJX3String;
 begin
   Result := TJX3String.Create;
-  TJX3Tools.CallMethodProc( 'JSONInit', Result, []);
 end;
 
 class function TJX3String.C(AValue: string): TJX3String;
@@ -120,21 +120,21 @@ begin
   REsult.SetValue(AValue);
 end;
 
-procedure TJX3String.SetNull(ANull: Boolean);
-begin
-  FNull := ANull;
-  if FNull then FValue := '';
-end;
-
 procedure TJX3String.SetValue(AValue: string);
 begin
-  FNull := False;
+  FIsNull := False;
   FValue := AValue;
 end;
 
-function TJX3String.GetNull: Boolean;
+procedure TJX3String.SetIsNull(ANull: Boolean);
 begin
-  Result := FNull;
+  FIsNull := ANull;
+  if FIsNull then FValue := '';
+end;
+
+function TJX3String.GetIsNull: Boolean;
+begin
+  Result := FIsNull;
 end;
 
 function TJX3String.GetValue: string;
