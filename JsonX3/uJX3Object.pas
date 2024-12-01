@@ -10,15 +10,15 @@ type
 
   TJX3Object = class(TObject)
   public
-    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
-    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-
     constructor     Create;
     destructor      Destroy; override;
 
+    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
+
     class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        ToJSON(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil): string;
-    function        CLone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+    function        Clone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
   end;
   TJX3Obj = TJX3Object;
 
@@ -237,9 +237,9 @@ function TJX3Object.Clone<T>(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock)
 var
   LWatch: TStopWatch;
 begin
-  if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
   Result := Self.FromJSON<T>(Self.ToJSON(AOptions), AOptions, AInOutBlock);
-  if Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
 end.

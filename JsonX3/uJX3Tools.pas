@@ -56,11 +56,12 @@ type
 
   TJX3InOutStats = class
     ProcessingTimeMS: Int64;
-    PrimitivesCount: Int64;
-    ListsCount: Int64;
-    DicsCount: Int64;
+    PrimitiveCount: Int64;
+    ListCount: Int64;
+    DicCount: Int64;
     BooleanCount: Int64;
     NumCount: Int64;
+    function OpCount: Int64;
     procedure Clear;
   end;
 
@@ -227,11 +228,20 @@ end;
 procedure TJX3InOutStats.Clear;
 begin
   ProcessingTimeMS  := 0;
-  PrimitivesCount   := 0;
-  ListsCount        := 0;
-  DicsCount         := 0;
+  PrimitiveCount    := 0;
+  ListCount          := 0;
+  DicCount          := 0;
   BooleanCount      := 0;
   NumCount          := 0;
+end;
+
+function TJX3InOutStats.OpCount: Int64;
+begin
+  Result := PrimitiveCount;
+  Result := Result + ListCount;
+  Result := Result + DicCount;
+  Result := Result + BooleanCount;
+  Result := Result + NumCount;
 end;
 
 constructor TJX3InOutBlock.Create;
@@ -248,8 +258,6 @@ begin
   Stats.Free;
   inherited;
 end;
-
-{ JX2Default }
 
 
 end.

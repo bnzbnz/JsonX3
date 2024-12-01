@@ -130,8 +130,8 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
-    Memo1.Lines.add( '==>>' + LStats.Stats.PrimitivesCount.toString + ' Primitives Read !!!' );
-    Memo1.Lines.add( '==>>' + Trunc(LStats.Stats.PrimitivesCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+    Memo1.Lines.add( '==>>' + LStats.Stats.OpCount.toString + ' Operations Count !!!' );
+    Memo1.Lines.add( '==>>' + Trunc(LStats.Stats.OpCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;

@@ -12,21 +12,23 @@ type
 
   TObjectDictionary<V> = class(System.Generics.Collections.TObjectDictionary<string,V>);
   TJX3Dic<V:class, constructor> = class(TObjectDictionary<V>)
+  protected
+    function  GetIsNull: Boolean;
+    procedure SetIsNull(ANull: Boolean);
   public
     constructor Create;
 
     function  JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
-    function  GetNull: Boolean;
-    procedure SetNull(ANull: Boolean);
-    property  IsNull: Boolean read GetNull write SetNull;
-
-    class function  C: TJX3Dic<V>;
-    class function  CAdd(AKey: string; AValue: V): TJX3Dic<V>;
-    class function  CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
-
     function Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Dic<V>;
+
+    property  IsNull: Boolean read GetIsNull write SetIsNull;
+    property  N:      Boolean read GetIsNull write SetIsNull;
+
+    class function C: TJX3Dic<V>;
+    class function CAdd(AKey: string; AValue: V): TJX3Dic<V>;
+    class function CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
   end;
 
 implementation
@@ -62,12 +64,12 @@ begin
   inherited Create([doOwnsValues]);
 end;
 
-function TJX3Dic<V>.GetNull: Boolean;
+function TJX3Dic<V>.GetIsNull: Boolean;
 begin
   Result := Count = 0;
 end;
 
-procedure TJX3Dic<V>.SetNull(ANull: Boolean);
+procedure TJX3Dic<V>.SetIsNull(ANull: Boolean);
 begin
   Clear;
 end;
@@ -89,7 +91,7 @@ var
   LNameAttr:  JX3Name;
   LJObj:      TJSONObject;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicCount);
 
   if Assigned(AInfoBlock.Field) then
   begin
@@ -100,7 +102,7 @@ begin
     LName := AInfoBlock.FieldName;
   LName := TJX3Tools.NameDecode(LName);
 
-  if GetNull then
+  if GetIsNull then
   begin
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
     if AInfoBlock.FieldName.IsEmpty then EXit('null');
@@ -138,11 +140,11 @@ var
   LJObj: TJSONObject;
 begin
 
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicCount);
 
-  if not Assigned(AInfoBlock.Obj) then begin setNull(True); Exit end;;
-  if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin setNull(True); Exit end;
-  if AInfoBlock.Obj.Pairs[0].JsonValue.Null then begin setNull(True); Exit end;;
+  if not Assigned(AInfoBlock.Obj) then begin SetIsNull(True); Exit end;;
+  if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin SetIsNull(True); Exit end;
+  if AInfoBlock.Obj.Pairs[0].JsonValue.Null then begin SetIsNull(True); Exit end;;
 
   for LPair in AInfoBlock.Obj do
   begin
@@ -166,18 +168,19 @@ var
   LInfoBlock : TJX3InfoBlock;
   LJObj: TJSONObject;
 begin
-  Result := Nil;
   LInfoBlock := Nil;
+  LJObj := Nil;
+  Result := TJX3Dic<V>.Create;
+  LInfoBlock := TJX3InfoBlock.Create('', LJObj, Nil, AOptions);
   try
-    LJObj := Nil;
-    Result := TJX3Dic<V>.Create;
-    LInfoBlock := TJX3InfoBlock.Create('', LJObj, Nil, AOptions);
     LJson := TJX3Tools.CallMethodFunc('JSONSerialize', Self, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
-    if not LJson.IsEmpty then LInfoBlock.Obj := TJSONObject.ParseJSONValue(LJson.AsString, True, True) as TJSONObject;
+    if LJson.IsEmpty then Exit(Nil);
+    LInfoBlock.Obj := TJSONObject.ParseJSONValue(LJson.AsString, True, True) as TJSONObject;
     LJson.Empty;
     TJX3Tools.CallMethodProc('JSONDeserialize', Result, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
     LInfoBlock.Obj.Free;
   finally
+    if Assigned(LInfoBlock.Obj) then LInfoBlock.Obj.Free;
     LInfoBlock.Free;
   end;
 end;

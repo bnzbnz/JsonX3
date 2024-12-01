@@ -7,29 +7,29 @@ type
 
   TJX3Number = class(TObject)
   private
-    FNull: Boolean;
+    FNull:  Boolean;
     FValue: string;
   public
     constructor Create;
-    destructor Destroy; override;
-    function JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
-    procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    function GetNull: Boolean;
-    procedure SetNull(ANull: Boolean);
-    function GetInt: Integer;
-    procedure SetInt(AValue: Integer);
-    function GetInt64: Int64;
-    procedure SetInt64(AValue: Int64);
-    function GetUInt: Cardinal;
-    procedure SetUInt(AValue: Cardinal);
-    function GetUInt64: UInt64;
-    procedure SetUInt64(AValue: UInt64);
-    function GetDouble: Double;
-    procedure SetDouble(AValue: Double);
-    function GetCurrency: Currency;
-    procedure SetCurrency(AValue: Currency);
-    function GetValue: string;
-    procedure SetValue(AValue: string);
+    destructor  Destroy; override;
+    function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
+    function    GetIsNull: Boolean;
+    procedure   SetIsNull(ANull: Boolean);
+    function    GetInt: Integer;
+    procedure   SetInt(AValue: Integer);
+    function    GetInt64: Int64;
+    procedure   SetInt64(AValue: Int64);
+    function    GetUInt: Cardinal;
+    procedure   SetUInt(AValue: Cardinal);
+    function    GetUInt64: UInt64;
+    procedure   SetUInt64(AValue: UInt64);
+    function    GetDouble: Double;
+    procedure   SetDouble(AValue: Double);
+    function    GetCurrency: Currency;
+    procedure   SetCurrency(AValue: Currency);
+    function    GetValue: string;
+    procedure   SetValue(AValue: string);
 
     class function C: TJX3Number;
     class function CInt(AValue: Integer):TJX3Number;
@@ -40,16 +40,17 @@ type
     class function CCurrency(AValue: Currency):TJX3Number;
     class function CValue(AValue: string):TJX3Number;
 
-    property IsNull: Boolean read GetNull write SetNull;
-    property Int: Integer read GetInt write SetInt;
-    property UInt: Cardinal read GetUInt write SetUInt;
-    property Int64: Int64 read GetInt64 write SetInt64;
-    property UInt64: UInt64 read GetUInt64 write SetUInt64;
-    property Double: Double read GetDouble write SetDouble;
-    property Currency: Currency read GetCurrency write SetCurrency;
-    property Value: string read GetValue write Setvalue;
-    property Val: string read GetValue write Setvalue;
-    property V: string read GetValue write Setvalue;
+    property IsNull:    Boolean read GetIsNull write SetIsNull;
+    property N:         Boolean read GetIsNull write SetIsNull;
+    property Int:       Integer read GetInt write SetInt;
+    property UInt:      Cardinal read GetUInt write SetUInt;
+    property Int64:     Int64 read GetInt64 write SetInt64;
+    property UInt64:    UInt64 read GetUInt64 write SetUInt64;
+    property Double:    Double read GetDouble write SetDouble;
+    property Currency:  Currency read GetCurrency write SetCurrency;
+    property Value:     string read GetValue write Setvalue;
+    property Val:       string read GetValue write Setvalue;
+    property V:         string read GetValue write Setvalue;
   end;
   TJX3Num = TJX3Number;
 
@@ -69,7 +70,7 @@ var
   LDefaultAttr:   JX3Default;
 begin
 
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
 
   if Assigned(AInfoBlock.Field) then
   begin
@@ -81,7 +82,7 @@ begin
   LName := TJX3Tools.NameDecode(LName);
 
   LValue := FValue;
-  if GetNull then
+  if GetIsNull then
   begin
     LDefaultAttr := Nil;
     if Assigned(AInfoBlock.Field) then
@@ -112,7 +113,7 @@ var
   LJPair: TJSONPair;
   LDefaultAttr:   JX3Default;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitivesCount);
+  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull)) then
   begin
@@ -123,7 +124,7 @@ begin
     if Assigned(LDefaultAttr) then
       SetValue(LDefaultAttr.Value)
     else
-      SetNull(True);
+      SetIsNull(True);
   end;
 end;
 
@@ -186,12 +187,12 @@ begin
   Result.SetValue(AValue);
 end;
 
-function TJX3Number.GetNull: Boolean;
+function TJX3Number.GetISNull: Boolean;
 begin
   Result := FNull;
 end;
 
-procedure TJX3Number.SetNull(ANull: Boolean);
+procedure TJX3Number.SetIsNull(ANull: Boolean);
 begin
   FNull := ANull;
   if ANull then FValue := '0';
