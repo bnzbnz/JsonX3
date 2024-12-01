@@ -79,14 +79,15 @@ end;
 
 function TJX3Dic<V>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
-  LParts: TStringList;
-  LPart: TValue;
-  LRes: string;
-  Lkp: TPair<string,V>;
-  LObj: TObject;
+  LParts:     TStringList;
+  LPart:      TValue;
+  LRes:       string;
+  Lkp:        TPair<string,V>;
+  LObj:       TObject;
   LInfoBlock: TJX3InfoBlock;
-  LName: string;
-  LNameAttr:      JX3Name;
+  LName:      string;
+  LNameAttr:  JX3Name;
+  LJObj:      TJSONObject;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
 
@@ -111,18 +112,11 @@ begin
   for Lkp in Self do
   begin
     LObj := TValue.From<V>(Lkp.Value).AsObject;
-    var LVal := Lkp.Key;
     if Assigned(LObj) then
     begin
-      LInfoBlock := TJX3InfoBlock.Create(Nil, LVal, AInfoBlock.Field, AInfoBlock.Options);
-      LPart :=  TJX3Tools.CallMethod(
-                  'JSONSerialize'
-                , LObj
-                , [
-                      TValue.From<TJX3InfoBlock>(LInfoBlock)
-                    , TValue.From<TJX3InOutBlock>(AInOutBlock)
-                  ]
-                );
+      LJObj := nil;
+      LInfoBlock := TJX3InfoBlock.Create(Lkp.Key, LJObj, AInfoBlock.Field, AInfoBlock.Options);
+      LPart :=  TJX3Tools.CallMethodFunc('JSONSerialize', LObj, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
       if not LPart.IsEmpty then LParts.Add(LPart.AsString);
       LInfoBlock.Free;
     end;
@@ -141,6 +135,7 @@ var
   LPair: TJSONPair;
   LNewObj: TObject;
   LInfoBlock: TJX3InfoBlock;
+  LJObj: TJSONObject;
 begin
 
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicsCount);
@@ -155,8 +150,9 @@ begin
     Add(LPair.JsonString.value, LNewObj);
     LPair.JsonValue.Owned := False;
     LPair.Owned := False;
-    LInfoBlock := TJX3InfoBlock.Create(TJSONObject.Create(LPair), AInfoBlock.FieldName, AInfoBlock.Field, AInfoBlock.Options);
-    TJX3Tools.CallMethod( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
+    LJObj := TJSONObject.Create(LPair);
+    LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
+    TJX3Tools.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
     LInfoBlock.Obj.Free;
     LInfoBlock.Free;
     LPair.Owned := True;
@@ -168,15 +164,18 @@ function TJX3Dic<V>.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): T
 var
   LJson: TValue;
   LInfoBlock : TJX3InfoBlock;
+  LJObj: TJSONObject;
 begin
+  Result := Nil;
   LInfoBlock := Nil;
   try
+    LJObj := Nil;
     Result := TJX3Dic<V>.Create;
-    LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, AOptions);
-    LJson := TJX3Tools.CallMethod('JSONSerialize', Self, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
+    LInfoBlock := TJX3InfoBlock.Create('', LJObj, Nil, AOptions);
+    LJson := TJX3Tools.CallMethodFunc('JSONSerialize', Self, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
     if not LJson.IsEmpty then LInfoBlock.Obj := TJSONObject.ParseJSONValue(LJson.AsString, True, True) as TJSONObject;
     LJson.Empty;
-    TJX3Tools.CallMethod( 'JSONDeserialize', Result, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
+    TJX3Tools.CallMethodProc('JSONDeserialize', Result, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
     LInfoBlock.Obj.Free;
   finally
     LInfoBlock.Free;
