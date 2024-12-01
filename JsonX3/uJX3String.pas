@@ -111,7 +111,7 @@ end;
 class function TJX3String.C: TJX3String;
 begin
   Result := TJX3String.Create;
-  TJX3Tools.CallMethod( 'JSONInit', Result, []);
+  TJX3Tools.CallMethodProc( 'JSONInit', Result, []);
 end;
 
 class function TJX3String.C(AValue: string): TJX3String;

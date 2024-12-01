@@ -109,6 +109,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LStream : TStringStream;
     LJsonStr : string;
     LWatch : TStopWatch;
+
     LStats: TJX3InOutBlock;
   begin
     Memo1.Lines.Clear;

@@ -36,7 +36,8 @@ type
   JS3Required  = class(TCustomAttribute);
 
   TJX3Tools = record
-    class function  CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue; static;
+    class procedure CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue); static;
+    class function  CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue; static;
     class procedure BreakPoint(AMsg: string = ''; ABreak: Boolean= True); static;
     class procedure RaiseException(const AMsg: string); static;
     class function  FormatJSON(const json: string; Indentation: Integer = 4): string; static;
@@ -50,7 +51,7 @@ type
     FieldName: string;
     Field: TRttiField;
     Options: TJX3Options;
-    constructor Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
+    constructor Create( AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
   end;
 
   TJX3InOutStats = class
@@ -118,7 +119,15 @@ begin
  {$ENDIF}
 end;
 
-class function TJX3Tools.CallMethod(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
+class procedure TJX3Tools.CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue);
+var
+  LMeth: TRttiMethod;
+begin
+  LMeth := JX3GetMethod(AObj, AMethod);
+  if Assigned(LMeth) then LMeth.Invoke(AObj, AArgs);
+end;
+
+class function TJX3Tools.CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
 var
   LMeth: TRttiMethod;
 begin
@@ -127,6 +136,7 @@ begin
   Result := LMeth.Invoke(AObj, AArgs);
   if not Result.IsEmpty then Result := Result.AsType<TValue>(True);
 end;
+
 
 class function TJX3Tools.FormatJSON(const json: string; Indentation: Integer): string;
 var
@@ -204,7 +214,7 @@ begin
   Value := AValue;
 end;
 
-constructor TJX3InfoBlock.Create(AObj: TJSONObject; AFieldName: string; AField: TRttiField; AOptions: TJX3Options);
+constructor TJX3InfoBlock.Create( AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
 begin
   Obj := AObj;
   FieldName := AFieldName;

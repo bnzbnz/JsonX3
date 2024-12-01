@@ -88,6 +88,7 @@ var
   LPart:      TValue;
   LRes:       string;
   LInfoBlock: TJX3InfoBlock;
+  LJObj:      TJSONObject;
 begin
   Result := '';
   LParts := TStringList.Create(#0, cCommaDelimiter, [soStrictDelimiter]);
@@ -96,15 +97,10 @@ begin
   for LField in LFields do
     if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility = mvPublic) then
     begin
-      LInfoBlock := TJX3InfoBlock.Create(Nil, LField.Name, LField, AInfoBlock.Options);
-      LPart :=  TJX3Tools.CallMethod(
-            'JSONSerialize'
-          , LField.GetValue(Self).AsObject
-          , [
-                TValue.From<TJX3InfoBlock>(LInfoBlock)
-              , TValue.From<TJX3InOutBlock>(AInOutBlock)
-            ]
-      );
+      LJObj := Nil;
+      LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
+      LPart :=  TJX3Tools.CallMethodFunc('JSONSerialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
+      LJObj.Free;
       if not LPart.IsEmpty then LParts.Add(LPart.AsString);
       LInfoBlock.Free;
       Continue;
@@ -129,8 +125,8 @@ end;
 procedure TJX3Object.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LField: TRTTIField;
-  LPair: TJSONPAir;
-  LObj: TJSONObject;
+  LJPair: TJSONPAir;
+  LJObj: TJSONObject;
   LInfoBlock: TJX3InfoBlock;
   LNameAttr: JX3Name;
   LName: string;
@@ -143,33 +139,33 @@ begin
     LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Name));
     if Assigned(LNameAttr) then LName := LNameAttr.Name;
 
-    LPair := AInfoBlock.Obj.Get(LName);
-    if LPair <> Nil then
+    LJPair := AInfoBlock.Obj.Get(LName);
+    if LJPair <> Nil then
     begin
 
-      LPair.Owned := False;
-      LPair.JsonValue.Owned := False;
-      if (LPair.JsonValue is TJSONObject) then
-        LObj := (LPair.JsonValue as TJSONObject)
+      LJPair.Owned := False;
+      LJPair.JsonValue.Owned := False;
+      if (LJPair.JsonValue is TJSONObject) then
+        LJObj := (LJPair.JsonValue as TJSONObject)
       else
-      LObj :=  TJSONObject.Create(LPair);
-      LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, AInfoBlock.Options);
-      TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
+        LJObj :=  TJSONObject.Create(LJPair);
+      LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
+      TJX3Tools.CallMethodProc('JSONDeserialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
       LInfoBlock.Free;
-      if (Assigned(LObj)) and not (LPair.JsonValue is TJSONObject) then FreeAndNil(LObj);
-      LPair.JsonValue.Owned := True;
-      LPair.Owned := True;
+      if (Assigned(LJObj)) and not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
+      LJPair.JsonValue.Owned := True;
+      LJPair.Owned := True;
 
     end else begin
 
       var LAttr := JX3Default(JX3GetFieldAttribute(LField, JX3Default));
       if Assigned(LAttr) then
       begin
-        LObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
-        LInfoBlock := TJX3InfoBlock.Create(LObj, LField.Name, LField, AInfoBlock.Options);
-        TJX3Tools.CallMethod('JSONDeserialize', LField.GetValue(Self).AsObject, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
+        LJObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
+        LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
+        TJX3Tools.CallMethodProc('JSONDeserialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
         LInfoBlock.Free;
-        LObj.Free;
+        LJObj.Free;
         Continue;
       end;
 
@@ -186,50 +182,43 @@ class function TJX3Object.FromJSON<T>(AJson: string; AOptions: TJX3Options; AInO
 var
   LInfoBlock: TJX3InfoBlock;
   LWatch: TStopWatch;
+  LJObj: TJSONObject;
 begin
   LInfoBlock := Nil;
   try
     if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     Result := T.Create;
     try
-      LInfoBlock := TJX3InfoBlock.Create(
-                        TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject
-                      , ''
-                      , Nil
-                      , AOptions
-                    );
-      if not Assigned(LInfoBlock.Obj) then TJX3Tools.RaiseException('TJX3Object.FromJSON: Erroneous JSON string');
-      TJX3Tools.CallMethod(
-          'JSONDeserialize'
-        , Result
-        , [
-              TValue.From<TJX3InfoBlock>(LInfoBlock)
-            , TValue.From<TJX3InOutBlock>(AInOutBlock)
-          ]
-      );
-      LInfoBlock.Obj.Free;
+      LJObj := TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject;
+      if not Assigned(LJObj) then TJX3Tools.RaiseException('TJX3Object.FromJSON: Erroneous JSON string');
+      LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
+      TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
     except
       on Ex: Exception do
       begin
+        FreeAndNil(Result);
         if joRaiseException in AOptions then Raise Ex;
       end;
     end;
   finally
-    if (joStats in LInfoBlock.Options) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+    LJObj.Free;
     LInfoBlock.Free;
+    if (joStats in LInfoBlock.Options) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
   end;
 end;
 
 function TJX3Object.ToJSON(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): string;
 var
   LInfoBlock: TJX3InfoBlock;
-  LWatch: TStopWatch;
+  LWatch:     TStopWatch;
+  LJObj:      TJSONObject;
 begin
   LInfoBlock := Nil;
   try
     if (joStats in AOptions) and  Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     try
-      LInfoBlock := TJX3InfoBlock.Create(Nil, '', Nil, AOptions);
+      LJObj := Nil;
+      LInfoBlock := TJX3InfoBlock.Create('', LJObj, Nil, AOptions);
       Result := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
     except
       on Ex: Exception do
