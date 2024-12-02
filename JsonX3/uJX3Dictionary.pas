@@ -173,7 +173,6 @@ var
   LInfoBlock : TJX3InfoBlock;
   LJObj: TJSONObject;
 begin
-  LInfoBlock := Nil;
   LJObj := Nil;
   Result := TJX3Dic<V>.Create;
   LInfoBlock := TJX3InfoBlock.Create('', LJObj, Nil, AOptions);

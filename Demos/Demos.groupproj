@@ -15,7 +15,7 @@
         <Projects Include="Demo04\Demo04.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="Demo5\Demo05.dproj">
+        <Projects Include="Demo05\Demo05.dproj">
             <Dependencies/>
         </Projects>
         <Projects Include="Large\Large.dproj">
@@ -66,13 +66,13 @@
         <MSBuild Projects="Demo04\Demo04.dproj" Targets="Make"/>
     </Target>
     <Target Name="Demo05">
-        <MSBuild Projects="Demo5\Demo05.dproj"/>
+        <MSBuild Projects="Demo05\Demo05.dproj"/>
     </Target>
     <Target Name="Demo05:Clean">
-        <MSBuild Projects="Demo5\Demo05.dproj" Targets="Clean"/>
+        <MSBuild Projects="Demo05\Demo05.dproj" Targets="Clean"/>
     </Target>
     <Target Name="Demo05:Make">
-        <MSBuild Projects="Demo5\Demo05.dproj" Targets="Make"/>
+        <MSBuild Projects="Demo05\Demo05.dproj" Targets="Make"/>
     </Target>
     <Target Name="Large">
         <MSBuild Projects="Large\Large.dproj"/>
