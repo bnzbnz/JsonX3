@@ -104,6 +104,9 @@ begin
 
   if GetIsNull then
   begin
+    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+      TJX3Tools.RaiseException(Format('"%s" (TJX3Dic) : a value is required', [LName]));
+
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
     if AInfoBlock.FieldName.IsEmpty then EXit('null');
     Exit(Format('"%s":null', [LName]));

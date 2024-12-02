@@ -40,21 +40,21 @@ type
       { Public declarations }
   end;
 
-  TFvalueConst = class( TJX3Object )
+  TvalueConst = class( TJX3Object )
     applicableForLocalizedAspectName : TJX3String;
     applicableForLocalizedAspectValues : TJX3List< TJX3String >;
   end;
 
-  TFvalueConstraint = class( TJX3Object )
+  TvalueConstraint = class( TJX3Object )
     localizedValue : TJX3String;
-    valueConstraints : TJX3List< TFvalueConst >;
+    valueConstraints : TJX3List< TvalueConst >;
     applicableForLocalizedAspectName : TJX3String;
     applicableForLocalizedAspectValues : TJX3List< TJX3String >;
   end;
 
   TaspectValues = class( TJX3Object )
     localizedValue : TJX3String;
-    valueConstraints : TJX3List< TFvalueConstraint >;
+    valueConstraints : TJX3List< TvalueConstraint >;
   end;
 
   TaspectConstraint = class( TJX3Object )
@@ -130,8 +130,8 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
-    Memo1.Lines.add( '==>>' + LStats.Stats.OpCount.toString + ' Operations Count !!!' );
-    Memo1.Lines.add( '==>>' + Trunc(LStats.Stats.OpCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+    Memo1.Lines.add( '==> ' + LStats.Stats.OpCount.toString + ' Operations Count !!!' );
+    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.OpCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;

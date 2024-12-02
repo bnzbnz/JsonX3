@@ -35,8 +35,6 @@ type
 
   JS3Required  = class(TCustomAttribute);
 
-  JS3AddDecimal = class(TCustomAttribute);
-
   TJX3Tools = record
     class procedure CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue); static;
     class function  CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue; static;

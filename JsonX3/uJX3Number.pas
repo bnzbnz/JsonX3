@@ -1,7 +1,11 @@
 unit uJX3Number;
 
 interface
-uses RTTI, JSON, uJX3Tools;
+uses
+    RTTI
+  , JSON
+  , uJX3Tools
+  ;
 
 type
 
@@ -15,6 +19,7 @@ type
     constructor Create;
     destructor  Destroy; override;
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    function    Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function    GetIsNull: Boolean;
     procedure   SetIsNull(ANull: Boolean);
@@ -59,10 +64,12 @@ type
 
 implementation
 uses
-  SysUTils,
-  StrUtils,
-  System.Generics.Collections,
-  uJX3Rtti;
+    SysUTils
+  , StrUtils
+  , System.Generics.Collections
+  , System.Diagnostics
+  , uJX3Rtti
+  ;
 
 function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
@@ -95,7 +102,7 @@ begin
     begin
 
     if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-        TJX3Tools.RaiseException(Format('"%s" (TJX3Object) is required but undefined...', [LName]));
+      TJX3Tools.RaiseException(Format('"%s" (TJX3Number) : a value is required', [LName]));
 
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
@@ -132,6 +139,32 @@ begin
     else
       SetIsNull(True);
   end;
+end;
+
+function TJX3Number.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
+var
+  LWatch: TStopWatch;
+  LJObj: TJSONObject;
+  LInfoBlock: TJX3InfoBlock;
+  LJson: string;
+begin
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  LInfoBlock := Nil;
+  LJObj := Nil;
+  try
+    Result := TJX3Number.Create;
+    LInfoBlock := TJX3InfoBlock.Create('T', LJObj, Nil, AOptions);
+    LJson := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
+    LInfoBlock.Free;
+    LJObj := TJSONObject.ParseJSONValue('{'  + LJson + '}', True, joRaiseException in AOptions) as TJSONObject;
+    LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
+    JSONDeserialize(LInfoBlock, AInOutBlock);
+    TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
+  finally
+    LJObj.Free;
+    LInfoBlock.Free;
+  end;
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
 constructor TJX3Number.Create;
