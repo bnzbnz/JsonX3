@@ -19,17 +19,19 @@ function  JX3GetFieldInstance(Field: TRTTIField) : TRttiInstanceType;
 
 {$IFDEF JX3RTTICACHE}
 var
-  _RTTIFieldLock: TCriticalSection;
-  _RTTIPropLock: TCriticalSection;
-  _RTTIPMethLock: TCriticalSection;
-  _RTTIPMethsLock: TCriticalSection;
-  _RTTIPInstLock:  TCriticalSection;
+  _RTTIctx: TRttiContext;
+  _RTTILock1: TCriticalSection;
+  _RTTILock2: TCriticalSection;
+  _RTTILock3: TCriticalSection;
+  _RTTILock4: TCriticalSection;
+  _RTTILock5: TCriticalSection;
+  _RTTILock6: TCriticalSection;
   _RTTIFieldsCacheDic: TDictionary<TClass, TArray<TRttiField>>;
   _RTTIPropsCacheDic: TDictionary<TClass, TArray<TRTTIProperty>>;
   _RTTIMethsCacheDic: TDictionary<TClass, TArray<TRTTIMethod>>;
-  _RTTIInsMethsCacheDic: TDictionary<TRttiInstanceType, TRTTIMethod>;
+  _RTTIMethObjCacheDic: TDictionary<NativeInt, TRTTIMethod>;
+  _RTTIInstMethsCacheDic: TDictionary<TRttiInstanceType, TRTTIMethod>;
   _RTTIInstCacheDic: TDictionary<TRTTIField, TRttiInstanceType>;
-  _RTTIctx: TRttiContext;
 
 {$ELSE}
 var
@@ -47,14 +49,14 @@ function JX3GetFields(aObj: TObject): TArray<TRTTIField>;
 var
   CType: TClass;
 begin
-  _RTTIFieldLock.Enter;
+  _RTTILock1.Enter;
   CType := aObj.ClassType;
   if not _RTTIFieldsCacheDic.TryGetValue(CType, Result) then
   begin
     Result :=  _RTTIctx.GetType(CType).GetFields;
     _RTTIFieldsCacheDic.Add(CType, Result);
   end;
-    _RTTIFieldLock.Leave;
+    _RTTILock1.Leave;
 end;
 {$ELSE}
 begin
@@ -67,14 +69,14 @@ function JX3GetProps(aObj: TObject): TArray<TRTTIProperty>;
 var
   CType: TClass;
 begin
-  _RTTIPropLock.Enter;
+  _RTTILock2.Enter;
   CType := aObj.ClassType;
   if not _RTTIPropsCacheDic.TryGetValue(CType, Result) then
   begin
     Result :=  _RTTIctx.GetType(CType).GetProperties;
     _RTTIPropsCacheDic.Add(CType, Result);
   end;
-    _RTTIPropLock.Leave;
+    _RTTILock2.Leave;
 end;
 {$ELSE}
 begin
@@ -87,14 +89,14 @@ function JX3GetMethods(aObj: TObject): TArray<TRTTIMethod>;
 var
   CType: TClass;
 begin
-  _RTTIPMethsLock.Enter;
+  _RTTILock3.Enter;
   CType := aObj.ClassType;
   if not _RTTIMethsCacheDic.TryGetValue(CType, Result) then
   begin
     Result :=  _RTTIctx.GetType(CType).GetMethods;
     _RTTIMethsCacheDic.Add(CType, Result);
   end;
-    _RTTIPMethsLock.Leave;
+    _RTTILock3.Leave;
 end;
 {$ELSE}
 begin
@@ -103,20 +105,29 @@ end;
 {$ENDIF}
 
 function JX3GetMethod(AObj: TObject; const AName: string): TRTTIMethod;
+var
+  Lx: NativeInt;
 begin
-  Result :=  _RTTIctx.GetType(aObj.ClassType).GetMethod(AName);
+  _RTTILock4.Enter;
+  Lx := AName.GetHashCode + NativeInt(AObj.ClassType);
+  if  not _RTTIMethObjCacheDic.TryGetValue(Lx, Result)  then
+  begin
+    Result :=  _RTTIctx.GetType(AObj.ClassType).GetMethod(AName);
+    _RTTIMethObjCacheDic.Add(Lx, Result);
+  end;
+  _RTTILock4.Leave;
 end;
 
 function JX3GetMethod(AInstance: TRttiInstanceType; const AName: string): TRTTIMethod;
 {$IFDEF JX3RTTICACHE}
 begin
-  _RTTIPMethLock.Enter;
-  if not _RTTIInsMethsCacheDic.TryGetValue(AInstance, Result) then
+  _RTTILock5.Enter;
+  if not _RTTIInstMethsCacheDic.TryGetValue(AInstance, Result) then
   begin
     Result := AInstance.GetMethod(AName);
-    _RTTIInsMethsCacheDic.Add(AInstance, Result);
+    _RTTIInstMethsCacheDic.Add(AInstance, Result);
   end;
-    _RTTIPMethLock.Leave;
+  _RTTILock5.Leave;
 end;
 {$ELSE}
 begin
@@ -148,13 +159,13 @@ end;
 function JX3GetFieldInstance(Field: TRTTIField) : TRttiInstanceType;
 {$IFDEF JX3RTTICACHE}
 begin
-  _RTTIPInstLock.Enter;
+  _RTTILock6.Enter;
   if not _RTTIInstCacheDic.TryGetValue(Field, Result) then
   begin
     Result := Field.FieldType.AsInstance;
     _RTTIInstCacheDic.Add(Field, Result);
   end;
-  _RTTIPInstLock.Leave;
+  _RTTILock6.Leave;
 end;
 {$ELSE}
 begin
@@ -169,25 +180,28 @@ initialization
   _RTTIPropsCacheDic := TDictionary<TClass, TArray<TRttiProperty>>.Create;
   _RTTIMethsCacheDic := TDictionary<TClass, TArray<TRttiMEthod>>.Create;
   _RTTIInstCacheDic := TDictionary<TRTTIField, TRttiInstanceType>.Create;
-  _RTTIInsMethsCacheDic := TDictionary<TRttiInstanceType, TRTTIMethod>.Create;
-  _RTTIFieldLock := TCriticalSection.Create;
-  _RTTIPropLock := TCriticalSection.Create;
-  _RTTIPMethLock := TCriticalSection.Create;
-  _RTTIPMethsLock := TCriticalSection.Create;
-  _RTTIPInstLock := TCriticalSection.Create;
-
+  _RTTIInstMethsCacheDic := TDictionary<TRttiInstanceType, TRTTIMethod>.Create;
+  _RTTIMethObjCacheDic := TDictionary<NativeInt, TRTTIMethod>.Create;
+  _RTTILock1 := TCriticalSection.Create;
+  _RTTILock2 := TCriticalSection.Create;
+  _RTTILock3 := TCriticalSection.Create;
+  _RTTILock4 := TCriticalSection.Create;
+  _RTTILock5 := TCriticalSection.Create;
+  _RTTILock6 := TCriticalSection.Create;
 {$ENDIF}
 finalization
 {$IFDEF JX3RTTICACHE}
-  _RTTIFieldLock.Free;
-  _RTTIPropLock.Free;
-  _RTTIPMethsLock.Free;
-  _RTTIPInstLock.Free;
-  _RTTIInsMethsCacheDic.Free;
-  _RTTIInstCacheDic.Free;
-  _RTTIMethsCacheDic.Free;
-  _RTTIPropsCacheDic.Free;
+  _RTTILock6.Free;
+  _RTTILock5.Free;
+  _RTTILock4.Free;
+  _RTTILock3.Free;
+  _RTTILock2.Free;
+  _RTTILock1.Free;
   _RTTIFieldsCacheDic.Free;
-  _RTTIPMethLock.Free;
+  _RTTIPropsCacheDic.Free;
+  _RTTIMethsCacheDic.Free;
+  _RTTIMethObjCacheDic.Free;
+  _RTTIInstMethsCacheDic.Free;
+  _RTTIInstCacheDic.Free;
 {$ENDIF}
 end.
