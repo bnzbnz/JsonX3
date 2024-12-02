@@ -3,9 +3,6 @@
         <ProjectGuid>{6C1EF02E-554E-4C18-A135-92997D0E1B98}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
-        <Projects Include="Demo01\Demo01.dproj">
-            <Dependencies/>
-        </Projects>
         <Projects Include="Demo02\Demo02.dproj">
             <Dependencies/>
         </Projects>
@@ -13,6 +10,9 @@
             <Dependencies/>
         </Projects>
         <Projects Include="Demo04\Demo04.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Demo5\Demo05.dproj">
             <Dependencies/>
         </Projects>
         <Projects Include="Large\Large.dproj">
@@ -26,15 +26,6 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <Target Name="Demo01">
-        <MSBuild Projects="Demo01\Demo01.dproj"/>
-    </Target>
-    <Target Name="Demo01:Clean">
-        <MSBuild Projects="Demo01\Demo01.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="Demo01:Make">
-        <MSBuild Projects="Demo01\Demo01.dproj" Targets="Make"/>
-    </Target>
     <Target Name="Demo02">
         <MSBuild Projects="Demo02\Demo02.dproj"/>
     </Target>
@@ -62,6 +53,15 @@
     <Target Name="Demo04:Make">
         <MSBuild Projects="Demo04\Demo04.dproj" Targets="Make"/>
     </Target>
+    <Target Name="Demo05">
+        <MSBuild Projects="Demo5\Demo05.dproj"/>
+    </Target>
+    <Target Name="Demo05:Clean">
+        <MSBuild Projects="Demo5\Demo05.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Demo05:Make">
+        <MSBuild Projects="Demo5\Demo05.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Large">
         <MSBuild Projects="Large\Large.dproj"/>
     </Target>
@@ -72,13 +72,13 @@
         <MSBuild Projects="Large\Large.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="Demo01;Demo02;Demo03;Demo04;Large"/>
+        <CallTarget Targets="Demo02;Demo03;Demo04;Demo05;Large"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="Demo01:Clean;Demo02:Clean;Demo03:Clean;Demo04:Clean;Large:Clean"/>
+        <CallTarget Targets="Demo02:Clean;Demo03:Clean;Demo04:Clean;Demo05:Clean;Large:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="Demo01:Make;Demo02:Make;Demo03:Make;Demo04:Make;Large:Make"/>
+        <CallTarget Targets="Demo02:Make;Demo03:Make;Demo04:Make;Demo05:Make;Large:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
