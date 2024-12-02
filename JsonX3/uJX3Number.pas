@@ -5,10 +5,12 @@ uses RTTI, JSON, uJX3Tools;
 
 type
 
-  TJX3Number = class(TObject)
+  TJX3NumKind   = (nkNull, nkInt, nkUInt, nkInt64, nkUInt64, nkDouble, nkCurrency);
+  TJX3Number    = class(TObject)
   private
     FNull:  Boolean;
     FValue: string;
+    FKind: TJX3NumKind;
   public
     constructor Create;
     destructor  Destroy; override;
@@ -52,6 +54,7 @@ type
     property Val:       string read GetValue write Setvalue;
     property V:         string read GetValue write Setvalue;
   end;
+
   TJX3Num = TJX3Number;
 
 implementation
@@ -63,20 +66,18 @@ uses
 
 function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
-  LName:          string;
-  LValue:         string;
-  LJValue:        TJsonValue;
-  LNameAttr:      JX3Name;
-  LDefaultAttr:   JX3Default;
+  LName:    string;
+  LValue:   string;
+  LAttr:    TCustomAttribute;
+  LJValue:  TJSONNumber;
 begin
-
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
 
   if Assigned(AInfoBlock.Field) then
   begin
     LName := AInfoBlock.Field.Name;
-    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
-    if Assigned(LNameAttr) then LName := LNameAttr.Name;
+    LAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
   end else
     LName := AInfoBlock.FieldName;
   LName := TJX3Tools.NameDecode(LName);
@@ -84,24 +85,29 @@ begin
   LValue := FValue;
   if GetIsNull then
   begin
-    LDefaultAttr := Nil;
+    LAttr := Nil;
     if Assigned(AInfoBlock.Field) then
     begin
-      LDefaultAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
-      if Assigned(LDefaultAttr) then LValue := LDefaultAttr.Value;
+      LAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+      if Assigned(LAttr) then LValue := JX3Default(LAttr).Value;
     end;
-    if not Assigned(LDefaultAttr) then
+    if not Assigned(LAttr) then
     begin
+
+    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+        TJX3Tools.RaiseException(Format('"%s" (TJX3Object) is required but undefined...', [LName]));
+
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
       Exit(Format('"%s":null', [LName]))
     end;
   end;
 
-  LJValue := TJSONString.Create(LValue);
+  LJValue := TJSONNumber.Create(LValue);
   try
     if AInfoBlock.FieldName.IsEmpty then Exit(LJValue.Value);
-    Result := Format('"%s":%s', [AInfoBlock.FieldName, LJValue.Value]);
+    if LName.IsEmpty then Exit(Format('%s', [LName, LJValue.Value]));
+    Result := Format('"%s":%s', [LName, LJValue.Value]);
   finally
     LJValue.Free;
   end;
@@ -131,6 +137,7 @@ end;
 constructor TJX3Number.Create;
 begin
   inherited;
+  FKind := nkNull;
   FNull := True;
   FValue := '0';
 end;
@@ -211,6 +218,7 @@ end;
 
 procedure TJX3Number.SetInt(AValue: Integer);
 begin
+  FKind := nkInt;
   SetValue(AValue.ToString);
 end;
 
@@ -221,6 +229,7 @@ end;
 
 procedure TJX3Number.SetInt64(AValue: Int64);
 begin
+  FKind := nkInt64;
   SetValue(AValue.ToString);
 end;
 
@@ -236,6 +245,7 @@ end;
 
 procedure TJX3Number.SetUInt(AValue: Cardinal);
 begin
+   FKind := nkUInt;
    SetValue(AValue.ToString);
 end;
 
@@ -246,6 +256,7 @@ end;
 
 procedure TJX3Number.SetUInt64(AValue: UInt64);
 begin
+   FKind := nkUInt64;
    SetValue(AValue.ToString);
 end;
 
@@ -256,11 +267,13 @@ end;
 
 procedure TJX3Number.SetDouble(AValue: Double);
 begin
+   FKind := nkDouble;
    SetValue(AValue.ToString);
 end;
 
 function TJX3Number.GetCurrency: Currency;
 begin
+   FKind := nkCurrency;
    Result := StrToCurr(FValue);
 end;
 

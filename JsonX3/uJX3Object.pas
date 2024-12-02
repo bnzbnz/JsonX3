@@ -110,6 +110,10 @@ begin
     begin
       if LRes.IsEmpty then
       begin
+
+        if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+          TJX3Tools.RaiseException(Format('"%s" (TJX3Object) is required but undefined...', [AInfoBlock.FieldName]));
+
         if joNullToEmpty in AInfoBlock.Options then
           Result := TValue.Empty
         else
@@ -197,7 +201,7 @@ begin
       on Ex: Exception do
       begin
         FreeAndNil(Result);
-        if joRaiseException in AOptions then Raise Ex;
+        if joRaiseException in AOptions then Raise;
       end;
     end;
   finally
@@ -220,16 +224,16 @@ begin
       LJObj := Nil;
       LInfoBlock := TJX3InfoBlock.Create('', LJObj, Nil, AOptions);
       Result := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
-    except
-      on Ex: Exception do
-      begin
-        Result := '';
-        if joRaiseException in AOptions then Raise Ex;
-      end;
+    finally
+      if (joStats in LInfoBlock.Options) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+      LInfoBlock.Free;
     end;
-  finally
-    if (joStats in LInfoBlock.Options) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
-    LInfoBlock.Free;
+  except
+    on Ex: Exception do
+    begin
+      Result := '';
+      if joRaiseException in AOptions then Raise;
+    end;
   end;
 end;
 

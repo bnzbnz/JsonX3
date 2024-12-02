@@ -66,78 +66,73 @@ begin
   Demo.S.V := '~~😃~~'; // UTF8 Support
 
   // TJX3List<TJX3Str> : Array<string>
+  Memo1.lines.add('TJX3List<TJX3Str> : Array<string> :');
   Demo.X.Add(TJX3Str.C('@@@@'));  // "C" to Create with a Value
   Demo.X.Add(TJX3Str.C('EEZZ'));
   Demo.X.Add(TJX3Str.C('OOOO'));
+  Json := Demo.ToJson([joNullToEmpty]);
+  Memo1.lines.add(Json);
 
-  // TJX3Dic<TJX3Num> :  Dictionary<string, number> (JSON only allows strings as keys)
-  Demo.Y.Add('Value1', TJX3Num.CInt(10111));
-  Demo.Y.Add('Value2', TJX3Num.CInt64(12222));
+  // TJX3Dic<TJX3Num> : Dictionary<string, number> (JSON only allows strings as keys)
+  Memo1.lines.add('');
+  Memo1.lines.add('TJX3Dic<TJX3Num> : Dictionary<string, number> :');
+  Demo.Y.Add('Value1', TJX3Num.CInt(1111));
+  Demo.Y.Add('Value2', TJX3Num.CInt64(2222));
+  Demo.Y.Add('Value3', TJX3Num.CInt64(3333));
+  Demo.Y.Add('Value4', TJX3Num.CInt64(4444));
+  Json := Demo.ToJson([joNullToEmpty]);
+  Memo1.lines.add(Json);
 
-  // TJX3List<TPrimitives>  : Array<TPrimitives)
+   // TJX3List<TPrimitives>  : Array<TPrimitives)
+  Memo1.lines.add('');
+  Memo1.lines.add('TJX3List<TPrimitives>  : Array<TPrimitives) :');
   Demo.Z.Add(TPrimitives.Create);
   Demo.Z.Last.Bool.V := True;
   Demo.Z.Last.e.Int64 := 111;
   Demo.Z.Add(TPrimitives.Create);
   Demo.Z.Last.Bool.V := False;
   Demo.Z.Last.e.Int64 := 333;
+  Json := Demo.ToJson([joNullToEmpty]);
+  Memo1.lines.add(Json);
 
   // TJX3List<TJX3List<TJX3Str>> : Array<Array<string>>>
+  Memo1.lines.add('');
+  Memo1.lines.add('TJX3List<TJX3List<TJX3Str>> : Array<Array<string>>> :');
   S := TJX3List<TJX3Str>.Create;
-  S.Add(TJX3Str.C('TTT'));  // C for create
-  S.Add(TJX3Str.C('OOO'));  // C for create
+  S.Add(TJX3Str.C('TTT'));
+  S.Add(TJX3Str.C('OOO'));
   Demo.Q.Add(S);
-
-    // 1 Liner :
-    // Demo.Q.Add(TJX3List<TJX3Str>.CAddRange([TJX3Str.C('TTT'), TJX3Str.C('OOO')]));
+  S := TJX3List<TJX3Str>.C;
+  S.AddRange([TJX3Str.C('UUU'), TJX3Str.C('III')]);
+  Demo.Q.Add(S);
+  Json := Demo.ToJson([joNullToEmpty]);
+  Memo1.lines.add(Json);
+  Memo1.lines.add('');
+  Json := Demo.ToJson([joNullToEmpty]);
+  Memo1.lines.add(Json);
 
   // TJX3List<TJX3Dic<TJX3List<TPrimitives>>>  : Array<Dictionary<string, Array<TPrimitives>>> :)
+  Memo1.lines.add('');
+  Memo1.lines.add('TJX3List<TJX3Dic<TJX3List<TPrimitives>>>  : Array<Dictionary<string, Array<TPrimitives>>>');
   var p1 := TJX3List<TPrimitives>.CAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
   p1.First.Str.v := 'Boolean1';                                          // Acdess the Last item (which is the first also in this case)
   p1.First.Bool.v := True;
   var p2 := TJX3List<TPrimitives>.CAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
-  p2.Last.Str.v := 'Boolean2';
-  p2.Last.Bool.v := True;
-
+  p2[0].Str.V := 'Boolean3';
+  p2[0].Bool.v := True;
   var d1 := TJX3Dic<TJX3List<TPrimitives>>.Create;                        // Create the dictionary ownning the 2 lists
   d1.Add('DicVal1', p1);
   d1.Add('DicVal2', p2);
-
   Demo.w.Add(d1);                                                         // Adding the Dict and its clone to the main list
   Demo.w.Add(d1.Clone);
-
-  // Raw Json
-  Json := Demo.ToJson([]);
-  Memo1.lines.add('Raw Original Object:');
-  Memo1.lines.add(Json);
-
-  // Optimized Json
-  Memo1.lines.add('');
   Json := Demo.ToJson([joNullToEmpty]);
-  Memo1.lines.add('Optimized Original Object:');
   Memo1.lines.add(Json);
 
-  // Converting back to a Primitives Object;
-  NewDemo := TJX3Object.FromJSON<TObjectDemo>(Json);
-
-  // Serializing the New Object
-  Memo1.lines.add('');
-  Json := NewDemo.ToJson([joNullToEmpty]);
-  Memo1.lines.add('New Optimized Object:');
-  Memo1.lines.add(Json);
-
-  // You may also cloned any JSX3 Objects.
-  CloneDemo := Demo.Clone<TObjectDemo>;
-
-  // Formatted Json
-  Memo1.lines.add('');
+  Memo1.lines.add('');                                                    // Format
   Memo1.lines.add('Formatted:');
-  Memo1.lines.add(TJX3Tools.FormatJSON(CloneDemo.ToJSON([]), 8));
+  Memo1.lines.add(TJX3Tools.FormatJSON(Json));
 
-  CloneDemo.Free;
-  NewDemo.Free;
   Demo.Free;
-
 end;
 
 end.
