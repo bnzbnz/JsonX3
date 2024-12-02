@@ -41,7 +41,6 @@ type
   end;
   TInnerObjectDemo = class(TJX3Object)
     S: TJX3Str;
-    [JS3Required]
     SubClass: TSubClassDemo; // a class
   end;
 
@@ -65,13 +64,15 @@ begin
 
   Demo := TInnerObjectDemo.Create;
   Demo.S.V := '~~😃~~'; // UTF8 Support
-  Demo.SubClass.X.Int := 222;
+  Demo.SubClass.X.Double := 222;
   Demo.SubClass.PClass.Bool.V := True;
   Demo.SubClass.PClass.b.Int := 1234;
   Demo.SubClass.PClass.d.Double := 2.22;
 
+  Demo.SubClass.PClass.Str.V:= 'ABC';
+
   // Raw Json
-  Json := Demo.ToJson([]);
+  Json := Demo.ToJson([joRaiseException]);
   Memo1.lines.add('Raw Original Object:');
   Memo1.lines.add(Json);
 
@@ -82,11 +83,11 @@ begin
   Memo1.lines.add(Json);
 
   // Converting back to a Primitives Object;
-  NewDemo := TJX3Object.FromJSON<TInnerObjectDemo>(Json);
+  NewDemo := TJX3Object.FromJSON<TInnerObjectDemo>(Json,[joRaiseException]);
 
   // Serializing the New Object
   Memo1.lines.add('');
-  Json := NewDemo.ToJson([joNullToEmpty]);
+  Json := NewDemo.ToJson([]);
   Memo1.lines.add('New Optimized Object:');
   Memo1.lines.add(Json);
 

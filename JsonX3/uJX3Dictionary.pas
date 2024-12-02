@@ -117,7 +117,7 @@ begin
     if Assigned(LObj) then
     begin
       LJObj := nil;
-      LInfoBlock := TJX3InfoBlock.Create(Lkp.Key, LJObj, AInfoBlock.Field, AInfoBlock.Options);
+      LInfoBlock := TJX3InfoBlock.Create(LKp.Key, LJObj, Nil, AInfoBlock.Options);
       LPart :=  TJX3Tools.CallMethodFunc('JSONSerialize', LObj, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
       if not LPart.IsEmpty then LParts.Add(LPart.AsString);
       LInfoBlock.Free;
@@ -153,8 +153,10 @@ begin
     LPair.JsonValue.Owned := False;
     LPair.Owned := False;
     LJObj := TJSONObject.Create(LPair);
+
     LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
     TJX3Tools.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
+
     LInfoBlock.Obj.Free;
     LInfoBlock.Free;
     LPair.Owned := True;
@@ -178,7 +180,6 @@ begin
     LInfoBlock.Obj := TJSONObject.ParseJSONValue(LJson.AsString, True, True) as TJSONObject;
     LJson.Empty;
     TJX3Tools.CallMethodProc('JSONDeserialize', Result, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
-    LInfoBlock.Obj.Free;
   finally
     if Assigned(LInfoBlock.Obj) then LInfoBlock.Obj.Free;
     LInfoBlock.Free;

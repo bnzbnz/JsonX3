@@ -47,16 +47,15 @@ function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3In
 var
   LName: string;
   LValue: string;
-  LNameAttr:      JX3Name;
-  LDefaultAttr:   JX3Default;
+  LAttr:  TCustomAttribute;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
 
   if Assigned(AInfoBlock.Field) then
   begin
     LName := AInfoBlock.Field.Name;
-    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
-    if Assigned(LNameAttr) then LName := LNameAttr.Name;
+    LAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
   end else
     LName := AInfoBlock.FieldName;
   LName := TJX3Tools.NameDecode(LName);
@@ -64,14 +63,18 @@ begin
   LValue := FValue;
   if GetIsNull then
   begin
-    LDefaultAttr := Nil;
+    LAttr := Nil;
     if Assigned(AInfoBlock.Field) then
     begin
-      LDefaultAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
-      if Assigned(LDefaultAttr) then LValue := LDefaultAttr.Value;
+      LAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+      if Assigned(LAttr) then LValue := JX3Default(LAttr).Value;
     end;
-    if not Assigned(LDefaultAttr) then
+    if not Assigned(LAttr) then
     begin
+
+    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+        TJX3Tools.RaiseException(Format('"%s" (TJX3Object) is required but undefined...', [LName]));
+
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
       Exit(Format('"%s":null', [LName]))

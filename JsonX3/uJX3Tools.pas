@@ -35,12 +35,14 @@ type
 
   JS3Required  = class(TCustomAttribute);
 
+  JS3AddDecimal = class(TCustomAttribute);
+
   TJX3Tools = record
     class procedure CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue); static;
     class function  CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue; static;
     class procedure BreakPoint(AMsg: string = ''; ABreak: Boolean= True); static;
     class procedure RaiseException(const AMsg: string); static;
-    class function  FormatJSON(const json: string; Indentation: Integer = 4): string; static;
+    class function  FormatJSON(const AJson: string; AIndentation: Integer = 4): string; static;
     class function  EscapeJSONStr(const AStr: string): string; static;
     class function  NameDecode(const ToDecode: string): string; static;
     class function  NameEncode(const ToEncode: string): string; static;
@@ -115,6 +117,7 @@ class procedure TJX3Tools.RaiseException(const AMsg: string);
 begin
   {$IF defined(DEBUG) and defined(MSWINDOWS)}
     BreakPoint(AMsg, False);
+    Raise Exception.Create(AMsg) at ReturnAddress;
  {$ELSE}
     Raise Exception.Create(AMsg) at ReturnAddress;
  {$ENDIF}
@@ -139,12 +142,12 @@ begin
 end;
 
 
-class function TJX3Tools.FormatJSON(const json: string; Indentation: Integer): string;
+class function TJX3Tools.FormatJSON(const AJson: string; AIndentation: Integer): string;
 var
   TmpJson: TJsonObject;
 begin
-  TmpJson := TJSONObject.ParseJSONValue(json) as TJSONObject;
-  Result := TJSONAncestor(TmpJson).Format(Indentation);
+  TmpJson := TJSONObject.ParseJSONValue(AJson) as TJSONObject;
+  Result := TJSONAncestor(TmpJson).Format(AIndentation);
   FreeAndNil(TmpJson);
 end;
 

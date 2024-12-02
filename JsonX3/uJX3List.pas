@@ -68,8 +68,12 @@ begin
   end;
   LName := TJX3Tools.NameDecode(LName);
 
-  if Self.Count = 0 then
+  if GetIsNull then
   begin
+
+    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+    TJX3Tools.RaiseException(Format('"%s" (TJX3List) is required but undefined...', [LName]));
+
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
     if AInfoBlock.FieldName.IsEmpty then EXit('null');
     Exit(Format('"%s":null', [LName]));
@@ -149,7 +153,7 @@ begin
   Result.AddRange(AValues);
 end;
 
-function TJX3List<T>.GetISNull: Boolean;
+function TJX3List<T>.GetIsNull: Boolean;
 begin
   Result := Count = 0;
 end;
