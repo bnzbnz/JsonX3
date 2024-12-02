@@ -155,7 +155,14 @@ class function TJX3Tools.EscapeJSONStr(const AStr: string): string;
 var
   LP: PChar;
   LEndP: PChar;
+  // LStr : TJSONString;
 begin
+  (*
+  LStr := TJSONString.Create(AStr);
+  Result := LStr.ToJSON([TJSONAncestor.TJSONOutputOption.EncodeBelow32]);
+  LStr.Free;
+  Exit;
+  *)
   Result := '';
   LP := PChar(Pointer(AStr));
   LEndP := LP + Length(AStr);
