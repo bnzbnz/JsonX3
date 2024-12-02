@@ -16,14 +16,16 @@ type
   TJX3List<T: class, constructor> = class(TObjectList<T>)
     constructor Create;
 
-    function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
-    procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock =Nil);
+    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock =Nil);
+    function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
+    class function  FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+    function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3List<T>;
 
     function        GetIsNull: Boolean;
     procedure       SetIsNull(ANull: Boolean);
     function        First:T;
     function        Last: T;
-    function        Clone(AOptions: TJX3Options = [joNullToEmpty]): TJX3List<T>;
 
     property        IsNull: Boolean read GetIsNull write SetIsNull;
     property        N: Boolean read GetIsNull write SetIsNull;
@@ -43,6 +45,7 @@ uses
   , JSON
   , SysUtils
   , StrUtils
+  , System.Diagnostics
   , uJX3Object
   , uJX3Rtti
   ;
@@ -72,7 +75,7 @@ begin
   begin
 
     if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-    TJX3Tools.RaiseException(Format('"%s" (TJX3List) is required but undefined...', [LName]));
+      TJX3Tools.RaiseException(Format('"%s" (TJX3List) : a value is required', [LName]));
 
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
     if AInfoBlock.FieldName.IsEmpty then EXit('null');
@@ -135,6 +138,90 @@ begin
     end;
 end;
 
+class function TJX3List<T>.FromJSON(AJson: string; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): T;
+var
+  LInfoBlock: TJX3InfoBlock;
+  LWatch: TStopWatch;
+  LJObj: TJSONObject;
+begin
+  LInfoBlock := Nil;
+  LJObj := Nil;
+  try
+     if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+    Result := T.Create;
+    try
+      LJObj := TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject;
+      if not Assigned(LJObj) then TJX3Tools.RaiseException('TJX3Object.FromJSON: Erroneous JSON string');
+      FreeAndNil(LInfoBlock);
+      LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
+      TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
+    except
+      on Ex: Exception do
+      begin
+        FreeAndNil(Result);
+        if joRaiseException in AOptions then Raise;
+      end;
+    end;
+  finally
+    LJObj.Free;
+    LInfoBlock.Free;
+    if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+  end;
+end;
+
+function TJX3List<T>.ToJSON(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): string;
+var
+  LInfoBlock: TJX3InfoBlock;
+  LWatch:     TStopWatch;
+  LJObj:      TJSONObject;
+begin
+  LInfoBlock := Nil;
+  try
+    if (joStats in AOptions) and  Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+    try
+      LJObj := Nil;
+      LInfoBlock := TJX3InfoBlock.Create('', LJObj, Nil, AOptions);
+      Result := '{"JX3List":' + JSONSerialize(LInfoBlock, AInOutBlock).AsString + '}';
+    finally
+      if (joStats in LInfoBlock.Options) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+      LInfoBlock.Free;
+    end;
+  except
+    on Ex: Exception do
+    begin
+      Result := '';
+      if joRaiseException in AOptions then Raise;
+    end;
+  end;
+end;
+
+
+function TJX3List<T>.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3List<T>;
+var
+  LWatch: TStopWatch;
+  LJObj: TJSONObject;
+  LInfoBlock: TJX3InfoBlock;
+  LJson: string;
+begin
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  LInfoBlock := Nil;
+  LJObj := Nil;
+  try
+    Result := TJX3List<T>.Create;
+    LInfoBlock := TJX3InfoBlock.Create('T', LJObj, Nil, AOptions);
+    LJson := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
+    LInfoBlock.Free;
+    LJObj := TJSONObject.ParseJSONValue('{'  + LJson + '}', True, joRaiseException in AOptions) as TJSONObject;
+    LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
+    JSONDeserialize(LInfoBlock, AInOutBlock);
+    TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
+  finally
+    LJObj.Free;
+    LInfoBlock.Free;
+  end;
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+end;
+
 constructor TJX3List<T>.Create;
 begin
   inherited Create;
@@ -176,31 +263,6 @@ end;
 function TJX3List<T>.Last: T;
 begin
   Result := Self[Count - 1];
-end;
-
-function TJX3List<T>.Clone(AOptions: TJX3Options): TJX3List<T>;
-var
-  LJson: TValue;
-  LVal: TJSONValue;
-  LObj: TJSONObject;
-begin
-  LVal := Nil;
-  LObj := Nil;
-  try
-    Result := TJX3List<T>.Create;
-    LJson := TJX3Tools.CallMethodFunc('JSONSerialize', Self, ['', Nil, TValue.From<TJX3Options>(AOptions)]);
-    if LJson.IsEmpty then Exit(Nil);
-    LVal := TJSONObject.ParseJSONValue(LJson.AsString, True, True ) as TJSONValue;
-    LJson.Empty;
-    LVal.Owned := False;
-    LObj := TJSONObject.Create(TJSONPair.Create('', LVal));
-    if not Assigned(LObj) then Exit(Nil);
-    TJX3Tools.CallMethodProc( 'JSONDeserialize', Result, [LObj, Nil, TValue.From<TJX3Options>(AOptions)]);
-  finally
-    LObj.Free;
-    if Assigned(LVal) then LVal.Owned := True;
-    LVal.Free;
-  end;
 end;
 
 end.

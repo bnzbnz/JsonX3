@@ -105,6 +105,7 @@ end;
 {$ENDIF}
 
 function JX3GetMethod(AObj: TObject; const AName: string): TRTTIMethod;
+{$IFDEF JX3RTTICACHE}
 var
   Lx: NativeInt;
 begin
@@ -117,6 +118,12 @@ begin
   end;
   _RTTILock4.Leave;
 end;
+{$ELSE}
+begin
+  Result :=  _RTTIctx.GetType(AObj.ClassType).GetMethod(AName);
+end;
+{$IFEND}
+
 
 function JX3GetMethod(AInstance: TRttiInstanceType; const AName: string): TRTTIMethod;
 {$IFDEF JX3RTTICACHE}

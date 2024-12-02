@@ -25,6 +25,7 @@ type
 
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
+    function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
 
     property IsNull:  Boolean read GetIsNull write SetIsNull;
     property Null:    Boolean read GetIsNull write SetIsNull;
@@ -33,6 +34,7 @@ type
     property Val:     string read GetValue write Setvalue;
     property V:       string read GetValue write Setvalue;
   end;
+
   TJX3Str = TJX3String;
 
 implementation
@@ -40,6 +42,7 @@ uses
     SysUtils
   , StrUtils
   , System.Generics.Collections
+  , System.Diagnostics
   , uJX3Rtti
   ;
 
@@ -73,7 +76,8 @@ begin
     begin
 
     if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-        TJX3Tools.RaiseException(Format('"%s" (TJX3Object) is required but undefined...', [LName]));
+      TJX3Tools.RaiseException(Format('"%s" (TJX3String) : a value is required', [LName]));
+
 
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
@@ -143,6 +147,32 @@ end;
 function TJX3String.GetValue: string;
 begin
   Result := FValue;
+end;
+
+function TJX3String.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3String;
+var
+  LWatch: TStopWatch;
+  LJObj: TJSONObject;
+  LInfoBlock: TJX3InfoBlock;
+  LJson: string;
+begin
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  LInfoBlock := Nil;
+  LJObj := Nil;
+  try
+    Result := TJX3String.Create;
+    LInfoBlock := TJX3InfoBlock.Create('T', LJObj, Nil, AOptions);
+    LJson := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
+    LInfoBlock.Free;
+    LJObj := TJSONObject.ParseJSONValue('{'  + LJson + '}', True, joRaiseException in AOptions) as TJSONObject;
+    LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
+    JSONDeserialize(LInfoBlock, AInOutBlock);
+    TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
+  finally
+    LJObj.Free;
+    LInfoBlock.Free;
+  end;
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
 

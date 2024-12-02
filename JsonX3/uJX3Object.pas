@@ -17,7 +17,7 @@ type
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
-    function        ToJSON(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil): string;
+    function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     function        Clone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
   end;
   TJX3Obj = TJX3Object;
@@ -91,94 +91,100 @@ var
   LJObj:      TJSONObject;
 begin
   Result := '';
+  LInfoBlock := Nil;
   LParts := TStringList.Create(#0, cCommaDelimiter, [soStrictDelimiter]);
-  LFields := JX3GetFields(Self);
-  LParts.Capacity := Length(LFields);
-  for LField in LFields do
-    if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility = mvPublic) then
-    begin
-      LJObj := Nil;
-      LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
-      LPart :=  TJX3Tools.CallMethodFunc('JSONSerialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
-      LJObj.Free;
-      if not LPart.IsEmpty then LParts.Add(LPart.AsString);
-      LInfoBlock.Free;
-      Continue;
-    end;
-    LRes := LParts.DelimitedText.Replace(cCommaDelimiter, ',');
-    if not AInfoBlock.FieldName.IsEmpty then
-    begin
-      if LRes.IsEmpty then
+  try
+    LFields := JX3GetFields(Self);
+    LParts.Capacity := Length(LFields);
+    for LField in LFields do
+      if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility = mvPublic) then
       begin
+        LJObj := Nil;
+        LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
+        LPart :=  TJX3Tools.CallMethodFunc('JSONSerialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
+        if not LPart.IsEmpty then LParts.Add(LPart.AsString);
+        FreeAndNil(LInfoBlock);
+        Continue;
+      end;
+      LRes := LParts.DelimitedText.Replace(cCommaDelimiter, ',');
+      if not AInfoBlock.FieldName.IsEmpty then
+      begin
+        if LRes.IsEmpty then
+        begin
 
-        if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-          TJX3Tools.RaiseException(Format('"%s" (TJX3Object) is required but undefined...', [AInfoBlock.FieldName]));
+          if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+            TJX3Tools.RaiseException(Format('"%s" (TJX3Object) : a value is required', [AInfoBlock.FieldName]));
 
-        if joNullToEmpty in AInfoBlock.Options then
-          Result := TValue.Empty
-        else
-          Result := Format('"%s":null', [AInfoBlock.FieldName]);
-      end else
-        Result := Format('"%s":{%s}', [AInfoBlock.FieldName, LRes])
-    end
-  else
-    Result := Format('{%s}', [LRes]);
-  LParts.Free;
+          if joNullToEmpty in AInfoBlock.Options then
+            Result := TValue.Empty
+          else
+            Result := Format('"%s":null', [AInfoBlock.FieldName]);
+        end else
+          Result := Format('"%s":{%s}', [AInfoBlock.FieldName, LRes])
+      end
+    else
+      Result := Format('{%s}', [LRes]);
+  finally
+    LParts.Free;
+    LInfoBlock.Free;
+  end;
 end;
 
 procedure TJX3Object.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
-  LField: TRTTIField;
-  LJPair: TJSONPAir;
-  LJObj: TJSONObject;
+  LField:     TRTTIField;
+  LJPair:     TJSONPAir;
+  LJObj:      TJSONObject;
   LInfoBlock: TJX3InfoBlock;
-  LNameAttr: JX3Name;
-  LName: string;
+  LNameAttr:  JX3Name;
+  LName:      string;
 begin
-  for LField in JX3GetFields(Self) do
-  begin
-    LInfoBlock := Nil;
-
-    LName :=  TJX3Tools.NameDecode(LField.Name);
-    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Name));
-    if Assigned(LNameAttr) then LName := LNameAttr.Name;
-
-    LJPair := AInfoBlock.Obj.Get(LName);
-    if LJPair <> Nil then
+  try
+    for LField in JX3GetFields(Self) do
     begin
+      LName :=  TJX3Tools.NameDecode(LField.Name);
+      LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Name));
+      if Assigned(LNameAttr) then LName := LNameAttr.Name;
 
-      LJPair.Owned := False;
-      LJPair.JsonValue.Owned := False;
-      if (LJPair.JsonValue is TJSONObject) then
-        LJObj := (LJPair.JsonValue as TJSONObject)
-      else
-        LJObj :=  TJSONObject.Create(LJPair);
-      LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
-      TJX3Tools.CallMethodProc('JSONDeserialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
-      LInfoBlock.Free;
-      if (Assigned(LJObj)) and not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
-      LJPair.JsonValue.Owned := True;
-      LJPair.Owned := True;
-
-    end else begin
-
-      var LAttr := JX3Default(JX3GetFieldAttribute(LField, JX3Default));
-      if Assigned(LAttr) then
+      LJPair := AInfoBlock.Obj.Get(LName);
+      if LJPair <> Nil then
       begin
-        LJObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
+
+        LJPair.Owned := False;
+        LJPair.JsonValue.Owned := False;
+        if (LJPair.JsonValue is TJSONObject) then
+          LJObj := (LJPair.JsonValue as TJSONObject)
+        else
+          LJObj :=  TJSONObject.Create(LJPair);
         LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
         TJX3Tools.CallMethodProc('JSONDeserialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
-        LInfoBlock.Free;
-        LJObj.Free;
-        Continue;
+        FreeAndNil(LInfoBlock);
+        if (Assigned(LJObj)) and not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
+        LJPair.JsonValue.Owned := True;
+        LJPair.Owned := True;
+
+      end else begin
+
+        var LAttr := JX3Default(JX3GetFieldAttribute(LField, JX3Default));
+        if Assigned(LAttr) then
+        begin
+          LJObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
+          LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
+          TJX3Tools.CallMethodProc('JSONDeserialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
+          FreeAndNil(LInfoBlock);
+          LJObj.Free;
+          Continue;
+        end;
+
+        if Assigned(JS3Required(JX3GetFieldAttribute(LField, JS3Required))) then
+          TJX3Tools.RaiseException(Format('"%s" is required but not defined', [LName]));
+
+        if (JoRaiseOnMissingField in AInfoBlock.Options)  then
+          TJX3Tools.RaiseException(Format('Missing Field : %s', [LName]));
       end;
-
-      if Assigned(JS3Required(JX3GetFieldAttribute(LField, JS3Required))) then
-        TJX3Tools.RaiseException(Format('"%s" is required but not defined', [LName]));
-
-      if (JoRaiseOnMissingField in AInfoBlock.Options)  then
-        TJX3Tools.RaiseException(Format('Missing Field : %s', [LName]));
     end;
+  finally
+    LInfoBlock.Free;
   end;
 end;
 
@@ -189,12 +195,14 @@ var
   LJObj: TJSONObject;
 begin
   LInfoBlock := Nil;
+  LJObj := Nil;
   try
-    if Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+    if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     Result := T.Create;
     try
       LJObj := TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject;
       if not Assigned(LJObj) then TJX3Tools.RaiseException('TJX3Object.FromJSON: Erroneous JSON string');
+      FreeAndNil(LInfoBlock);
       LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
       TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
     except
@@ -207,7 +215,7 @@ begin
   finally
     LJObj.Free;
     LInfoBlock.Free;
-    if (joStats in LInfoBlock.Options) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+    if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
   end;
 end;
 

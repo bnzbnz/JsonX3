@@ -1,7 +1,7 @@
 object Form4: TForm4
   Left = 0
   Top = 0
-  Caption = 'Form4'
+  Caption = 'Large JSON'
   ClientHeight = 363
   ClientWidth = 636
   FormFactor.Width = 320
