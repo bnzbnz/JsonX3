@@ -83,7 +83,7 @@ begin
     Memo1.Lines.Add('JX3Required exception');
     Demo3.Str.IsNull := True;
     //Demo.Str is null but required >> Exception;
-    JsonStr := Demo.ToJSON([joRaiseException]);        // This flag will re-raise internal exceptions
+    JsonStr := Demo3.ToJSON([joRaiseException]);        // This flag will re-raise internal exceptions
 
     // Options flags:
     //  joNullToEmpty         : Remove null fields
