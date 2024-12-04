@@ -26,10 +26,13 @@ type
     { Public declarations }
   end;
 
-  TJSObject = class(TJX3Object)
+  TDemoContainer = class(TJX3Object)
   public
-    StringList : TJSONableStringList;
-  end;
+    StringList : TJSONableStringList; // Creation and destruction will handle automatically
+
+    [JX3Unmanaged]
+    StringListNotManaged : TJSONableStringList; // NOT MANAGED : You have to take care of the Creation/Destruction of this Object;
+  end;                                          // It will still be serialized/deserialized
 
 var
   Form4: TForm4;
@@ -41,16 +44,23 @@ implementation
 procedure TForm4.ButtonClick(Sender: TObject);
 var
   Json: string;
-  Obj, NewObj: TJSObject;
+  Obj, NewObj: TDemoContainer;
+  MyList:  TJSONableStringList;
 begin
   Memo1.Lines.Clear;
 
-  Obj := TJSObject.Create;      // Again, we dont have to take care of the stringlist creation, TJX3Object handles it for us!
-                                // It will call Create() and then JSONInit
+  MyList :=  TJSONableStringList.Create;      // we create a "jsonable" object
+  MyList.Add('Not');
+
+
+  Obj := TDemoContainer.Create;       // Again, we dont have to take care of the "StringList" creation, TJX3Object handles it for us!
+
   Obj.StringList.Add('A');
   Obj.StringList.Add('B');
   Obj.StringList.Add('C');
   Obj.StringList.Add('D');
+
+  Obj.StringListNotManaged := MyList;   // The field is unmanaged, we assign the list.
 
   // Raw Json
   Json := Obj.ToJson([]);
@@ -59,24 +69,27 @@ begin
   Memo1.lines.add('List Raw:');
   Memo1.lines.add(Json);
 
-  Obj.StringList.Strings[0] := '>>';
+  Obj.StringList.Strings[0] := '>>';  // we update the lists
   Obj.StringList.Strings[2] := '<<';
-  Json := Obj.ToJson([]);
+  MyList.Add('Managed');
 
-  // Updated and Formatted Json
+  // Updated Json
+  Json := Obj.ToJson([]);
   Memo1.lines.add('');
-  Memo1.lines.add('Updated and Formatted:');
+  Memo1.lines.add('Updated:');
   Memo1.lines.add(Json);
 
-  NewObj := Obj.Clone<TJSObject>;
-
-  // Cloned, updated and Formatted Json
+  // Cloned Json
+  NewObj := Obj.Clone<TDemoContainer>;
+  Json := NewObj.ToJson([]);
   Memo1.lines.add('');
   Memo1.lines.add('Cloned and Formatted:');
   Memo1.lines.add(Json);
 
   NewObj.Free;
   Obj.Free;
+
+  MyList.Free; // we destroy the list...
 end;
 
 end.

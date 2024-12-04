@@ -35,7 +35,7 @@ type
 
   JS3Required = class(TCustomAttribute);
 
-  JX3DoNotManage = class(TCustomAttribute);
+  JX3Unmanaged = class(TCustomAttribute);
 
   TJX3Tools = record
     class procedure CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue); static;

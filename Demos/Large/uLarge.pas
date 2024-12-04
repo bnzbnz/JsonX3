@@ -126,7 +126,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Convert Json String to JSX3 Objects :' );
-    LJObj := TJX3Object.FromJSON< TfetchItemAspectsContentType >( LJsonStr, [ joNullToEmpty, joStats ], LStats );
+    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joNullToEmpty, joStats ], LStats );
     Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );

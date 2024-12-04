@@ -16,9 +16,9 @@ type
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
-    class function  FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Object;
+    class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
-    function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Object;
+    function        Clone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
   end;
 
   TJX3Obj = TJX3Object;
@@ -50,7 +50,7 @@ begin
         and (LField.Visibility in [mvPublic, mvPublished])
     then
     begin
-      if not Assigned( uJX3Rtti.JX3GetFieldAttribute(LField, JX3DoNotManage)) then
+      if not Assigned( uJX3Rtti.JX3GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
         LInstance := LField.FieldType.AsInstance;
         LMethod := LInstance.GetMethod('Create');
@@ -69,21 +69,17 @@ var
   LField:   TRTTIField;
   LFields:  TArray<TRttiField>;
   LObj:     TOBject;
-  LMethod:  TRTTIMEthod;
   LManaged: TValue;
 begin
   LFields := JX3GetFields(Self);
   for LField in LFields do
-    if  (LField.FieldType.TypeKind in [tkClass])
-        and (LField.Visibility in [mvPublic, mvPublished])
-    then
+    if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
     begin
       LObj := LField.GetValue(Self).AsObject;
-      if Assigned( uJX3Rtti.JX3GetFieldAttribute(LField, JX3DoNotManage)) then
+      if not Assigned(LObj) then Continue;
+      if Assigned(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        if not Assigned(LObj) then Continue;
-        LManaged := TJX3Tools.CallMethodFunc('JSONDestroy', LObj, []);
-        if not (LManaged.IsEmpty and LManaged.AsBoolean) then
+        if TJX3Tools.CallMethodFunc('JSONDestroy', LObj, []).AsBoolean then
           FreeAndNil(LObj);
       end else
         FreeAndNil(LObj);
@@ -100,6 +96,9 @@ var
   LRes:       string;
   LInfoBlock: TJX3InfoBlock;
   LJObj:      TJSONObject;
+  LInstance:  TRttiInstanceType;
+  LMethod:    TRTTIMEthod;
+  LObj:       TOBject;
 begin
   Result := '';
   LInfoBlock := Nil;
@@ -110,9 +109,18 @@ begin
     for LField in LFields do
       if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility = mvPublic) then
       begin
+        LObj := LField.GetValue(Self).AsObject;
+        if  (LObj = nil) then
+        begin
+          LInstance := LField.FieldType.AsInstance;
+          LMethod := LInstance.GetMethod('Create');
+          LObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
+          LField.SetValue(Self, LObj);
+          TJX3Tools.CallMethodProc('JSONCreate', LObj, [True]);
+        end;
         LJObj := Nil;
         LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
-        LPart :=  TJX3Tools.CallMethodFunc('JSONSerialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
+        LPart :=  TJX3Tools.CallMethodFunc('JSONSerialize', LObj, [LInfoBlock, AInOutBlock]);
         if not LPart.IsEmpty then LParts.Add(LPart.AsString);
         FreeAndNil(LInfoBlock);
         Continue;
@@ -149,15 +157,14 @@ var
   LInfoBlock: TJX3InfoBlock;
   LNameAttr:  JX3Name;
   LName:      string;
-
-    LFields:    TArray<TRttiField>;
-    LInstance:  TRttiInstanceType;
-    LMethod:    TRTTIMEthod;
-    LObj:       TOBject;
+  LInstance:  TRttiInstanceType;
+  LMethod:    TRTTIMEthod;
+  LObj:       TOBject;
 begin
   try
     for LField in JX3GetFields(Self) do
     begin
+
       LName :=  TJX3Tools.NameDecode(LField.Name);
       LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Name));
       if Assigned(LNameAttr) then LName := LNameAttr.Name;
@@ -165,7 +172,6 @@ begin
       LJPair := AInfoBlock.Obj.Get(LName);
       if LJPair <> Nil then
       begin
-
         LJPair.Owned := False;
         LJPair.JsonValue.Owned := False;
         if (LJPair.JsonValue is TJSONObject) then
@@ -215,26 +221,17 @@ begin
   end;
 end;
 
-class function TJX3Object.FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Object;
+class function TJX3Object.FromJSON<T>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
 var
   LInfoBlock: TJX3InfoBlock;
   LWatch: TStopWatch;
   LJObj: TJSONObject;
-
-  LFields:    TArray<TRttiField>;
-  LField:     TRTTIField;
-  LInstance:  TRttiInstanceType;
-  LMethod:    TRTTIMEthod;
-  LObj:       TOBject;
-  LNewObj:    TOBject;
 begin
   LInfoBlock := Nil;
   LJObj := Nil;
   try
     if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-
-    Result := Self.Create;
-
+    Result := T.Create;
     try
       LJObj := TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject;
       FreeAndNil(LInfoBlock);
@@ -280,12 +277,12 @@ begin
   end;
 end;
 
-function TJX3Object.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Object;
+function TJX3Object.Clone<T>(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): T;
 var
   LWatch: TStopWatch;
 begin
   if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-  Result := Self.FromJSON(Self.ToJSON(AOptions), AOptions, AInOutBlock);
+  Result := Self.FromJSON<T>(Self.ToJSON(AOptions), AOptions, AInOutBlock);
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 

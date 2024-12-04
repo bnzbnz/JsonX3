@@ -53,6 +53,7 @@ var
 begin
   Demo := Nil;
   JDemo := Nil;
+  Demo3 := Nil;
   Memo1.Lines.Clear;
   try
     Demo := TDemo.Create;
