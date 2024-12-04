@@ -33,7 +33,9 @@ type
     constructor Create(const AValue: string);
   end;
 
-  JS3Required  = class(TCustomAttribute);
+  JS3Required = class(TCustomAttribute);
+
+  JX3DoNotManage = class(TCustomAttribute);
 
   TJX3Tools = record
     class procedure CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue); static;

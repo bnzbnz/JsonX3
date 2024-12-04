@@ -10,16 +10,17 @@ type
 
   TJX3Object = class(TObject)
   public
-    constructor     Create;
+    constructor     Create; virtual;
     destructor      Destroy; override;
 
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
-    class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+    class function  FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Object;
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
-    function        Clone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+    function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Object;
   end;
+
   TJX3Obj = TJX3Object;
 
 implementation
@@ -39,9 +40,9 @@ var
   LField:     TRTTIField;
   LInstance:  TRttiInstanceType;
   LMethod:    TRTTIMEthod;
-  LNewObj:    TOBject;
+  LNewObj:    TObject;
 begin
-  inherited;
+  inherited Create;
   LFields := JX3GetFields(Self);
   for LField in LFields do
   begin
@@ -49,13 +50,17 @@ begin
         and (LField.Visibility in [mvPublic, mvPublished])
     then
     begin
-      LInstance := LField.FieldType.AsInstance;
-      LMethod := LInstance.GetMethod('Create');
-      LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
-      LField.SetValue(Self, LNewObj);
-      LMethod := JX3GetMethod(LInstance, 'JSONInit');
-      if LMethod <> nil then LMethod.Invoke(LNewObj, []);
-    end;
+      if not Assigned( uJX3Rtti.JX3GetFieldAttribute(LField, JX3DoNotManage)) then
+      begin
+        LInstance := LField.FieldType.AsInstance;
+        LMethod := LInstance.GetMethod('Create');
+        LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
+        LField.SetValue(Self, LNewObj);
+        TJX3Tools.CallMethodProc('JSONCreate', LNewObj, [True]);
+      end else begin
+        LField.SetValue(Self, Nil);
+       end;
+     end;
   end;
 end;
 
@@ -65,6 +70,7 @@ var
   LFields:  TArray<TRttiField>;
   LObj:     TOBject;
   LMethod:  TRTTIMEthod;
+  LManaged: TValue;
 begin
   LFields := JX3GetFields(Self);
   for LField in LFields do
@@ -73,9 +79,14 @@ begin
     then
     begin
       LObj := LField.GetValue(Self).AsObject;
-      LMethod := JX3GetMethod(LField.FieldType.AsInstance, 'JSONExit');
-      if  LMethod <> nil then LMethod.Invoke(LObj, []);
-      FreeAndNil(LObj);
+      if Assigned( uJX3Rtti.JX3GetFieldAttribute(LField, JX3DoNotManage)) then
+      begin
+        if not Assigned(LObj) then Continue;
+        LManaged := TJX3Tools.CallMethodFunc('JSONDestroy', LObj, []);
+        if not (LManaged.IsEmpty and LManaged.AsBoolean) then
+          FreeAndNil(LObj);
+      end else
+        FreeAndNil(LObj);
     end;
   inherited;
 end;
@@ -138,6 +149,11 @@ var
   LInfoBlock: TJX3InfoBlock;
   LNameAttr:  JX3Name;
   LName:      string;
+
+    LFields:    TArray<TRttiField>;
+    LInstance:  TRttiInstanceType;
+    LMethod:    TRTTIMEthod;
+    LObj:       TOBject;
 begin
   try
     for LField in JX3GetFields(Self) do
@@ -156,8 +172,19 @@ begin
           LJObj := (LJPair.JsonValue as TJSONObject)
         else
           LJObj :=  TJSONObject.Create(LJPair);
+
+        LObj := LField.GetValue(Self).AsObject;
+        if  (LObj = nil) then
+        begin
+          LInstance := LField.FieldType.AsInstance;
+          LMethod := LInstance.GetMethod('Create');
+          LObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
+          LField.SetValue(Self, LObj);
+          TJX3Tools.CallMethodProc('JSONCreate', LObj, [True]);
+        end;
+
         LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
-        TJX3Tools.CallMethodProc('JSONDeserialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
+        TJX3Tools.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
         FreeAndNil(LInfoBlock);
         if (Assigned(LJObj)) and not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
         LJPair.JsonValue.Owned := True;
@@ -188,20 +215,28 @@ begin
   end;
 end;
 
-class function TJX3Object.FromJSON<T>(AJson: string; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): T;
+class function TJX3Object.FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Object;
 var
   LInfoBlock: TJX3InfoBlock;
   LWatch: TStopWatch;
   LJObj: TJSONObject;
+
+  LFields:    TArray<TRttiField>;
+  LField:     TRTTIField;
+  LInstance:  TRttiInstanceType;
+  LMethod:    TRTTIMEthod;
+  LObj:       TOBject;
+  LNewObj:    TOBject;
 begin
   LInfoBlock := Nil;
   LJObj := Nil;
   try
     if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-    Result := T.Create;
+
+    Result := Self.Create;
+
     try
       LJObj := TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject;
-      if not Assigned(LJObj) then TJX3Tools.RaiseException('TJX3Object.FromJSON: Erroneous JSON string');
       FreeAndNil(LInfoBlock);
       LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
       TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
@@ -245,12 +280,12 @@ begin
   end;
 end;
 
-function TJX3Object.Clone<T>(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): T;
+function TJX3Object.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Object;
 var
   LWatch: TStopWatch;
 begin
   if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-  Result := Self.FromJSON<T>(Self.ToJSON(AOptions), AOptions, AInOutBlock);
+  Result := Self.FromJSON(Self.ToJSON(AOptions), AOptions, AInOutBlock);
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
