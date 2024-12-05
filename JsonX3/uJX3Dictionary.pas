@@ -155,12 +155,11 @@ begin
     Add(LPair.JsonString.value, LNewObj);
     LPair.JsonValue.Owned := False;
     LPair.Owned := False;
-    LJObj := TJSONObject.Create(LPair);
+    LJObj := LPair.JsonValue as TJSONObject;
 
     LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
     TJX3Tools.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
 
-    LInfoBlock.Obj.Free;
     LInfoBlock.Free;
     LPair.Owned := True;
     LPair.JsonValue.Owned := True;
