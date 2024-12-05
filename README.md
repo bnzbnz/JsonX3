@@ -1,7 +1,7 @@
 JsonX3 (Json eXtended version 3)
 =================
 
-JsonX3 is a Delphi Json to  Objects, Objects to Json parser. It is fast, light still simple to use
+JsonX3 is a Delphi Json to Objects, Objects to Json parser. It is fast, light still simple to use
 It supports Delphi 10.3 to 12.2 on all the platforms.
 
 Clone with GIT
@@ -33,7 +33,7 @@ Example : using primitives (Demo01)
 ```
   JX3 will take care of all owned objects (Constructor/Destrutor), for exmaple 'Primitives.Str" is created and will be destroyed automatically , you don't have take care of it!
 ```Delphi
-  Json := Primitives.ToJson; // Serialisation
+  Json := Primitives.ToJson; // Serialization
 ```
 ```Json
 {"Str":"testing 😜","Bool":true,"Num":-99}
@@ -64,13 +64,13 @@ end;
 
 ```
 ```Delphi
- Json := Demo.ToJson([joNullToEmpty]);  // Remove null field
+ Json := Demo.ToJson([joNullToEmpty]);  // Remove null fields
 ```
 ```Json
    {"S":"~~😃~~","SubClass":{"X":222}}
 ```
 Obviously you may deserialize the Json string to an TInnerObjectDemo Object.
-Again, JX3 will create the inner classes for you. An inner class can containt any number of inner classes...
+Again, JX3 will create the inner classes for you. An inner class can containt any number of sub inner classes...
 
 Example : using arrays and dictionaries (Demo03)
 -
@@ -85,23 +85,23 @@ It's where JX3 excel ! You can create any complex types
     W: TJX3List<TJX3Dic<TJX3List<TPrimitives>>>;  // ouch ! A List of dictionaries of TPrimitives Objects Lists !!!
   end;
 ```
-Please not the JX3 uses TList instead of arrays, TList being way easier ti use.
-Filled with value, serializing this, will give you ;
+Please note that JX3 uses TLists instead of arrays, TList being way easier to use.
+Filled with value, serializing this (joNullToEmpty), will give you ;
 ```Json
 
 {"S":"~~😃~~","X":["@@@@","EEZZ","OOOO"],"Y":{"Value1":1111,"Value4":4444,"Value2":2222,"Value3":3333},"Z":[{"Bool":true,"e":111},{"Bool":false,"e":333}],"Q":[["TTT","OOO"],["UUU","III"]],"W":[{"DicVal1":[{"Str":"Boolean1","Bool":true}],"DicVal2":[{"Str":"Boolean3","Bool":true}]},{"DicVal1":[{"Str":"Boolean1","Bool":true}],"DicVal2":[{"Str":"Boolean3","Bool":true}]}]}
 ```
-And again this is perfectly deserializable in a TObjectDemo Object ! You may validate this json string at : https://jsonformatter.org/json-parser
+This is perfectly deserializable back to a TObjectDemo Object! You may validate this json string at : https://jsonformatter.org/json-parser
 
 -----
 Example : mapping any type of Objects for JSON serialization/deserialization (Demo04)
 JX3 is able to handle any type of Objects as long as they implement 4 public methods
 ```Delphi
-  TJSONableStringList = class(TStringList)
+  TJSONableStringList = class(TStringList)  // A SringList to be parsed.
   private
     FIsManaged: Boolean;
   public
-    procedure   JSONCreate(AManaged: Boolean); // After construcot is called, JX3 will tell the object if it is managed
+    procedure   JSONCreate(AManaged: Boolean); // After the constructor being called, JX3 will tell the object if it is managed
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue; // see Demo04
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock); // see Demo04
     function    JSONDestroy: Boolean // Return the previous manage flag from JSONCreate;
@@ -139,9 +139,9 @@ It's where JX3 excel ! You can create any complex types
     HrefVar: TJX3Str;                   // a JSON field name to be read/write from/to the Json file as HrefVar.
     [JX3Default('22')]                  // a default value to be used during deserialization if the field is null
     Num1:    TJX3Num;
-    __23href2: TJX3Str;                 // name encoding :  __23href = #hef    ('_'+'_'+Hex('#')+'href')
-   
-    [JX3Default('true')]                //                                       ^-- Header
+    __23href2: TJX3Str;                 // name encoding :  __23href = #hef  ('_'+'_'+Hex('#')+'href')
+                                        // instead of usin JX3Name attribute you may use this inline encoding 
+    [JX3Default('true')]                // functions NameEncode in uJX3Tools...
     [JX3Name('NewMix')]
     Mix: TJX3Bool;                      // Using NewMix as JSON field name with a default value of True;
   end;
