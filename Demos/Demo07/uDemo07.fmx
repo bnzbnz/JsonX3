@@ -1,0 +1,52 @@
+object Form4: TForm4
+  Left = 0
+  Top = 0
+  Caption = 'Demo01: Primitives'
+  ClientHeight = 363
+  ClientWidth = 636
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object Memo1: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      
+        '  [{"id":"0001","type":"donut","name":"Cake","ppu":0.55,"batters' +
+        '":{"batter":[{"id":"1001","type":"Regular"},{"id":"1002","type":' +
+        '"Chocolate"},{"id":"1003","type":"Blueberry"},{"id":"1004","type' +
+        '":"Devil'#39's Food"}]},"topping":[{"id":"5001","type":"None"},{"id"' +
+        ':"5002","type":"Glazed"},{"id":"5005","type":"Sugar"},{"id":"500' +
+        '7","type":"Powdered Sugar"},{"id":"5006","type":"Chocolate with ' +
+        'Sprinkles"},{"id":"5003","type":"Chocolate"},{"id":"5004","type"' +
+        ':"Maple"}]},{"id":"0002","type":"donut","name":"Raised","ppu":0.' +
+        '55,"batters":{"batter":[{"id":"1001","type":"Regular"}]},"toppin' +
+        'g":[{"id":"5001","type":"None"},{"id":"5002","type":"Glazed"},{"' +
+        'id":"5005","type":"Sugar"},{"id":"5003","type":"Chocolate"},{"id' +
+        '":"5004","type":"Maple"}]},{"id":"0003","type":"donut","name":"O' +
+        'ld Fashioned","ppu":0.55,"batters":{"batter":[{"id":"1001","type' +
+        '":"Regular"},{"id":"1002","type":"Chocolate"}]},"topping":[{"id"' +
+        ':"5001","type":"None"},{"id":"5002","type":"Glazed"},{"id":"5003' +
+        '","type":"Chocolate"},{"id":"5004","type":"Maple"}]}]'
+      '')
+    TextSettings.WordWrap = True
+    Align = Client
+    Size.Width = 636.000000000000000000
+    Size.Height = 314.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    Viewport.Width = 636.000000000000000000
+    Viewport.Height = 314.000000000000000000
+  end
+  object Button: TButton
+    Align = Top
+    Size.Width = 636.000000000000000000
+    Size.Height = 49.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    Text = 'Start'
+    TextSettings.Trimming = None
+    OnClick = ButtonClick
+  end
+end

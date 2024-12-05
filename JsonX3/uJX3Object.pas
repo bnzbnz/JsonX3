@@ -71,7 +71,6 @@ var
   LField:   TRTTIField;
   LFields:  TArray<TRttiField>;
   LObj:     TOBject;
-  LManaged: TValue;
 begin
   LFields := JX3GetFields(Self);
   for LField in LFields do

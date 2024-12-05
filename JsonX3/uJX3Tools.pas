@@ -71,6 +71,8 @@ type
     Stats: TJX3InOutStats;
     User1: TValue;
     User2: TValue;
+    User3: TValue;
+    User4: TValue;
     constructor Create;
     destructor Destroy; override;
   end;

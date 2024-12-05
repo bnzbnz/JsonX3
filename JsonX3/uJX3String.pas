@@ -74,11 +74,8 @@ begin
     end;
     if not Assigned(LAttr) then
     begin
-
-    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-      TJX3Tools.RaiseException(Format('"%s" (TJX3String) : a value is required', [LName]));
-
-
+      if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+        TJX3Tools.RaiseException(Format('"%s" (TJX3String) : a value is required', [LName]));
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
       Exit(Format('"%s":null', [LName]))
