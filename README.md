@@ -180,3 +180,6 @@ As simple as that :
 
   Game.Free; 
 ```
+```
+Example : Parse an Array as payload (Demo07)
+-
