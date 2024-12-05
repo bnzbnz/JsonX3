@@ -2,7 +2,7 @@ JsonX3 (Json eXtended version 3)
 =================
 
 JsonX3 is a Delphi Json to Objects, Objects to Json parser. It is fast, light still simple to use
-It supports Delphi 10.3 to 12.2 on all the platforms.
+It supports Delphi 10.3 to 12.2 on all the platforms. This is supporting 100% of the json format...
 
 Clone with GIT
 --------------
