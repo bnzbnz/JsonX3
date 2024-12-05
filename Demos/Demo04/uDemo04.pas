@@ -53,14 +53,14 @@ begin
   MyList.Add('Not');
 
 
-  Obj := TDemoContainer.Create;       // Again, we dont have to take care of the "StringList" creation, TJX3Object handles it for us!
+  Obj := TDemoContainer.Create;         // will also create "Obj.StringList", but not "StringListNotManaged" as it it Not Managed
 
-  Obj.StringList.Add('A');
+  Obj.StringList.Add('A');              // Again, we dont have to take care of the "StringList" creation, TJX3Object handles it for us!
   Obj.StringList.Add('B');
   Obj.StringList.Add('C');
   Obj.StringList.Add('D');
 
-  Obj.StringListNotManaged := MyList;   // The field is unmanaged, we assign the list.
+  Obj.StringListNotManaged := MyList;   // This external field is nil, we assign it
 
   // Raw Json
   Json := Obj.ToJson([]);
@@ -69,7 +69,7 @@ begin
   Memo1.lines.add('List Raw:');
   Memo1.lines.add(Json);
 
-  Obj.StringList.Strings[0] := '>>';  // we update the lists
+  Obj.StringList.Strings[0] := '>>';      // we update the lists
   Obj.StringList.Strings[2] := '<<';
   MyList.Add('Managed');
 
@@ -80,8 +80,8 @@ begin
   Memo1.lines.add(Json);
 
   // Cloned Json
-  NewObj := Obj.Clone<TDemoContainer>;
-  Json := NewObj.ToJson([]);
+  NewObj := Obj.Clone<TDemoContainer>;    // we clone the json object as NewObj
+  Json := NewObj.ToJson([]);              // Serialize the new object;
   Memo1.lines.add('');
   Memo1.lines.add('Cloned and Formatted:');
   Memo1.lines.add(Json);

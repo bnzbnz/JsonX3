@@ -80,18 +80,17 @@ begin
     Demo3 := Demo.Clone<TDemo>;
     Memo1.Lines.Add('Clone : ' + Demo3.ToJSON([joNulltoEmpty]));
 
-    Memo1.Lines.Add('');
-    Memo1.Lines.Add('JX3Required exception');
-    Demo3.Str.IsNull := True;
-    //Demo.Str is null but required >> Exception;
-    JsonStr := Demo3.ToJSON([joRaiseException]);        // This flag will re-raise internal exceptions
-
     // Options flags:
     //  joNullToEmpty         : Remove null fields
     //  joRaiseException      : Re-raise ecxceptions
     //  joRaiseOnMissingField : Raise an exception when json field is missing in the delphi object; (Debug)
     //  joStats               : Calc. stats (see Lage demo)
 
+    Memo1.Lines.Add('');
+    Memo1.Lines.Add('JX3Required exception');
+    Demo3.Str.IsNull := True;
+    //Demo.Str is null but required >> Exception;
+    JsonStr := Demo3.ToJSON([joRaiseException]);        // This flag will re-raise internal exceptions
 
   finally
     Demo3.Free;
