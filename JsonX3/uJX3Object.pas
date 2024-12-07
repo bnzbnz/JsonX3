@@ -19,6 +19,7 @@ type
     class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     function        Clone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+    procedure       JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3MeergeOptions);
   end;
 
   TJX3Obj = TJX3Object;
@@ -285,6 +286,34 @@ begin
   if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
   Result := Self.FromJSON<T>(Self.ToJSON(AOptions), AOptions, AInOutBlock);
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+end;
+// Work In Progress...
+procedure TJX3Object.JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3MeergeOptions);
+var
+  LField:     TRTTIField;
+  (*
+  LJPair:     TJSONPAir;
+  LJObj:      TJSONObject;
+  LInfoBlock: TJX3InfoBlock;
+  LNameAttr:  JX3Name;
+  LName:      string;
+  LInstance:  TRttiInstanceType;
+  LMethod:    TRTTIMEthod;
+  *)
+  LObj:       TOBject;
+begin
+
+    for LField in JX3GetFields(Self) do
+    begin
+      for var LSrcField in JX3GetFields(ASrc) do
+      begin
+        if LField.Name = LSrcField.Name then
+        begin
+          LObj := LField.GetValue(Self).AsObject;
+          TJX3Tools.CallMethodProc('JSONMerge', LObj, [ LSrcField.GetValue(ASrc).AsObject, TValue.From<TJX3MeergeOptions>(AMergeOpts)]);
+        end;
+      end;
+     end;
 end;
 
 end.

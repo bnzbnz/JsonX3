@@ -21,6 +21,7 @@ type
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     class function  FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3List<T>;
+    procedure       JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3MeergeOptions);
 
     function        GetIsNull: Boolean;
     procedure       SetIsNull(ANull: Boolean);
@@ -263,6 +264,16 @@ end;
 function TJX3List<T>.Last: T;
 begin
   Result := Self[Count - 1];
+end;
+
+procedure TJX3List<T>.JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3MeergeOptions);
+begin
+    for var R in ASrc do
+    begin
+      var LOBJ := T.Create;
+      TJX3Tools.CallMethodProc('JSONMerge', LOBJ, [ R, TValue.From<TJX3MeergeOptions>(AMergeOpts)]);
+      Self.Add(LObj);
+    end;
 end;
 
 end.

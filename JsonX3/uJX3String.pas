@@ -18,6 +18,10 @@ type
     procedure       SetIsNull(ANull: Boolean);
     function        GetValue: string;
     procedure       SetValue(AValue: string);
+    function        GetIso8601: TDateTime;
+    procedure       SetIso8601(AValue: TDateTime);
+    function        GetIso8601UTC: TDateTime;
+    procedure       SetIso8601UTC(AValue: TDateTime);
   public
     constructor     Create;
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
@@ -26,13 +30,16 @@ type
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
+    procedure       JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3MeergeOptions);
 
-    property IsNull:  Boolean read GetIsNull write SetIsNull;
-    property Null:    Boolean read GetIsNull write SetIsNull;
-    property N:       Boolean read GetIsNull write SetIsNull;
-    property Value:   string read GetValue write Setvalue;
-    property Val:     string read GetValue write Setvalue;
-    property V:       string read GetValue write Setvalue;
+    property IsNull:    Boolean read GetIsNull write SetIsNull;
+    property Null:      Boolean read GetIsNull write SetIsNull;
+    property N:         Boolean read GetIsNull write SetIsNull;
+    property Value:     string read GetValue write Setvalue;
+    property Val:       string read GetValue write Setvalue;
+    property V:         string read GetValue write Setvalue;
+    property Iso8601:   TDateTime read GetIso8601 write SetIso8601;
+    property Iso8601UTC:TDateTime read GetIso8601 write SetIso8601;
   end;
 
   TJX3Str = TJX3String;
@@ -41,6 +48,7 @@ implementation
 uses
     SysUtils
   , StrUtils
+  , DateUtils
   , System.Generics.Collections
   , System.Diagnostics
   , uJX3Rtti
@@ -146,6 +154,26 @@ begin
   Result := FValue;
 end;
 
+function  TJX3String.GetIso8601: TDateTime;
+begin
+  Result := ISO8601ToDate(FValue, False);
+end;
+
+procedure TJX3String.SetIso8601(AValue: TDateTime);
+begin
+  SetValue(DateToISO8601(AValue, False));
+end;
+
+function  TJX3String.GetIso8601UTC: TDateTime;
+begin
+  Result := ISO8601ToDate(FValue, True);
+end;
+
+procedure TJX3String.SetIso8601UTC(AValue: TDateTime);
+begin
+  SetValue(DateToISO8601(AValue, True));
+end;
+
 function TJX3String.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3String;
 var
   LWatch: TStopWatch;
@@ -172,6 +200,13 @@ begin
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
+procedure TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3MeergeOptions);
+begin
+  if ASrc.IsNull then
+    Self.SetIsNull(True)
+  else
+    SetValue(ASrc.Value);
+end;
 
 
 end.

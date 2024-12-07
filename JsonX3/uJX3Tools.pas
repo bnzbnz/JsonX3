@@ -12,6 +12,8 @@ const
   cCommaDelimiter = #0;
 
 type
+  TJX3MeergeOption  = (moLazy);
+  TJX3MeergeOptions = set of TJX3MeergeOption;
 
   TJS3Option  = (
         joNullToEmpty
@@ -241,7 +243,7 @@ procedure TJX3InOutStats.Clear;
 begin
   ProcessingTimeMS  := 0;
   PrimitiveCount    := 0;
-  ListCount          := 0;
+  ListCount         := 0;
   DicCount          := 0;
   BooleanCount      := 0;
   NumCount          := 0;

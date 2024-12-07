@@ -10,17 +10,12 @@ uses
 type
 
   TJX3NumKind   = (nkNull, nkInt, nkUInt, nkInt64, nkUInt64, nkDouble, nkCurrency);
+
   TJX3Number    = class(TObject)
   private
     FNull:  Boolean;
     FValue: string;
     FKind: TJX3NumKind;
-  public
-    constructor Create;
-    destructor  Destroy; override;
-    function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
-    function    Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
-    procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function    GetIsNull: Boolean;
     procedure   SetIsNull(ANull: Boolean);
     function    GetInt: Integer;
@@ -37,6 +32,14 @@ type
     procedure   SetCurrency(AValue: Currency);
     function    GetValue: string;
     procedure   SetValue(AValue: string);
+  public
+    constructor Create;
+    destructor  Destroy; override;
+
+    function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
+    function    Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
+    procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3MeergeOptions);
 
     class function C: TJX3Number;
     class function CInt(AValue: Integer):TJX3Number;
@@ -61,7 +64,6 @@ type
   end;
 
   TJX3Num = TJX3Number;
-
 implementation
 uses
     SysUTils
@@ -313,6 +315,14 @@ end;
 procedure TJX3Number.SetCurrency(AValue: Currency);
 begin
    SetValue(AValue.ToString);
+end;
+
+procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3MeergeOptions);
+begin
+  if ASrc.IsNull then
+    Self.SetIsNull(True)
+  else
+    SetValue(ASrc.Value);
 end;
 
 end.

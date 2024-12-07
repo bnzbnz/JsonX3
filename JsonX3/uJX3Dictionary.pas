@@ -21,7 +21,8 @@ type
     function  JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
-    function Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Dic<V>;
+    function  Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Dic<V>;
+    procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3MeergeOptions);
 
     property  IsNull: Boolean read GetIsNull write SetIsNull;
     property  N:      Boolean read GetIsNull write SetIsNull;
@@ -155,15 +156,22 @@ begin
     Add(LPair.JsonString.value, LNewObj);
     LPair.JsonValue.Owned := False;
     LPair.Owned := False;
-    LJObj := LPair.JsonValue as TJSONObject;
+
+    if LPair.JsonValue is TJSONArray then
+    begin
+      LJObj := TJSONObject.Create(TJSONPAir.Create('', LPair.JsonValue));
+    end else
+      LJObj := LPair.JsonValue as TJSONObject;
 
     LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
     TJX3Tools.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
-
     LInfoBlock.Free;
+
+    if LPair.JsonValue is TJSONArray then FreeAndNil(LJObj);
     LPair.Owned := True;
     LPair.JsonValue.Owned := True;
   end;
+
 end;
 
 function TJX3Dic<V>.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Dic<V>;
@@ -185,6 +193,19 @@ begin
     if Assigned(LInfoBlock.Obj) then LInfoBlock.Obj.Free;
     LInfoBlock.Free;
   end;
+end;
+
+procedure TJX3Dic<V>.JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3MeergeOptions);
+begin
+    for var R in ASrc do
+    begin
+      if not Self.ContainsKey(R.Key) then
+      begin
+        var LObj := V.Create;
+        TJX3Tools.CallMethodProc('JSONMerge', LObj, [ R.Value, TValue.From<TJX3MeergeOptions>(AMergeOpts)]);
+        Self.Add(R.Key, LObj);
+      end;
+    end
 end;
 
 end.

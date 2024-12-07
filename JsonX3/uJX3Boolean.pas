@@ -16,16 +16,19 @@ type
   private
     FNull:  Boolean;
     FValue: Boolean;
+  protected
+    function        GetIsNull: Boolean;
+    procedure       SetIsNull(ANull: Boolean);
+    function        GetValue: Boolean;
+    procedure       SetValue(AValue: Boolean);
   public
     constructor     Create;
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function        Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Boolean;
-    function        GetIsNull: Boolean;
-    procedure       SetIsNull(ANull: Boolean);
-    function        GetValue: Boolean;
-    procedure       SetValue(AValue: Boolean);
     class function  C(AValue: Boolean = False): TJX3Boolean;
+    procedure       JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3MeergeOptions);
+
     property        IsNull: Boolean read GetIsNull write SetIsNull;
     property        N: Boolean read GetIsNull write SetIsNull;
     property        Value: Boolean read GetValue write Setvalue;
@@ -163,6 +166,14 @@ end;
 function TJX3Boolean.GetValue: Boolean;
 begin
   Result := FValue;
+end;
+
+procedure TJX3Boolean.JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3MeergeOptions);
+begin
+  if ASrc.IsNull then
+    Self.SetIsNull(True)
+  else
+    SetValue(ASrc.Value);
 end;
 
 end.
