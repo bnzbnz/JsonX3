@@ -51,14 +51,13 @@ begin
     begin
       if not Assigned(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        LNewObj := Nil;
         LInstance := LField.FieldType.AsInstance;
         if not Assigned(LInstance) then Continue;
         LMethod := LInstance.GetMethod('Create');
-        if not Assigned(LMethod) then Continue else
-          LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
-        if Assigned(LNewObj) then
-          TJX3Tools.CallMethodProc('JSONCreate', LNewObj, [True]);
+        if not Assigned(LMethod) then Continue;
+        LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
+        if not Assigned(LNewObj) then Continue;
+        TJX3Tools.CallMethodProc('JSONCreate', LNewObj, [True]);
         LField.SetValue(Self, LNewObj);
       end else begin
         LField.SetValue(Self, Nil);
@@ -179,7 +178,7 @@ begin
         if (LJPair.JsonValue is TJSONObject) then
           LJObj := (LJPair.JsonValue as TJSONObject)
         else
-          LJObj :=  TJSONObject.Create(LJPair);
+          LJObj := TJSONObject.Create(LJPair);
 
         LObj := LField.GetValue(Self).AsObject;
         if  (LObj = nil) then

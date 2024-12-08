@@ -92,7 +92,6 @@ begin
 
   if AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(LValue) + '"');
   Result := Format('"%s":%s', [TJX3Tools.EscapeJSONStr(LName),  '"' + TJX3Tools.EscapeJSONStr(LValue) + '"']);
-          if LName = 'localiz' then TJX3Tools.BreakPoint();
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
