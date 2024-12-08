@@ -48,7 +48,7 @@ implementation
 
 procedure TForm4.ButtonClick(Sender: TObject);
 var
-  Demo, Demo3, JDemo: TDemo;
+  Demo, Demo3, Demo4, JDemo: TDemo;
   JsonStr: string;
 begin
   Demo := Nil;
@@ -80,6 +80,11 @@ begin
     Demo3 := Demo.Clone<TDemo>;
     Memo1.Lines.Add('Clone : ' + Demo3.ToJSON([joNulltoEmpty]));
 
+    //Cloning RTTI:
+    Memo1.Lines.Add('');
+    Demo4 := Demo.CloneRTTI<TDemo>;
+    Memo1.Lines.Add('Clone RTTI: ' + Demo4.ToJSON([joNulltoEmpty]));
+
     // Options flags:
     //  joNullToEmpty         : Remove null fields
     //  joRaiseException      : Re-raise ecxceptions
@@ -93,6 +98,7 @@ begin
     JsonStr := Demo3.ToJSON([joRaiseException]);        // This flag will re-raise internal exceptions
 
   finally
+    Demo4.Free;
     Demo3.Free;
     JDemo.Free;
     Demo.Free;
