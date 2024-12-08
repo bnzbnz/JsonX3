@@ -30,7 +30,7 @@ type
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
-    procedure       JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3MeergeOptions);
+    procedure       JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options);
 
     property IsNull:    Boolean read GetIsNull write SetIsNull;
     property Null:      Boolean read GetIsNull write SetIsNull;
@@ -82,7 +82,7 @@ begin
     end;
     if not Assigned(LAttr) then
     begin
-      if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+      if Assigned(AInfoBlock.Field) and Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
         TJX3Tools.RaiseException(Format('"%s" (TJX3String) : a value is required', [LName]));
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
@@ -91,7 +91,8 @@ begin
   end;
 
   if AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(LValue) + '"');
-  Result := Format('"%s":%s', [LName,  '"' + TJX3Tools.EscapeJSONStr(LValue) + '"']);
+  Result := Format('"%s":%s', [TJX3Tools.EscapeJSONStr(LName),  '"' + TJX3Tools.EscapeJSONStr(LValue) + '"']);
+          if LName = 'localiz' then TJX3Tools.BreakPoint();
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
@@ -117,8 +118,7 @@ end;
 constructor TJX3String.Create;
 begin
   inherited;
-  FValue := '';
-  FIsNull := True;
+  SetIsNull(True);
 end;
 
 class function TJX3String.C: TJX3String;
@@ -200,12 +200,15 @@ begin
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
-procedure TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3MeergeOptions);
+procedure TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options);
 begin
-  if ASrc.IsNull then
-    Self.SetIsNull(True)
-  else
-    SetValue(ASrc.Value);
+  if ASrc.GetIsNull then
+  begin
+    Self.SetIsNull(True);
+    Exit;
+  end;
+  if Self.GetIsNull then
+    SetValue(ASrc.GetValue);
 end;
 
 

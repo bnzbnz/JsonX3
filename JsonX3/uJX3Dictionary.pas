@@ -22,7 +22,7 @@ type
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
     function  Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Dic<V>;
-    procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3MeergeOptions);
+    procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options);
 
     property  IsNull: Boolean read GetIsNull write SetIsNull;
     property  N:      Boolean read GetIsNull write SetIsNull;
@@ -195,17 +195,29 @@ begin
   end;
 end;
 
-procedure TJX3Dic<V>.JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3MeergeOptions);
+procedure TJX3Dic<V>.JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options);
+var
+  ADic: TPair<string, V>;
+  LObj: V;
 begin
-    for var R in ASrc do
+
+  if ASrc.GetIsNull then
+  begin
+    Self.SetIsNull(True);
+    Exit;
+  end;
+
+  for ADic in ASrc do
+  begin
+    if not Self.ContainsKey(ADic.Key) then
     begin
-      if not Self.ContainsKey(R.Key) then
-      begin
-        var LObj := V.Create;
-        TJX3Tools.CallMethodProc('JSONMerge', LObj, [ R.Value, TValue.From<TJX3MeergeOptions>(AMergeOpts)]);
-        Self.Add(R.Key, LObj);
-      end;
-    end
+      LObj := V.Create;
+      TJX3Tools.CallMethodProc('JSONCreate', LObj, [True]);
+      TJX3Tools.CallMethodProc('JSONMerge', LObj, [ ADic.Value, TValue.From<TJX3Options>(AMergeOpts)]);
+      Self.Add(ADic.Key, LObj);
+    end;
+  end
+
 end;
 
 end.

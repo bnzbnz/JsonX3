@@ -7,7 +7,7 @@ uses
   , RTTI
   ;
 
-{$DEFINE JX3RTTICACHE}
+{.$DEFINE JX3RTTICACHE}
 
 function  JX3GetFields(aObj: TObject): TArray<TRTTIField>;
 function  JX3GetProps(aObj: TObject): TArray<TRTTIProperty>;

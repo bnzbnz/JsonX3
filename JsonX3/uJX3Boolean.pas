@@ -14,7 +14,7 @@ type
 
   TJX3Boolean = class(TObject)
   private
-    FNull:  Boolean;
+    FIsNull:  Boolean;
     FValue: Boolean;
   protected
     function        GetIsNull: Boolean;
@@ -27,7 +27,7 @@ type
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function        Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Boolean;
     class function  C(AValue: Boolean = False): TJX3Boolean;
-    procedure       JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3MeergeOptions);
+    procedure       JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options);
 
     property        IsNull: Boolean read GetIsNull write SetIsNull;
     property        N: Boolean read GetIsNull write SetIsNull;
@@ -74,9 +74,8 @@ begin
     end;
     if not Assigned(LAttr) then
     begin
-
-    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-      TJX3Tools.RaiseException(Format('"%s" (TJX3Boolean) : a value is required', [LName]));
+      if Assigned(AInfoBlock.Field) and Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+        TJX3Tools.RaiseException(Format('"%s" (TJX3Boolean) : a value is required', [LName]));
 
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
@@ -100,7 +99,7 @@ begin
     SetValue(LJPair.JsonValue.Value.ToBoolean);
     Exit;
   end else begin
-    LAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+    if  Assigned(AInfoBlock.Field) then LAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
     if Assigned(LAttr) then
       SetValue(JX3Default(LAttr).Value.ToBoolean())
     else
@@ -136,7 +135,7 @@ end;
 constructor TJX3Boolean.Create;
 begin
   inherited;
-  FNull := True;
+  FIsNull := True;
   FValue := False;
 end;
 
@@ -148,18 +147,18 @@ end;
 
 function TJX3Boolean.GetIsNull: Boolean;
 begin
-  Result := FNull;
+  Result := FIsNull;
 end;
 
 procedure TJX3Boolean.SetIsNull(ANull: Boolean);
 begin
-  FNull := ANull;
+  FIsNull := ANull;
   if ANull then FValue := False;
 end;
 
 procedure TJX3Boolean.SetValue(AValue: Boolean);
 begin
-  FNull := False;
+  FIsNull := False;
   FValue := AValue;
 end;
 
@@ -168,12 +167,17 @@ begin
   Result := FValue;
 end;
 
-procedure TJX3Boolean.JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3MeergeOptions);
+procedure TJX3Boolean.JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options);
 begin
-  if ASrc.IsNull then
-    Self.SetIsNull(True)
-  else
-    SetValue(ASrc.Value);
+
+  if ASrc.GetIsNull then
+  begin
+    Self.SetIsNull(True);
+    Exit;
+  end;
+
+  if Self.GetIsNull then
+    Self.SetValue(ASrc.GetValue);
 end;
 
 end.

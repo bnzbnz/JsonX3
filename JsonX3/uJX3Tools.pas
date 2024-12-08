@@ -12,14 +12,13 @@ const
   cCommaDelimiter = #0;
 
 type
-  TJX3MeergeOption  = (moLazy);
-  TJX3MeergeOptions = set of TJX3MeergeOption;
-
   TJS3Option  = (
         joNullToEmpty
       , joRaiseException
       , joRaiseOnMissingField
       , joStats
+      // Merge
+
   );
   TJX3Options = set of TJS3Option;
 

@@ -21,7 +21,7 @@ type
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     class function  FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3List<T>;
-    procedure       JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3MeergeOptions);
+    procedure       JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3Options);
 
     function        GetIsNull: Boolean;
     procedure       SetIsNull(ANull: Boolean);
@@ -266,14 +266,25 @@ begin
   Result := Self[Count - 1];
 end;
 
-procedure TJX3List<T>.JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3MeergeOptions);
+procedure TJX3List<T>.JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3Options);
+var
+  AList: T;
+  LObj: T;
 begin
-    for var R in ASrc do
-    begin
-      var LOBJ := T.Create;
-      TJX3Tools.CallMethodProc('JSONMerge', LOBJ, [ R, TValue.From<TJX3MeergeOptions>(AMergeOpts)]);
-      Self.Add(LObj);
-    end;
+
+  if ASrc.GetIsNull then
+  begin
+    Self.SetIsNull(True);
+    Exit;
+  end;
+
+  for AList in ASrc do
+  begin
+    LObj := T.Create;
+    TJX3Tools.CallMethodProc('JSONCreate', LObj, [True]);
+    TJX3Tools.CallMethodProc('JSONMerge', LOBJ, [ AList, TValue.From<TJX3Options>(AMergeOpts)]);
+    Self.Add(LObj);
+  end;
 end;
 
 end.

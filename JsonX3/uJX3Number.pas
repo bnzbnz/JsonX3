@@ -39,7 +39,7 @@ type
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function    Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
-    procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3MeergeOptions);
+    procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options);
 
     class function C: TJX3Number;
     class function CInt(AValue: Integer):TJX3Number;
@@ -92,6 +92,7 @@ begin
   LName := TJX3Tools.NameDecode(LName);
 
   LValue := FValue;
+
   if GetIsNull then
   begin
     LAttr := Nil;
@@ -103,8 +104,8 @@ begin
     if not Assigned(LAttr) then
     begin
 
-    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-      TJX3Tools.RaiseException(Format('"%s" (TJX3Number) : a value is required', [LName]));
+      if Assigned(AInfoBlock.Field) and Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+        TJX3Tools.RaiseException(Format('"%s" (TJX3Number) : a value is required', [LName]));
 
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
@@ -317,12 +318,17 @@ begin
    SetValue(AValue.ToString);
 end;
 
-procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3MeergeOptions);
+procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options);
 begin
-  if ASrc.IsNull then
-    Self.SetIsNull(True)
-  else
-    SetValue(ASrc.Value);
+
+  if ASrc.GetIsNull then
+  begin
+    Self.SetIsNull(True);
+    Exit;
+  end;
+
+  if Self.GetIsNull then
+    SetValue(ASrc.GetValue);
 end;
 
 end.
