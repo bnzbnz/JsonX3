@@ -22,7 +22,7 @@ type
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
     function  Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Dic<V>;
-    procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options);
+    procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 
     property  IsNull: Boolean read GetIsNull write SetIsNull;
     property  N:      Boolean read GetIsNull write SetIsNull;
@@ -195,7 +195,7 @@ begin
   end;
 end;
 
-procedure TJX3Dic<V>.JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options);
+procedure TJX3Dic<V>.JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 var
   ADic: TPair<string, V>;
   LObj: V;

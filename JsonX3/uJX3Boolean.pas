@@ -27,7 +27,7 @@ type
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function        Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Boolean;
     class function  C(AValue: Boolean = False): TJX3Boolean;
-    procedure       JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options);
+    procedure       JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 
     property        IsNull: Boolean read GetIsNull write SetIsNull;
     property        N: Boolean read GetIsNull write SetIsNull;
@@ -99,6 +99,7 @@ begin
     SetValue(LJPair.JsonValue.Value.ToBoolean);
     Exit;
   end else begin
+  	LAttr := Nil;
     if  Assigned(AInfoBlock.Field) then LAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
     if Assigned(LAttr) then
       SetValue(JX3Default(LAttr).Value.ToBoolean())
@@ -167,7 +168,7 @@ begin
   Result := FValue;
 end;
 
-procedure TJX3Boolean.JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options);
+procedure TJX3Boolean.JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
 
   if ASrc.GetIsNull then

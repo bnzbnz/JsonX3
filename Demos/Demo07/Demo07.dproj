@@ -1,6 +1,6 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{81CD2498-540A-4998-A04C-13ACDB1D1FAB}</ProjectGuid>
+        <ProjectGuid>{265273C0-0C2F-4D11-AF2A-99086786EDE3}</ProjectGuid>
         <ProjectVersion>20.2</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>

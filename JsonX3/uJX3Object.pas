@@ -19,7 +19,7 @@ type
     class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     function        Clone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
-    procedure       JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3Options);
+    procedure       JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
   end;
 
   TJX3Obj = TJX3Object;
@@ -178,7 +178,7 @@ begin
         if (LJPair.JsonValue is TJSONObject) then
           LJObj := (LJPair.JsonValue as TJSONObject)
         else
-          LJObj := TJSONObject.Create(LJPair);
+          LJObj :=  TJSONObject.Create(LJPair);
 
         LObj := LField.GetValue(Self).AsObject;
         if  (LObj = nil) then
@@ -287,7 +287,7 @@ begin
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 // Work In Progress...
-procedure TJX3Object.JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3Options);
+procedure TJX3Object.JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 var
   LField:     TRTTIField;
   LInstance:  TRttiInstanceType;

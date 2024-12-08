@@ -30,7 +30,7 @@ type
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
-    procedure       JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options);
+    procedure       JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 
     property IsNull:    Boolean read GetIsNull write SetIsNull;
     property Null:      Boolean read GetIsNull write SetIsNull;
@@ -90,7 +90,7 @@ begin
     end;
   end;
 
-  if AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(LValue) + '"');
+  if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(LValue) + '"');
   Result := Format('"%s":%s', [TJX3Tools.EscapeJSONStr(LName),  '"' + TJX3Tools.EscapeJSONStr(LValue) + '"']);
 end;
 
@@ -199,7 +199,7 @@ begin
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
-procedure TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options);
+procedure TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
   if ASrc.GetIsNull then
   begin

@@ -39,7 +39,7 @@ type
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function    Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
-    procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options);
+    procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 
     class function C: TJX3Number;
     class function CInt(AValue: Integer):TJX3Number;
@@ -136,7 +136,8 @@ begin
     SetValue(LJPair.JsonValue.Value);
     Exit;
   end else begin
-    LDefaultAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+  	LDefaultAttr := Nil;
+    if  Assigned(AInfoBlock.Field) then LDefaultAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
     if Assigned(LDefaultAttr) then
       SetValue(LDefaultAttr.Value)
     else
@@ -318,7 +319,7 @@ begin
    SetValue(AValue.ToString);
 end;
 
-procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options);
+procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
 
   if ASrc.GetIsNull then
