@@ -22,7 +22,8 @@ type
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
     function  Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Dic<V>;
-    procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+    function  CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Dic<V>;
+    procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     property  IsNull: Boolean read GetIsNull write SetIsNull;
     property  N:      Boolean read GetIsNull write SetIsNull;
@@ -31,12 +32,15 @@ type
     class function CAdd(AKey: string; AValue: V): TJX3Dic<V>;
     class function CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
   end;
+  TJX3Dictionary<V:class, constructor> = class(TJX3Dic<V>);
+  TJX3Dict<V:class, constructor> = class(TJX3Dic<V>);
 
 implementation
 uses
   Classes
   , Sysutils
   , StrUTils
+  , System.Diagnostics
   , uJX3String
   , uJX3Number
   , uJX3List
@@ -142,8 +146,8 @@ var
   LNewObj: TObject;
   LInfoBlock: TJX3InfoBlock;
   LJObj: TJSONObject;
+  LJObjDestroy: Boolean;
 begin
-
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicCount);
 
   if not Assigned(AInfoBlock.Obj) then begin SetIsNull(True); Exit end;;
@@ -154,24 +158,39 @@ begin
   begin
     LNewObj := V.Create;
     Add(LPair.JsonString.value, LNewObj);
+
     LPair.JsonValue.Owned := False;
     LPair.Owned := False;
-
+    LJObjDestroy := True;
+    if LPair.JsonValue is TJSONObject then
+    begin
+       LJObjDestroy := False;
+       LJObj := LPair.JsonValue as TJSONObject;
+    end else
     if LPair.JsonValue is TJSONArray then
     begin
-      LJObj := TJSONObject.Create(TJSONPAir.Create('', LPair.JsonValue));
+      LJObj := TJSONObject.Create(TJSONPAir.Create('', LPair.JsonValue));  // TList,
     end else
-      LJObj := LPair.JsonValue as TJSONObject;
+      LJObj := TJSONObject.Create(LPair);  // Primitive
 
     LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
     TJX3Tools.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
     LInfoBlock.Free;
 
-    if LPair.JsonValue is TJSONArray then FreeAndNil(LJObj);
+    if LJObjDestroy then FreeAndNil(LJObj);
     LPair.Owned := True;
     LPair.JsonValue.Owned := True;
   end;
+end;
 
+function TJX3Dic<V>.CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Dic<V>;
+var
+  LWatch: TStopWatch;
+begin
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  Result := TJX3Dic<V>.Create;
+  Result.JSONMerge(Self, [], Nil);
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
 end;
 
 function TJX3Dic<V>.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Dic<V>;
@@ -199,25 +218,23 @@ procedure TJX3Dic<V>.JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options; AInOut
 var
   ADic: TPair<string, V>;
   LObj: V;
+  LIsNull : TValue;
 begin
-
   if ASrc.GetIsNull then
   begin
     Self.SetIsNull(True);
     Exit;
   end;
-
   for ADic in ASrc do
   begin
     if not Self.ContainsKey(ADic.Key) then
     begin
       LObj := V.Create;
       TJX3Tools.CallMethodProc('JSONCreate', LObj, [True]);
-      TJX3Tools.CallMethodProc('JSONMerge', LObj, [ ADic.Value, TValue.From<TJX3Options>(AMergeOpts)]);
-      Self.Add(ADic.Key, LObj);
+      TJX3Tools.CallMethodProc('JSONMerge', LObj, [ ADic.Value, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
+      Self.Add(ADic.Key, LObj)
     end;
   end
-
 end;
 
 end.

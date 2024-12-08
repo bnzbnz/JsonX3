@@ -38,8 +38,9 @@ type
 
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    function    Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
-    procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+    function    Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Number;
+    function    CloneRTTI(AOptions: TJX3Options  = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Number;
+    procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function C: TJX3Number;
     class function CInt(AValue: Integer):TJX3Number;
@@ -143,6 +144,16 @@ begin
     else
       SetIsNull(True);
   end;
+end;
+
+function TJX3Number.CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
+var
+  LWatch: TStopWatch;
+begin
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  Result := TJX3Number.Create;
+  Result.JSONMerge(Self, [], Nil);
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
 end;
 
 function TJX3Number.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
@@ -321,15 +332,13 @@ end;
 
 procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-
   if ASrc.GetIsNull then
   begin
     Self.SetIsNull(True);
     Exit;
   end;
-
   if Self.GetIsNull then
-    SetValue(ASrc.GetValue);
+    Self.SetValue(ASrc.GetValue);
 end;
 
 end.

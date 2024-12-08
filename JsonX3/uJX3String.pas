@@ -30,7 +30,8 @@ type
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
-    procedure       JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+    function        CloneRTTI(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
+    function        JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock): TValue;
 
     property IsNull:    Boolean read GetIsNull write SetIsNull;
     property Null:      Boolean read GetIsNull write SetIsNull;
@@ -199,15 +200,29 @@ begin
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
 
-procedure TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+function TJX3String.CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3String;
+var
+  LWatch: TStopWatch;
 begin
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  Result := TJX3String.Create;
+  Result.JSONMerge(Self, [], Nil);
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
+end;
+
+function TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock): TValue;
+begin
+  Result := False;
+
   if ASrc.GetIsNull then
   begin
     Self.SetIsNull(True);
+    Result := True;
     Exit;
   end;
+
   if Self.GetIsNull then
-    SetValue(ASrc.GetValue);
+    Self.SetValue(ASrc.GetValue);
 end;
 
 

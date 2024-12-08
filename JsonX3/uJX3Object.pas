@@ -19,7 +19,8 @@ type
     class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     function        Clone<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
-    procedure       JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+    function        CloneRTTI<T:class, constructor>(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+    procedure       JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
   end;
 
   TJX3Obj = TJX3Object;
@@ -286,32 +287,50 @@ begin
   Result := Self.FromJSON<T>(Self.ToJSON(AOptions), AOptions, AInOutBlock);
   if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
 end;
-// Work In Progress...
+
+function TJX3Object.CloneRTTI<T>(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): T;
+var
+  LWatch: TStopWatch;
+begin
+  Result := T.Create;
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  TJX3Tools.CallMethodProc('JSONCreate', Result, [True]);
+  TJX3Tools.CallMethodProc('JSONMerge', Result, [ Self, TValue.From<TJX3Options>([]), AInOutBlock]);
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
+end;
+
 procedure TJX3Object.JSONMerge(ASrc: TJX3Object; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 var
   LField:     TRTTIField;
   LInstance:  TRttiInstanceType;
   LMethod:    TRTTIMEthod;
-  LObj:       TOBject;
+  LObj:       TObject;
+  LIsNull:    TValue;
 begin
-
-    for LField in JX3GetFields(Self) do
+  for LField in JX3GetFields(Self) do
+  begin
+    for var LSrcField in JX3GetFields(ASrc) do
     begin
-      for var LSrcField in JX3GetFields(ASrc) do
+      if LField.Name = LSrcField.Name then
       begin
-        if LField.Name = LSrcField.Name then
+        LObj := LField.GetValue(Self).AsObject;
+        if not Assigned(LObj) then
         begin
           LInstance := LField.FieldType.AsInstance;
           if not Assigned(LInstance) then Continue;
           LMethod := LInstance.GetMethod('Create');
-          if not Assigned(LMethod) then Continue else
-            LObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
+          if not Assigned(LMethod) then Continue;
+          LObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
           TJX3Tools.CallMethodProc('JSONCreate', LObj, [True]);
+          TJX3Tools.CallMethodProc('JSONMerge', LObj, [ LSrcField.GetValue(ASrc).AsObject, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
           LField.SetValue(Self, LObj);
-          TJX3Tools.CallMethodProc('JSONMerge', LObj, [ LSrcField.GetValue(ASrc).AsObject, TValue.From<TJX3Options>(AMergeOpts)]);
+          continue;
         end;
+        TJX3Tools.CallMethodProc('JSONMerge', LObj, [ LSrcField.GetValue(ASrc).AsObject, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
+        continue
       end;
-     end;
+    end;
+  end;
 end;
 
 end.

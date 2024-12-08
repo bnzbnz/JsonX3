@@ -14,14 +14,15 @@ type
 
   TObjectList<T: class, constructor> = class(System.Generics.Collections.TObjectList<T>);
   TJX3List<T: class, constructor> = class(TObjectList<T>)
-    constructor Create;
+    constructor     Create;
 
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock =Nil);
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     class function  FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3List<T>;
-    procedure       JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+    function        CloneRTTI(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock= Nil): TJX3List<T>;
+    procedure       JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     function        GetIsNull: Boolean;
     procedure       SetIsNull(ANull: Boolean);
@@ -36,11 +37,23 @@ type
     class function  CAddRange(const AValues: array of T): TJX3List<T>; overload;
   end;
 
-  TJX3StrList   = class(TJX3List<TJX3String>);
-  TJX3NumList   = class(TJX3List<TJX3Number>);
-  TJX3BoolList  = class(TJX3List<TJX3Boolean>);
+  TJX3Lst<V:class, constructor> = class(TJX3List<V>);
 
-  implementation
+  TJX3StrList   = class(TJX3List<TJX3String>);
+  TJX3StrLst    = class(TJX3List<TJX3String>);
+  TJX3NumList   = class(TJX3List<TJX3Number>);
+  TJX3NumLst    = class(TJX3List<TJX3Number>);
+  TJX3BoolList  = class(TJX3List<TJX3Boolean>);
+  TJX3BoolLst   = class(TJX3List<TJX3Boolean>);
+
+  TJX3ListStr   = class(TJX3List<TJX3String>);
+  TJX3LstStr    = class(TJX3List<TJX3String>);
+  TJX3ListNum   = class(TJX3List<TJX3Number>);
+  TJX3LstNum    = class(TJX3List<TJX3Number>);
+  TJX3ListBool  = class(TJX3List<TJX3Boolean>);
+  TJX3LstBool   = class(TJX3List<TJX3Boolean>);
+
+implementation
 uses
   Classes
   , JSON
@@ -196,6 +209,15 @@ begin
   end;
 end;
 
+function TJX3List<T>.CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3List<T>;
+var
+  LWatch: TStopWatch;
+begin
+  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
+  Result := TJX3List<T>.Create;
+  Result.JSONMerge(Self, [], Nil);
+  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
+end;
 
 function TJX3List<T>.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3List<T>;
 var
@@ -270,19 +292,18 @@ procedure TJX3List<T>.JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3Options; AInO
 var
   AList: T;
   LObj: T;
+  LIsNull: TValue;
 begin
-
   if ASrc.GetIsNull then
   begin
     Self.SetIsNull(True);
     Exit;
   end;
-
   for AList in ASrc do
   begin
     LObj := T.Create;
     TJX3Tools.CallMethodProc('JSONCreate', LObj, [True]);
-    TJX3Tools.CallMethodProc('JSONMerge', LOBJ, [ AList, TValue.From<TJX3Options>(AMergeOpts)]);
+    TJX3Tools.CallMethodProc('JSONMerge', LOBJ, [ AList, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
     Self.Add(LObj);
   end;
 end;
