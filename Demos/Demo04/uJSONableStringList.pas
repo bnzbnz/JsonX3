@@ -18,6 +18,7 @@ type
     procedure   JSONCreate(AManaged: Boolean);
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
+    procedure   JSONMerge(ASrc: TJSONableStringList; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
     function    JSONDestroy: Boolean;
   end;
 
@@ -59,5 +60,16 @@ begin
   for LStr in LArr do Self.Add(LStr.AsType<string>);
 end;
 
+// Optional, but required for Merge and CloneRTTI
+procedure TJSONableStringList.JSONMerge(ASrc: TJSONableStringList; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+var
+  AStr: string;
+begin
+  Clear;
+  for AStr in ASrc do
+  begin
+    Self.Add(AStr);
+  end;
+end;
 
 end.

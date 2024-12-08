@@ -169,9 +169,9 @@ begin
     end else
     if LPair.JsonValue is TJSONArray then
     begin
-      LJObj := TJSONObject.Create(TJSONPAir.Create('', LPair.JsonValue));  // TList,
+      LJObj := TJSONObject.Create(TJSONPAir.Create('', LPair.JsonValue));
     end else
-      LJObj := TJSONObject.Create(LPair);  // Primitive
+      LJObj := TJSONObject.Create(LPair);
 
     LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
     TJX3Tools.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);

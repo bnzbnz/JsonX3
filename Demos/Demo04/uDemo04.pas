@@ -44,7 +44,7 @@ implementation
 procedure TForm4.ButtonClick(Sender: TObject);
 var
   Json: string;
-  Obj, NewObj: TDemoContainer;
+  Obj, NewObj, RTTIObj: TDemoContainer;
   MyList:  TJSONableStringList;
 begin
   Memo1.Lines.Clear;
@@ -80,12 +80,20 @@ begin
   Memo1.lines.add(Json);
 
   // Cloned Json
-  NewObj := Obj.Clone<TDemoContainer>;    // we clone the json object as NewObj
+  NewObj := Obj.CloneRTTI<TDemoContainer>;    // we clone the json object as NewObj
   Json := NewObj.ToJson([]);              // Serialize the new object;
   Memo1.lines.add('');
-  Memo1.lines.add('Cloned and Formatted:');
+  Memo1.lines.add('Cloned:');
   Memo1.lines.add(Json);
 
+  // RTTI Clone Json
+  RTTIObj := Obj.CloneRTTI<TDemoContainer>;    // we clone the json object usin RTTI as NewObj
+  Json := NewObj.ToJson([]);              // Serialize the new object;
+  Memo1.lines.add('');
+  Memo1.lines.add('RTTI Cloned:');
+  Memo1.lines.add(Json);
+
+  RTTIObj.Free;
   NewObj.Free;
   Obj.Free;
 
