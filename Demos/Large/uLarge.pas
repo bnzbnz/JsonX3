@@ -105,7 +105,7 @@ uses
 
 procedure TForm4.ButtonClick( Sender : TObject );
   var
-    LJObj : TfetchItemAspectsContentType;
+    LJObj, LJObjClone, LJObjCLoneRTTI : TfetchItemAspectsContentType;
     LStream : TStringStream;
     LJsonStr : string;
     LWatch : TStopWatch;
@@ -132,6 +132,18 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( '' );
     Memo1.Lines.add( '==> ' + LStats.Stats.OpCount.toString + ' Operations !!!' );
     Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.OpCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+
+    Memo1.Lines.add( '' );
+    LStats.Stats.Clear;
+    Memo1.Lines.add( 'JSX3 Object Clone:' );
+    LJObjClone := LJObj.Clone<TfetchItemAspectsContentType>([joStats], LStats);
+    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
+
+    Memo1.Lines.add( '' );
+    LStats.Stats.Clear;
+    Memo1.Lines.add( 'JSX3 Object Clone RTTI:' );
+    LJObjCloneRTTI := LJObj.CloneRTTI<TfetchItemAspectsContentType>([joStats], LStats);
+    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;

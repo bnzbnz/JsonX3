@@ -23,10 +23,11 @@ type
     procedure       SetValue(AValue: Boolean);
   public
     constructor     Create;
+
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function        Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Boolean;
-    function        CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Boolean;
+    function        CloneRTTI(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Boolean;
     procedure       JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function  C(AValue: Boolean = False): TJX3Boolean;

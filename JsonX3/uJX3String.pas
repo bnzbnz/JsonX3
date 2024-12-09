@@ -23,14 +23,14 @@ type
     function        GetIso8601UTC: TDateTime;
     procedure       SetIso8601UTC(AValue: TDateTime);
   public
-    constructor     Create;
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
 
+    constructor     Create;
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
-    function        CloneRTTI(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
+    function        CloneRTTI(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
     function        JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock): TValue;
 
     property IsNull:    Boolean read GetIsNull write SetIsNull;

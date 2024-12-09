@@ -110,7 +110,7 @@ var
   Lx: NativeInt;
 begin
   _RTTILock4.Enter;
-  Lx := AName.GetHashCode + NativeInt(AObj.ClassType);
+  Lx := NativeInt(AObj.ClassType) + AName.GetHashCode;
   if  not _RTTIMethObjCacheDic.TryGetValue(Lx, Result)  then
   begin
     Result :=  _RTTIctx.GetType(AObj.ClassType).GetMethod(AName);

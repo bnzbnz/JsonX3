@@ -14,27 +14,29 @@ type
 
   TObjectList<T: class, constructor> = class(System.Generics.Collections.TObjectList<T>);
   TJX3List<T: class, constructor> = class(TObjectList<T>)
+  protected
+    function        GetIsNull: Boolean;
+    procedure       SetIsNull(ANull: Boolean);
+  public
     constructor     Create;
+    function        First:T;
+    function        Last: T;
 
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock =Nil);
     function        ToJSON(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
+
     class function  FromJSON(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3List<T>;
     function        CloneRTTI(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock= Nil): TJX3List<T>;
     procedure       JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
-    function        GetIsNull: Boolean;
-    procedure       SetIsNull(ANull: Boolean);
-    function        First:T;
-    function        Last: T;
-
-    property        IsNull: Boolean read GetIsNull write SetIsNull;
-    property        N: Boolean read GetIsNull write SetIsNull;
-
     class function  C: TJX3List<T>;
     class function  CAdd(AValue: T): TJX3List<T>;
     class function  CAddRange(const AValues: array of T): TJX3List<T>; overload;
+
+    property        IsNull: Boolean read GetIsNull write SetIsNull;
+    property        N: Boolean read GetIsNull write SetIsNull;
   end;
 
   TJX3Lst<V:class, constructor> = class(TJX3List<V>);

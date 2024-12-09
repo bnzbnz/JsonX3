@@ -16,6 +16,7 @@ type
     FNull:  Boolean;
     FValue: string;
     FKind: TJX3NumKind;
+  protected
     function    GetIsNull: Boolean;
     procedure   SetIsNull(ANull: Boolean);
     function    GetInt: Integer;
@@ -39,7 +40,7 @@ type
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     function    Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Number;
-    function    CloneRTTI(AOptions: TJX3Options  = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Number;
+    function    CloneRTTI(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Number;
     procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function C: TJX3Number;

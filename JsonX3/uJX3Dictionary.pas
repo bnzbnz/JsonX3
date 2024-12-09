@@ -20,17 +20,16 @@ type
 
     function  JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-
     function  Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Dic<V>;
     function  CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Dic<V>;
     procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
-    property  IsNull: Boolean read GetIsNull write SetIsNull;
-    property  N:      Boolean read GetIsNull write SetIsNull;
-
     class function C: TJX3Dic<V>;
     class function CAdd(AKey: string; AValue: V): TJX3Dic<V>;
     class function CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
+
+    property  IsNull: Boolean read GetIsNull write SetIsNull;
+    property  N:      Boolean read GetIsNull write SetIsNull;
   end;
   TJX3Dictionary<V:class, constructor> = class(TJX3Dic<V>);
   TJX3Dict<V:class, constructor> = class(TJX3Dic<V>);
