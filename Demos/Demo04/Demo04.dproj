@@ -197,7 +197,6 @@
             <Form>Form4</Form>
         </DCCReference>
         <DCCReference Include="..\..\JsonX3\uJX3String.pas"/>
-        <DCCReference Include="..\..\JsonX3\uJX3Tools.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Boolean.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3List.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Object.pas"/>

@@ -10,7 +10,6 @@ uses
   , uJX3Boolean
   , uJX3String
   , uJX3Object
-  , uJX3Tools
   , uJX3List
   , uJX3Dictionary
   ;
@@ -46,7 +45,7 @@ implementation
 
 procedure TForm4.ButtonClick(Sender: TObject);
 begin
-  // Random example from the internet
+  // Random json found on the internet
   var GameStr :=
     '''
     {"quiz":{"sport":{"q1":{"question":"Which one is correct team name in NBA?","options":["New York Bulls",
@@ -55,8 +54,9 @@ begin
     "q2":{"question":"12 - 8 = ?","options":["1","2","3","4"],"answer":"4"}}}}
     ''';
 
+  // TJX3 = TJX3Object
   var Game := TJX3Object.FromJSON<TGame>(GameStr);         // Get the Object from Json
-  Memo1.Text := TJX3Tools.FormatJSON( Game.ToJSON() );     // Get the Json from the Object, and print the formated result
+  Memo1.Text := TJX3.FormatJSON(  TJX3.ToJSON(Game) );     // Get the Json from the Object, and print the formated result
 
   Memo1.Lines.Add('');
   Memo1.Lines.Add('Questionss - Options :');

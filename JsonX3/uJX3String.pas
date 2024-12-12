@@ -4,12 +4,12 @@ interface
 uses
     RTTI
   , JSON
-  , uJX3Tools
+  , uJX3Object
   ;
 
 type
 
-  TJX3String = class(TObject)
+  TJX3String = class(TJX3Object)
   private
     FValue: string;
     FIsNull:  Boolean;
@@ -23,15 +23,15 @@ type
     function        GetIso8601UTC: TDateTime;
     procedure       SetIso8601UTC(AValue: TDateTime);
   public
+    constructor     Create; override;
+
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
+    procedure       JSONClone(ADest: TJX3String; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
+    function        JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TValue;
 
-    constructor     Create;
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
-    function        Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
-    function        CloneRTTI(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3String;
-    function        JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock): TValue;
 
     property IsNull:    Boolean read GetIsNull write SetIsNull;
     property Null:      Boolean read GetIsNull write SetIsNull;
@@ -55,6 +55,12 @@ uses
   , uJX3Rtti
   ;
 
+constructor TJX3String.Create;
+begin
+  inherited;
+  SetIsNull(True);
+end;
+
 function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
   LName: string;
@@ -70,7 +76,7 @@ begin
     if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
   end else
     LName := AInfoBlock.FieldName;
-  LName := TJX3Tools.NameDecode(LName);
+  LName := TJX3Object.NameDecode(LName);
 
   LValue := FValue;
   if GetIsNull then
@@ -84,15 +90,15 @@ begin
     if not Assigned(LAttr) then
     begin
       if Assigned(AInfoBlock.Field) and Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-        TJX3Tools.RaiseException(Format('"%s" (TJX3String) : a value is required', [LName]));
+        raise Exception.Create(Format('"%s" (TJX3String) : a value is required', [LName]));
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
       Exit(Format('"%s":null', [LName]))
     end;
   end;
 
-  if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Tools.EscapeJSONStr(LValue) + '"');
-  Result := Format('"%s":%s', [TJX3Tools.EscapeJSONStr(LName),  '"' + TJX3Tools.EscapeJSONStr(LValue) + '"']);
+  if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Object.EscapeJSONStr(LValue) + '"');
+  Result := Format('"%s":%s', [TJX3Object.EscapeJSONStr(LName),  '"' + TJX3Object.EscapeJSONStr(LValue) + '"']);
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
@@ -115,10 +121,30 @@ begin
   end;
 end;
 
-constructor TJX3String.Create;
+procedure TJX3String.JSONClone(ADest: TJX3String; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  inherited;
-  SetIsNull(True);
+  if Assigned(AInOutBlock) and (joStats in AOptions) then Inc(AInOutBlock.Stats.PrimitiveCount);
+  if FIsNull then
+  begin
+    ADest.IsNull := True;
+    Exit;
+  end;
+  ADest.SetValue(Self.FValue);
+end;
+
+function TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock): TValue;
+begin
+  Result := False;
+
+  if ASrc.GetIsNull then
+  begin
+    Self.SetIsNull(True);
+    Result := True;
+    Exit;
+  end;
+
+  if Self.GetIsNull then
+    Self.SetValue(ASrc.GetValue);
 end;
 
 class function TJX3String.C: TJX3String;
@@ -173,57 +199,5 @@ procedure TJX3String.SetIso8601UTC(AValue: TDateTime);
 begin
   SetValue(DateToISO8601(AValue, True));
 end;
-
-function TJX3String.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3String;
-var
-  LWatch: TStopWatch;
-  LJObj: TJSONObject;
-  LInfoBlock: TJX3InfoBlock;
-  LJson: string;
-begin
-  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-  LInfoBlock := Nil;
-  LJObj := Nil;
-  try
-    Result := TJX3String.Create;
-    LInfoBlock := TJX3InfoBlock.Create('T', LJObj, Nil, AOptions);
-    LJson := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
-    LInfoBlock.Free;
-    LJObj := TJSONObject.ParseJSONValue('{'  + LJson + '}', True, joRaiseException in AOptions) as TJSONObject;
-    LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
-    JSONDeserialize(LInfoBlock, AInOutBlock);
-    TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
-  finally
-    LJObj.Free;
-    LInfoBlock.Free;
-  end;
-  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
-end;
-
-function TJX3String.CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3String;
-var
-  LWatch: TStopWatch;
-begin
-  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-  Result := TJX3String.Create;
-  Result.JSONMerge(Self, [], Nil);
-  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
-end;
-
-function TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock): TValue;
-begin
-  Result := False;
-
-  if ASrc.GetIsNull then
-  begin
-    Self.SetIsNull(True);
-    Result := True;
-    Exit;
-  end;
-
-  if Self.GetIsNull then
-    Self.SetValue(ASrc.GetValue);
-end;
-
 
 end.

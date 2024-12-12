@@ -197,7 +197,6 @@
             <Form>Form4</Form>
         </DCCReference>
         <DCCReference Include="..\..\JsonX3\uJX3String.pas"/>
-        <DCCReference Include="..\..\JsonX3\uJX3Tools.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Boolean.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3List.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Object.pas"/>
@@ -246,19 +245,13 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="..\Large.exe" Configuration="Debug" Class="ProjectOutput">
-                    <Platform Name="Win64">
+                    <Platform Name="Win32">
                         <RemoteName>Large.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="..\Large.rsm" Configuration="Debug" Class="DebugSymbols">
+                <DeployFile LocalName="..\Large.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64">
-                        <RemoteName>Large.rsm</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="Win32\Debug\Large.exe" Configuration="Debug" Class="ProjectOutput">
-                    <Platform Name="Win32">
                         <RemoteName>Large.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>

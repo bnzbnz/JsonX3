@@ -25,8 +25,7 @@ uses
   uJX3String,
   uJX3List,
   uJX3Dictionary,
-  uJX3Object,
-  uJX3Tools;
+  uJX3Object;
 
 type
 
@@ -105,7 +104,7 @@ uses
 
 procedure TForm4.ButtonClick( Sender : TObject );
   var
-    LJObj, LJObjClone, LJObjCLoneRTTI : TfetchItemAspectsContentType;
+    LJObj, LJObjClone: TfetchItemAspectsContentType;
     LStream : TStringStream;
     LJsonStr : string;
     LWatch : TStopWatch;
@@ -126,7 +125,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Convert Json String to JSX3 Objects :' );
-    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joNullToEmpty, joStats ], LStats );
+    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joStats ], LStats );
     Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
@@ -135,20 +134,14 @@ procedure TForm4.ButtonClick( Sender : TObject );
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
-    Memo1.Lines.add( 'JSX3 Object Clone:' );
-    LJObjClone := LJObj.Clone<TfetchItemAspectsContentType>([joStats], LStats);
-    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
-
-    Memo1.Lines.add( '' );
-    LStats.Stats.Clear;
-    Memo1.Lines.add( 'JSX3 Object Clone RTTI:' );
-    LJObjCloneRTTI := LJObj.CloneRTTI<TfetchItemAspectsContentType>([joStats], LStats);
+    Memo1.Lines.add( 'JSX3 Object Cloneing:' );
+    LJObjClone := TJX3Object.Clone<TfetchItemAspectsContentType>(LJObj, [joStats], LStats);
     Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Revert JSX3 Objects to Json String :' );
-    LJsonStr := LJObj.ToJson( [ joNullToEmpty, joStats ], LStats );
+    LJsonStr := TJX3Object.ToJson( LJObj, [ joNullToEmpty, joStats ], LStats );
     Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
@@ -165,6 +158,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( Format( '  Stream size: %s KB', [ ( LStream.Size div 1024 ).toString ] ) );
     LStream.Free;
 
+    LJObjClone.Free;
     LStats.Free;
   end;
 

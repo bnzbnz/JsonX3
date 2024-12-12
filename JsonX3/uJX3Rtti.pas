@@ -37,11 +37,49 @@ var
 var
   _RTTIctx: TRttiContext;
 {$ENDIF}
-
+  function JX3CreateObject(AInstance: TRTTIInstanceType): TObject; overload; inline;
+  function JX3CreateObject(AClass: TClass): TObject; overload; inline;
+  procedure JX3CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue);
+  function  JX3CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
 implementation
 uses
-  StrUtils,
-  Sysutils;
+    StrUtils
+  , Sysutils
+  ;
+
+procedure JX3CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue);
+var
+  LMeth: TRttiMethod;
+begin
+  LMeth := JX3GetMethod(AObj, AMethod);
+  if Assigned(LMeth) then LMeth.Invoke(AObj, AArgs);
+end;
+
+function JX3CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
+var
+  LMeth: TRttiMethod;
+begin
+  LMeth := JX3GetMethod(AObj, AMethod);
+  if not Assigned(LMeth) then Exit(TValue.Empty);
+  Result := LMeth.Invoke(AObj, AArgs);
+  if not Result.IsEmpty then Result := Result.AsType<TValue>(True);
+end;
+
+function JX3CreateObject(AInstance: TRTTIInstanceType): TObject;
+var
+  LMethod: TRTTIMethod;
+begin
+  Result := Nil;
+  if not Assigned(AInstance) then Exit;
+  LMethod := AInstance.GetMethod('Create');
+  if not Assigned(LMethod) then Exit;
+  Result := LMethod.Invoke(AInstance.MetaclassType,[]).AsObject
+end;
+
+function JX3CreateObject(AClass: TClass): TObject;
+begin
+   Result := JX3CreateObject(_RTTIctx.GetType(AClass).AsInstance);
+end;
 
 function JX3GetFields(aObj: TObject): TArray<TRTTIField>;
 {$IFDEF JX3RTTICACHE}

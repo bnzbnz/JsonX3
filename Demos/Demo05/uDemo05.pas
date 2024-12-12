@@ -10,7 +10,6 @@ uses
   , uJX3Boolean
   , uJX3String
   , uJX3Object
-  , uJX3Tools
   ;
 
 type
@@ -48,7 +47,7 @@ implementation
 
 procedure TForm4.ButtonClick(Sender: TObject);
 var
-  Demo, Demo3, Demo4, JDemo: TDemo;
+  Demo, Demo3, JDemo: TDemo;
   JsonStr: string;
 begin
   Demo := Nil;
@@ -61,7 +60,7 @@ begin
     Demo.HrefVar.V := 'http://';
     //Demo.Mix.V := True;
     Memo1.Lines.Add('JX3Default Attribute : Num1 default to 22 :');
-    Memo1.Lines.Add(Demo.ToJSON([joNulltoEmpty]));
+    Memo1.Lines.Add(TJX3Object.ToJSON(Demo, [joNulltoEmpty]));
 
     Memo1.Lines.Add('');
     Memo1.Lines.Add('JX3Name Attribute, Name conversion :');
@@ -69,21 +68,16 @@ begin
     JDemo := TJX3Object.FromJSON<TDemo>(JsonStr);
     Memo1.Lines.Add('Deserialization: #href value is : ' + JDemo.HrefVar.Value);
     JDemo.HrefVar.Value :='ftp';
-    Memo1.Lines.Add('Serialization: ' + JDemo.ToJSON([joNulltoEmpty]));
+    Memo1.Lines.Add('Serialization: ' + TJX3Object.ToJSON(JDemo, [joNulltoEmpty]));
 
     Memo1.Lines.Add('');
     Demo.__23href2.Value := 'auto enc/dec oding';       // Name encoding: start by '_' and special characters: '_'+Hex Value : # => _23
-    Memo1.Lines.Add('Name encoding : ' + Demo.ToJSON([joNulltoEmpty]));
+    Memo1.Lines.Add('Name encoding : ' + TJX3Object.ToJSON(Demo, [joNulltoEmpty]));
 
     //Cloning :
     Memo1.Lines.Add('');
-    Demo3 := Demo.Clone<TDemo>;
-    Memo1.Lines.Add('Clone : ' + Demo3.ToJSON([joNulltoEmpty]));
-
-    //Cloning RTTI:
-    Memo1.Lines.Add('');
-    Demo4 := Demo.CloneRTTI<TDemo>;
-    Memo1.Lines.Add('Clone RTTI: ' + Demo4.ToJSON([joNulltoEmpty]));
+    Demo3 := TJX3Object.Clone<TDemo>(Demo);
+    Memo1.Lines.Add('Clone : ' + TJX3Object.ToJSON(Demo3, [joNulltoEmpty]));
 
     // Options flags:
     //  joNullToEmpty         : Remove null fields
@@ -95,10 +89,9 @@ begin
     Memo1.Lines.Add('JX3Required exception');
     Demo3.Str.IsNull := True;
     //Demo.Str is null but required >> Exception;
-    JsonStr := Demo3.ToJSON([joRaiseException]);        // This flag will re-raise internal exceptions
+    JsonStr := TJX3Object.ToJSON(Demo3, [joRaiseException]);        // This flag will re-raise internal exceptions
 
   finally
-    Demo4.Free;
     Demo3.Free;
     JDemo.Free;
     Demo.Free;

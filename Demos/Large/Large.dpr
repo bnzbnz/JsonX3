@@ -5,7 +5,6 @@ uses
   FMX.Forms,
   uLarge in 'uLarge.pas' {Form4},
   uJX3String in '..\..\JsonX3\uJX3String.pas',
-  uJX3Tools in '..\..\JsonX3\uJX3Tools.pas',
   uJX3Boolean in '..\..\JsonX3\uJX3Boolean.pas',
   uJX3List in '..\..\JsonX3\uJX3List.pas',
   uJX3Object in '..\..\JsonX3\uJX3Object.pas',

@@ -10,7 +10,6 @@ uses
   , uJX3Boolean
   , uJX3String
   , uJX3Object
-  , uJX3Tools
   ;
 
 type
@@ -61,13 +60,13 @@ begin
   // Primitives.NullStr << Null
 
   // Raw Json
-  Json := Primitives.ToJson([]);
+  Json := TJX3Object.ToJson(Primitives, []);
   Memo1.lines.add('Raw Original Object:');
   Memo1.lines.add(Json);
 
   //Optimized Json
   Memo1.lines.add('');
-  Json := Primitives.ToJson([joNullToEmpty]);
+  Json := TJX3Object.ToJson(Primitives, [joNullToEmpty]);
   Memo1.lines.add('Optimized Original Object:');
   Memo1.lines.add(Json);
 
@@ -76,7 +75,7 @@ begin
 
   // Serializing the New Object
   Memo1.lines.add('');
-  Json := NewPrimitives.ToJson([joNullToEmpty]);
+  Json := TJX3Object.ToJson(NewPrimitives, [joNullToEmpty]);
   Memo1.lines.add('New Cloned Object:');
   Memo1.lines.add(Json);
 
@@ -90,7 +89,7 @@ begin
   // Formatted Json
   Memo1.lines.add('');
   Memo1.lines.add('Formatted:');
-  Memo1.lines.add(TJX3Tools.FormatJSON(Json));
+  Memo1.lines.add(TJX3Object.FormatJSON(Json));
 
   NewPrimitives.Free;
   Primitives.Free;

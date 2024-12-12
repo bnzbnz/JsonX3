@@ -11,7 +11,6 @@ uses
   , uJX3String
   , uJX3Object
   , uJX3List
-  , uJX3Tools
   ;
 
 type
@@ -64,10 +63,10 @@ begin
   var Json := '{"container":' + Memo1.Lines.Text + '}';     // << because the provided json is an array, we enclose it with a TJXObject container
   var Ex7 := TJX3Object.FromJSON<TEx7>(Json);
 
-  var Ex7Clone := Ex7.Clone<TEx7>;                        // for the fun we clone Ex7... :)
+  var Ex7Clone := TJX3.Clone<TEx7>(Ex7);                        // for the fun we clone Ex7... :)
   Ex7.Free;
 
-  Memo1.Text := TJX3Tools.FormatJSON( Ex7Clone.ToJSON([joNullToEmpty]) );
+  Memo1.Text := TJX3.FormatJSON( TJX3.ToJSON(Ex7Clone, [joNullToEmpty]) );
 
   Ex7Clone.Free;
 end;

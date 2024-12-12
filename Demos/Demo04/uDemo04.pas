@@ -10,7 +10,6 @@ uses
   , uJX3Boolean
   , uJX3String
   , uJX3Object
-  , uJX3Tools
   , uJSONableStringList
   ;
 
@@ -44,7 +43,7 @@ implementation
 procedure TForm4.ButtonClick(Sender: TObject);
 var
   Json: string;
-  Obj, NewObj, RTTIObj: TDemoContainer;
+  Obj, NewObj: TDemoContainer;
   MyList:  TJSONableStringList;
 begin
   Memo1.Lines.Clear;
@@ -63,7 +62,7 @@ begin
   Obj.StringListNotManaged := MyList;   // This external field is nil, we assign it
 
   // Raw Json
-  Json := Obj.ToJson([]);
+  Json := TJX3Object.ToJson(Obj, []);
 
   // Formatted Json
   Memo1.lines.add('List Raw:');
@@ -74,26 +73,18 @@ begin
   MyList.Add('Managed');
 
   // Updated Json
-  Json := Obj.ToJson([]);
+  Json := TJX3Object.ToJson(Obj, []);
   Memo1.lines.add('');
   Memo1.lines.add('Updated:');
   Memo1.lines.add(Json);
 
   // Cloned Json
-  NewObj := Obj.CloneRTTI<TDemoContainer>;    // we clone the json object as NewObj
-  Json := NewObj.ToJson([]);              // Serialize the new object;
+  NewObj := TJX3Object.Clone<TDemoContainer>(Obj);    // we clone the json object as NewObj
+  Json := TJX3Object.ToJson(NewObj, []);             // Serialize the new object;
   Memo1.lines.add('');
   Memo1.lines.add('Cloned:');
   Memo1.lines.add(Json);
 
-  // RTTI Clone Json
-  RTTIObj := Obj.CloneRTTI<TDemoContainer>;    // we clone the json object usin RTTI as NewObj
-  Json := NewObj.ToJson([]);              // Serialize the new object;
-  Memo1.lines.add('');
-  Memo1.lines.add('RTTI Cloned:');
-  Memo1.lines.add(Json);
-
-  RTTIObj.Free;
   NewObj.Free;
   Obj.Free;
 

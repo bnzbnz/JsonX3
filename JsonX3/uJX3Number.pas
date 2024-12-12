@@ -4,7 +4,7 @@ interface
 uses
     RTTI
   , JSON
-  , uJX3Tools
+  , uJX3Object
   ;
 
 type
@@ -13,7 +13,7 @@ type
 
   TJX3Number    = class(TObject)
   private
-    FNull:  Boolean;
+    FIsNull:  Boolean;
     FValue: string;
     FKind: TJX3NumKind;
   protected
@@ -35,12 +35,10 @@ type
     procedure   SetValue(AValue: string);
   public
     constructor Create;
-    destructor  Destroy; override;
 
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    function    Clone(AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TJX3Number;
-    function    CloneRTTI(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Number;
+    procedure   JSONClone(ADest: TJX3Number; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function C: TJX3Number;
@@ -66,6 +64,7 @@ type
   end;
 
   TJX3Num = TJX3Number;
+
 implementation
 uses
     SysUTils
@@ -74,6 +73,14 @@ uses
   , System.Diagnostics
   , uJX3Rtti
   ;
+
+constructor TJX3Number.Create;
+begin
+  inherited;
+  FKind := nkNull;
+  FIsNull := True;
+  FValue := '0';
+end;
 
 function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
@@ -91,7 +98,7 @@ begin
     if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
   end else
     LName := AInfoBlock.FieldName;
-  LName := TJX3Tools.NameDecode(LName);
+  LName := TJX3Object.NameDecode(LName);
 
   LValue := FValue;
 
@@ -107,7 +114,7 @@ begin
     begin
 
       if Assigned(AInfoBlock.Field) and Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-        TJX3Tools.RaiseException(Format('"%s" (TJX3Number) : a value is required', [LName]));
+        raise Exception.Create(Format('"%s" (TJX3Number) : a value is required', [LName]));
 
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
@@ -147,53 +154,15 @@ begin
   end;
 end;
 
-function TJX3Number.CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
-var
-  LWatch: TStopWatch;
+procedure TJX3Number.JSONClone(ADest: TJX3Number; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-  Result := TJX3Number.Create;
-  Result.JSONMerge(Self, [], Nil);
-  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
-end;
-
-function TJX3Number.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Number;
-var
-  LWatch: TStopWatch;
-  LJObj: TJSONObject;
-  LInfoBlock: TJX3InfoBlock;
-  LJson: string;
-begin
-  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-  LInfoBlock := Nil;
-  LJObj := Nil;
-  try
-    Result := TJX3Number.Create;
-    LInfoBlock := TJX3InfoBlock.Create('T', LJObj, Nil, AOptions);
-    LJson := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
-    LInfoBlock.Free;
-    LJObj := TJSONObject.ParseJSONValue('{'  + LJson + '}', True, joRaiseException in AOptions) as TJSONObject;
-    LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
-    JSONDeserialize(LInfoBlock, AInOutBlock);
-    TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
-  finally
-    LJObj.Free;
-    LInfoBlock.Free;
+  if Assigned(AInOutBlock) and (joStats in AOptions) then Inc(AInOutBlock.Stats.PrimitiveCount);
+  if Self.FIsNull then
+  begin
+    ADest.IsNull := True;
+    Exit;
   end;
-  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
-end;
-
-constructor TJX3Number.Create;
-begin
-  inherited;
-  FKind := nkNull;
-  FNull := True;
-  FValue := '0';
-end;
-
-destructor TJX3Number.Destroy;
-begin
-  inherited;
+  ADest.SetValue(Self.FValue);
 end;
 
 class function TJX3Number.C: TJX3Number;
@@ -245,18 +214,18 @@ end;
 
 function TJX3Number.GetISNull: Boolean;
 begin
-  Result := FNull;
+  Result := FIsNull;
 end;
 
 procedure TJX3Number.SetIsNull(ANull: Boolean);
 begin
-  FNull := ANull;
+  FIsNull := ANull;
   if ANull then FValue := '0';
 end;
 
 procedure TJX3Number.SetValue(AValue: string);
 begin
-  FNull := False;
+  FIsNull := False;
   FValue := AValue;
 end;
 

@@ -5,7 +5,7 @@ uses
   Classes
   , JSON
   , RTTI
-  , uJX3Tools
+  , uJX3Object
   , SysUtils
   ;
 
@@ -18,6 +18,7 @@ type
     procedure   JSONCreate(AManaged: Boolean);
     function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
+    procedure   JSONClone(ADest: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
     procedure   JSONMerge(ASrc: TJSONableStringList; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
     function    JSONDestroy: Boolean;
   end;
@@ -60,7 +61,16 @@ begin
   for LStr in LArr do Self.Add(LStr.AsType<string>);
 end;
 
-// Optional, but required for Merge and CloneRTTI
+// Optional
+procedure TJSONableStringList.JSONClone(ADest: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+var
+  AStr: string;
+begin
+  for AStr in Self do
+    TJSONableStringList(ADest).Add(AStr);
+end;
+
+// Optional
 procedure TJSONableStringList.JSONMerge(ASrc: TJSONableStringList; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 var
   AStr: string;

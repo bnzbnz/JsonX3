@@ -4,7 +4,7 @@ interface
 uses
 
   RTTI
-  , uJX3Tools
+  , uJX3Object
   ;
 
 const
@@ -26,8 +26,7 @@ type
 
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    function        Clone(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Boolean;
-    function        CloneRTTI(AOptions: TJX3Options = [joNullToEmpty]; AInOutBlock: TJX3InOutBlock = Nil): TJX3Boolean;
+    procedure       JSONClone(ADest: TJX3Boolean; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function  C(AValue: Boolean = False): TJX3Boolean;
@@ -49,6 +48,13 @@ uses
   , uJX3Rtti
   ;
 
+constructor TJX3Boolean.Create;
+begin
+  inherited;
+  FIsNull := True;
+  FValue := False;
+end;
+
 function TJX3Boolean.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
   LName: string;
@@ -64,7 +70,7 @@ begin
     if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
   end else
     LName := AInfoBlock.FieldName;
-  LName := TJX3Tools.NameDecode(LName);
+  LName := TJX3Object.NameDecode(LName);
 
   LValue := FValue;
   if GetIsNull then
@@ -78,7 +84,7 @@ begin
     if not Assigned(LAttr) then
     begin
       if Assigned(AInfoBlock.Field) and Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
-        TJX3Tools.RaiseException(Format('"%s" (TJX3Boolean) : a value is required', [LName]));
+        raise Exception.Create(Format('"%s" (TJX3Boolean) : a value is required', [LName]));
 
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
@@ -111,46 +117,26 @@ begin
   end;
 end;
 
-function TJX3Boolean.CloneRTTI(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Boolean;
-var
-  LWatch: TStopWatch;
+procedure TJX3Boolean.JSONClone(ADest: TJX3Boolean; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-  Result := TJX3Boolean.Create;
-  Result.JSONMerge(Self, [], Nil);
-  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
+  if Assigned(AInOutBlock) and (joStats in AOptions) then Inc(AInOutBlock.Stats.PrimitiveCount);
+  if FIsNull then
+  begin
+    ADest.IsNull := True;
+    Exit;
+  end;
+  ADest.SetValue(Self.FValue);
 end;
 
-function TJX3Boolean.Clone(AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): TJX3Boolean;
-var
-  LWatch: TStopWatch;
-  LJObj: TJSONObject;
-  LInfoBlock: TJX3InfoBlock;
-  LJson: string;
+procedure TJX3Boolean.JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-  LInfoBlock := Nil;
-  LJObj := Nil;
-  try
-    Result := TJX3Boolean.Create;
-    LInfoBlock := TJX3InfoBlock.Create('T', LJObj, Nil, AOptions);
-    LJson := JSONSerialize(LInfoBlock, AInOutBlock).AsString;
-    LInfoBlock.Free;
-    LJObj := TJSONObject.ParseJSONValue('{'  + LJson + '}', True, joRaiseException in AOptions) as TJSONObject;
-    LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
-    JSONDeserialize(LInfoBlock, AInOutBlock);
-    TJX3Tools.CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
-  finally
-    LJObj.Free;
-    LInfoBlock.Free;
+  if ASrc.GetIsNull then
+  begin
+    Self.SetIsNull(True);
+    Exit;
   end;
-  if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
-end;
-constructor TJX3Boolean.Create;
-begin
-  inherited;
-  FIsNull := True;
-  FValue := False;
+  if Self.GetIsNull then
+    Self.SetValue(ASrc.GetValue);
 end;
 
 class function TJX3Boolean.C(AValue: Boolean = False): TJX3Boolean;
@@ -179,17 +165,6 @@ end;
 function TJX3Boolean.GetValue: Boolean;
 begin
   Result := FValue;
-end;
-
-procedure TJX3Boolean.JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
-begin
-  if ASrc.GetIsNull then
-  begin
-    Self.SetIsNull(True);
-    Exit;
-  end;
-  if Self.GetIsNull then
-    Self.SetValue(ASrc.GetValue);
 end;
 
 end.

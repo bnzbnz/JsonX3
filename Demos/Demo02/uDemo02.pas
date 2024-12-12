@@ -10,7 +10,6 @@ uses
   , uJX3Boolean
   , uJX3String
   , uJX3Object
-  , uJX3Tools
   ;
 
 type
@@ -72,32 +71,32 @@ begin
   Demo.SubClass.PClass.Str.V:= 'ABC';
 
   // Raw Json
-  Json := Demo.ToJson([joRaiseException]);
+  Json := TJX3Object.ToJson(Demo, [joRaiseException]);
   Memo1.lines.add('Raw Original Object:');
   Memo1.lines.add(Json);
 
   // Optimized Json
 
-  Json := Demo.ToJson([joNullToEmpty]);
+  Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
   Memo1.lines.add('Optimized Original Object:');
   Memo1.lines.add(Json);
 
   // Converting back to a Primitives Object;
-  NewDemo := TJX3Object.FromJSON<TInnerObjectDemo>(Json,[joRaiseException]);
+  NewDemo := TJX3Object.FromJSON<TInnerObjectDemo>(Json, [joRaiseException]);
 
   // Serializing the New Object
   Memo1.lines.add('');
-  Json := NewDemo.ToJson([]);
+  Json := TJX3Object.ToJson(NewDemo, []);
   Memo1.lines.add('New Optimized Object:');
   Memo1.lines.add(Json);
 
   // Formatted Json
   Memo1.lines.add('');
   Memo1.lines.add('Formatted:');
-  Memo1.lines.add(TJX3Tools.FormatJSON(Json));
+  Memo1.lines.add(TJX3Object.FormatJSON(Json));
 
   // You may also cloned any JSX3 Objects.
-  CloneDemo := Demo.Clone<TInnerObjectDemo>;
+  CloneDemo := TJX3Object.Clone<TInnerObjectDemo>(Demo);
 
   CloneDemo.Free;
   NewDemo.Free;
