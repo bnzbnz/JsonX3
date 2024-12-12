@@ -213,8 +213,6 @@ var
   LPart:      TValue;
   LRes:       string;
   LInfoBlock: TJX3InfoBlock;
-  LInstance:  TRttiInstanceType;
-  LMethod:    TRTTIMEthod;
   LObj:       TOBject;
 begin
   Result := '';
@@ -476,30 +474,39 @@ begin
 end;
 
 class function TJX3Object.EscapeJSONStr(const AStr: string): string;
+const
+  HexChars: array[0..15] of Char = '0123456789abcdef';
 var
   LP: PChar;
   LEndP: PChar;
-  // LStr : TJSONString;
+  LSb: TStringBuilder;
 begin
-  (*
-  LStr := TJSONString.Create(AStr);
-  Result := LStr.ToJSON([TJSONAncestor.TJSONOutputOption.EncodeBelow32]);
-  LStr.Free;
-  Exit;
-  *)
-  Result := '';
+  LSb :=  TStringBuilder.Create;
   LP := PChar(Pointer(AStr));
   LEndP := LP + Length(AStr);
   while LP < LendP do
   begin
     case LP^ of
-      #0 .. #31, '\', '"':
-        Result := Result + '\' + LP^;
-      else
-        Result := Result + LP^;
+      #0..#7, #11, #14..#31:
+        begin
+          LSb.Append('\u00');
+          LSb.Append(HexChars[Word(LP^) shr 4]);
+          LSb.Append(HexChars[Word(LP^) and $F]);
+        end;
+      #8: LSb.Append('\b');
+      #9: LSb.Append('\t');
+      #10: LSb.Append('\n');
+      #12: LSb.Append('\f');
+      #13: LSb.Append('\r');
+      '\': LSb.Append('\\');
+      '"': LSb.Append('\"');
+    else
+      LSb.Append(LP^);
     end;
     Inc(LP);
   end;
+  Result := LSb.ToString;
+  LSb.Free;
 end;
 
 class function TJX3Object.NameDecode(const ToDecode: string): string;
