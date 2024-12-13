@@ -2,12 +2,10 @@ unit uJX3Object;
 
 interface
 uses
-    RTTI
+  System.Generics.Collections
+  , RTTI
   , JSON
   ;
-
-const
-  cCommaDelimiter = #0;
 
 type
 
@@ -16,9 +14,8 @@ type
       , joRaiseException
       , joRaiseOnMissingField
       , joStats
-      // Merge
-      , joCloneRTTI
   );
+
   TJX3Options = set of TJS3Option;
 
   JX3Name = class(TCustomAttribute)
@@ -42,7 +39,9 @@ type
     FieldName: string;
     Field: TRttiField;
     Options: TJX3Options;
-    constructor Create( AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+    constructor Create; overload;
+    constructor Create( AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options); overload;
+    procedure   Init( AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
   end;
 
   TJX3InOutStats = class
@@ -80,10 +79,13 @@ type
     class function  ToJSON(AObj: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     class function  Clone<T:class, constructor>(AObj: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
 
+    //Utils
     class function  EscapeJSONStr(const AStr: string): string; static;
     class function  NameDecode(const ToDecode: string): string; static;
     class function  NameEncode(const ToEncode: string): string; static;
     class function  FormatJSON(const AJson: string; AIndentation: Integer = 4): string;
+    class function  JsonListToJsonString(AList: TList<string>): string;
+
   end;
 
   TJX3Obj = TJX3Object;
@@ -110,7 +112,16 @@ begin
   Value := AValue;
 end;
 
-constructor TJX3InfoBlock.Create( AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+constructor TJX3InfoBlock.Create;
+begin
+end;
+
+constructor TJX3InfoBlock.Create(AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+begin
+  Init(AFieldName, AObj, AField, AOptions);
+end;
+
+procedure TJX3InfoBlock.Init(AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
 begin
   Obj := AObj;
   FieldName := AFieldName;
@@ -209,15 +220,15 @@ function TJX3Object.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3In
 var
   LField:     TRTTIField;
   LFields:    TArray<TRTTIField>;
-  LParts:     TStringList;
+  LParts:     TList<string>;
   LPart:      TValue;
   LRes:       string;
   LInfoBlock: TJX3InfoBlock;
   LObj:       TOBject;
 begin
   Result := '';
-  LInfoBlock := Nil;
-  LParts := TStringList.Create(#0, cCommaDelimiter, [soStrictDelimiter]);
+  LInfoBlock := TJX3InfoBlock.Create;
+  LParts := TList<string>.Create;
   try
     LFields := JX3GetFields(Self);
     LParts.Capacity := Length(LFields);
@@ -232,13 +243,12 @@ begin
           LField.SetValue(Self, LObj);
           JX3CallMethodProc('JSONCreate', LObj, [True]);
         end;
-        LInfoBlock := TJX3InfoBlock.Create(LField.Name, Nil, LField, AInfoBlock.Options);
-        LPart :=  JX3CallMethodFunc('JSONSerialize', LObj, [LInfoBlock, AInOutBlock]);
+        LInfoBlock.Init(LField.Name, Nil, LField, AInfoBlock.Options);
+        LPart := JX3CallMethodFunc('JSONSerialize', LObj, [LInfoBlock, AInOutBlock]);
         if not LPart.IsEmpty then LParts.Add(LPart.AsString);
-        FreeAndNil(LInfoBlock);
         Continue;
       end;
-      LRes := LParts.DelimitedText.Replace(cCommaDelimiter, ',');
+      LRes := JsonListToJsonString(LParts);
       if not AInfoBlock.FieldName.IsEmpty then
       begin
         if LRes.IsEmpty then
@@ -249,12 +259,12 @@ begin
           if joNullToEmpty in AInfoBlock.Options then
             Result := TValue.Empty
           else
-            Result := Format('"%s":null', [AInfoBlock.FieldName]);
+            Result := '"' + AInfoBlock.FieldName + '":null';
         end else
-          Result := Format('"%s":{%s}', [AInfoBlock.FieldName, LRes])
+          Result := '"' + AInfoBlock.FieldName + '":{' + LRes + '}';
       end
     else
-      Result := Format('{%s}', [LRes]);
+      Result := '{' + LRes + '}';
   finally
     LParts.Free;
     LInfoBlock.Free;
@@ -272,6 +282,7 @@ var
   LObj:       TObject;
 begin
   try
+    LInfoBlock := TJX3InfoBlock.Create;
     for LField in JX3GetFields(Self) do
     begin
 
@@ -297,9 +308,8 @@ begin
           LField.SetValue(Self, LObj);
         end;
 
-        LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
+        LInfoBlock.Init(LField.Name, LJObj, LField, AInfoBlock.Options);
         JX3CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
-        FreeAndNil(LInfoBlock);
         if (Assigned(LJObj)) and not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
         LJPair.JsonValue.Owned := True;
         LJPair.Owned := True;
@@ -309,9 +319,8 @@ begin
         if Assigned( JX3Default(JX3GetFieldAttribute(LField, JX3Default)) ) then
         begin
           LJObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
-          LInfoBlock := TJX3InfoBlock.Create(LField.Name, LJObj, LField, AInfoBlock.Options);
+          LInfoBlock.Init(LField.Name, LJObj, LField, AInfoBlock.Options);
           JX3CallMethodProc('JSONDeserialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
-          FreeAndNil(LInfoBlock);
           LJObj.Free;
           Continue;
         end;
@@ -341,7 +350,6 @@ begin
     Result := T.Create;
     try
       LJObj := TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject;
-      FreeAndNil(LInfoBlock);
       LInfoBlock := TJX3InfoBlock.Create( '', LJObj, Nil, AOptions);
       JX3CallMethodProc('JSONDeserialize', Result, [LInfoBlock, AInOutBlock]);
     except
@@ -504,6 +512,23 @@ begin
       LSb.Append(LP^);
     end;
     Inc(LP);
+  end;
+  Result := LSb.ToString;
+  LSb.Free;
+end;
+
+class function TJX3Object.JsonListToJsonString(AList: TList<string>): string;
+var
+  LSb:  TStringBuilder;
+  LIdx: integer;
+begin
+  if AList.Count = 0 then Exit('');
+  if AList.Count = 1 then Exit(AList[0]);
+  LSb := TStringBuilder.Create;
+  for LIdx:= 0 to AList.Count -1 do
+  begin
+    LSb.Append(AList[LIdx]);
+    if LIdx <> AList.Count -1 then LSb.Append(',') ;
   end;
   Result := LSb.ToString;
   LSb.Free;

@@ -66,14 +66,13 @@ uses
 
 function TJX3List<T>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
-  LParts:     TStringList;
+  LParts:     TList<string>;
   LPart:      TValue;
   LRes:       string;
   LEle:       T;
   LInfoBlock: TJX3InfoBlock;
   LName:      string;
   LNameAttr:  JX3Name;
-   LJObj:     TJSONObject;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.ListCount);
 
@@ -93,20 +92,20 @@ begin
 
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
     if AInfoBlock.FieldName.IsEmpty then EXit('null');
-    Exit(Format('"%s":null', [LName]));
+    Exit('"' + LName + '":null');
   end;
 
-  LParts := TStringList.Create(#0, cCommaDelimiter, [soStrictDelimiter]);
+  LParts := TList<string>.Create;
   LParts.Capacity := Self.Count;
+  LInfoBlock := TJX3InfoBlock.Create;
   for LEle in Self do
   begin
-    LJObj := Nil;
-    LInfoBlock := TJX3InfoBlock.Create('', LJObj, Nil, AInfoBlock.Options);
+    LInfoBlock.Init('', Nil, Nil, AInfoBlock.Options);
     LPart := JX3CallMethodFunc('JSONSerialize', LEle, [ LInfoBlock, AInOutBlock ]);
     if not LPart.IsEmpty then LParts.Add(LPart.AsString);
-    LInfoBlock.Free;
   end;
-  LRes := LParts.DelimitedText.Replace(cCommaDelimiter, ',');
+  LInfoBlock.Free;
+  LRes := TJX3Object.JsonListToJsonString(LParts);
 
   if LName.IsEmpty then
     Result := '[' + LRes + ']'
@@ -128,28 +127,30 @@ begin
   if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin SetIsNull(True); Exit end;
   if AInfoBlock.Obj.Pairs[0].JsonValue.Null then begin SetIsNull(True); Exit end;;
   if TJSONArray(AInfoBlock.Obj.Pairs[0].JsonValue) is TJSONArray then
+  begin
+    LInfoBlock := TJX3InfoBlock.Create;
     for LEle in TJSONArray(AInfoBlock.Obj.Pairs[0].JsonValue) do
     begin
       if LELe is TJSONObject then
       begin
-         LNewObj := T.Create;
-         Add(LNewObj);
-         LJObj :=  LEle as TJSONObject;
-         LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
-         JX3CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
-         LInfoBlock.Free;
+        LNewObj := T.Create;
+        Add(LNewObj);
+        LJObj :=  LEle as TJSONObject;
+        LInfoBlock.Init(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
+        JX3CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
       end else begin
-         LNewObj := T.Create;
-         Add(LNewObj);
-         LEle.Owned := False;
-         LJObj :=  TJSONObject.Create(TJSONPair.Create('', LEle));
-         LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
-         JX3CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
-         LJObj.Free;;
-         LInfoBlock.Free;
-         LEle.Owned := True;
+        LNewObj := T.Create;
+        Add(LNewObj);
+        LEle.Owned := False;
+        LJObj :=  TJSONObject.Create(TJSONPair.Create('', LEle));
+        LInfoBlock.Init(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
+        JX3CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
+        LJObj.Free;;
+        LEle.Owned := True;
       end;
     end;
+    LInfoBlock.Free;
+  end;
 end;
 
 procedure TJX3List<T>.JSONClone(ADest: TJX3List<T>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
@@ -165,8 +166,7 @@ begin
   end;
   for LList in Self do
   begin
-    LNewObj := JX3CreateObject(T);
-    JX3CallMethodProc('JSONCreate', LNewObj, [True]);
+    LNewObj := T.Create;
     JX3CallMethodProc('JSONClone', LList, [LNewObj, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
     ADest.Add(LNewObj);
   end;
@@ -276,7 +276,6 @@ begin
   for AList in ASrc do
   begin
     LObj := T.Create;
-    JX3CallMethodProc('JSONCreate', LObj, [True]);
     JX3CallMethodProc('JSONMerge', LOBJ, [ AList, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
     Self.Add(LObj);
   end;

@@ -93,12 +93,12 @@ begin
         raise Exception.Create(Format('"%s" (TJX3String) : a value is required', [LName]));
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
-      Exit(Format('"%s":null', [LName]))
+      Exit('"' + LName + '":null');
     end;
   end;
 
   if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Object.EscapeJSONStr(LValue) + '"');
-  Result := Format('"%s":%s', [TJX3Object.EscapeJSONStr(LName),  '"' + TJX3Object.EscapeJSONStr(LValue) + '"']);
+  Result := '"' + LName + '":"' + TJX3Object.EscapeJSONStr(LValue)  +'"';
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
@@ -106,7 +106,7 @@ var
   LJPair:         TJSONPair;
   LDefaultAttr:   JX3Default;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
+  if Assigned(AInOutBlock) and (joStats in AInfoBlock.Options) then Inc(AInOutBlock.Stats.PrimitiveCount);
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull)) then
   begin

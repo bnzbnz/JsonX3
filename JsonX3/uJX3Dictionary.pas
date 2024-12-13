@@ -83,7 +83,7 @@ end;
 
 function TJX3Dic<V>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
 var
-  LParts:     TStringList;
+  LParts:     TList<string>;
   LPart:      TValue;
   LRes:       string;
   Lkp:        TPair<string,V>;
@@ -91,7 +91,6 @@ var
   LInfoBlock: TJX3InfoBlock;
   LName:      string;
   LNameAttr:  JX3Name;
-  LJObj:      TJSONObject;
 begin
   if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicCount);
 
@@ -114,27 +113,27 @@ begin
     Exit(Format('"%s":null', [LName]));
   end;
 
-  LParts := TStringList.Create(#0, cCommaDelimiter, [soStrictDelimiter]);
+  LParts := TList<string>.Create;
   LParts.Capacity := Self.Count;
+  LInfoBlock := TJX3InfoBlock.Create;
   for Lkp in Self do
   begin
     LObj := TValue.From<V>(Lkp.Value).AsObject;
     if Assigned(LObj) then
     begin
-      LJObj := nil;
-      LInfoBlock := TJX3InfoBlock.Create(LKp.Key, LJObj, Nil, AInfoBlock.Options);
+      LInfoBlock.Init(LKp.Key, Nil, Nil, AInfoBlock.Options);
       LPart :=  JX3CallMethodFunc('JSONSerialize', LObj, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
       if not LPart.IsEmpty then LParts.Add(LPart.AsString);
-      LInfoBlock.Free;
     end;
   end;
-  LRes := LParts.DelimitedText.Replace(cCommaDelimiter, ',');
+  LInfoBlock.Free;
+  LRes := TJX3Object.JsonListToJsonString(LParts);
+  LParts.Free;
 
   if AInfoBlock.FieldNAme.IsEmpty then
-    Result := '{'+ LRes + '}'
+    Result := '{' + LRes + '}'
   else
     Result := '"' + LName + '":{'+ LRes + '}';
-  LParts.Free;
 end;
 
 procedure TJX3Dic<V>.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
@@ -151,6 +150,7 @@ begin
   if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin SetIsNull(True); Exit end;
   if AInfoBlock.Obj.Pairs[0].JsonValue.Null then begin SetIsNull(True); Exit end;;
 
+  LInfoBlock := TJX3InfoBlock.Create;
   for LPair in AInfoBlock.Obj do
   begin
     LNewObj := V.Create;
@@ -170,14 +170,14 @@ begin
     end else
       LJObj := TJSONObject.Create(LPair);
 
-    LInfoBlock := TJX3InfoBlock.Create(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
+    LInfoBlock.Init(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
     JX3CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
-    LInfoBlock.Free;
 
     if LJObjDestroy then FreeAndNil(LJObj);
     LPair.Owned := True;
     LPair.JsonValue.Owned := True;
   end;
+  LInfoBlock.Free;
 end;
 
 procedure TJX3Dic<V>.JSONClone(ADest: TJX3Dic<V>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
@@ -193,8 +193,7 @@ begin
   end;
   for LPair in Self do
   begin
-    LNewObj := JX3CreateObject(V);
-    JX3CallMethodProc('JSONCreate', LNewObj, [True]);
+    LNewObj := V.Create;
     JX3CallMethodProc('JSONClone', LPair.Value, [LNewObj, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
     ADest.Add(LPair.Key, LNewObj);
   end;
@@ -215,7 +214,6 @@ begin
     if not Self.ContainsKey(ADic.Key) then
     begin
       LObj := V.Create;
-      JX3CallMethodProc('JSONCreate', LObj, [True]);
       JX3CallMethodProc('JSONMerge', LObj, [ ADic.Value, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
       Self.Add(ADic.Key, LObj)
     end;
