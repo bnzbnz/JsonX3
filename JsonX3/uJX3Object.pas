@@ -1,3 +1,26 @@
+(*****************************************************************************
+The MIT License (MIT)
+
+Copyright (c) 2020-2025 Laurent Meyer JsonX3@ea4d.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*****************************************************************************)
 unit uJX3Object;
 
 interface
@@ -104,6 +127,7 @@ uses
   , TypInfo
   , uJX3String
   , uJX3Number
+  , uJX3Boolean
   , uJX3Rtti
   ;
 
@@ -184,13 +208,10 @@ begin
     begin
       if not Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        LInstance := LField.FieldType.AsInstance;
-        if not Assigned(LInstance) then Continue;
-        LMethod := LInstance.GetMethod('Create');
-        if not Assigned(LMethod) then Continue;
-        LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
+        LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
         if not Assigned(LNewObj) then Continue;
-        TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
+        if not((LNewObj is TJX3String) or (LNewObj is TJX3Number) or (LNewObj is TJX3Boolean)) then
+          TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         LField.SetValue(Self, LNewObj);
       end else begin
         LField.SetValue(Self, Nil);
@@ -217,7 +238,7 @@ begin
           FreeAndNil(LObj);
       end else
         FreeAndNil(LObj);
-    end;
+      end;
   inherited;
 end;
 
@@ -246,10 +267,12 @@ begin
           LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
           TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
           LField.SetValue(Self, LObj);
-          TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
         end;
         LInfoBlock.Init(LField.Name, Nil, LField, AInfoBlock.Options);
-        LPart := TxRTTI.CallMethodFunc('JSONSerialize', LObj, [LInfoBlock, AInOutBlock]);
+        if LObj is TJX3String  then LPart := TJX3String(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
+        else if LObj is TJX3Number  then LPart := TJX3Number(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
+        else if LObj is TJX3Boolean  then LPart := TJX3Boolean(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
+        else LPart := TxRTTI.CallMethodFunc('JSONSerialize', LObj, [LInfoBlock, AInOutBlock]);
         if not LPart.IsEmpty then LParts.Add(LPart.AsString);
         Continue;
       end;
@@ -313,7 +336,10 @@ begin
         end;
 
         LInfoBlock.Init(LField.Name, LJObj, LField, AInfoBlock.Options);
-        TxRTTI.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
+        if LObj is TJX3String  then TJX3String(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+        else if LObj is TJX3Number  then TJX3Number(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+        else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+        else TxRTTI.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
         if (Assigned(LJObj)) and not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
         LJPair.JsonValue.Owned := True;
         LJPair.Owned := True;
@@ -322,9 +348,13 @@ begin
 
         if Assigned( JX3Default(TxRTTI.GetFieldAttribute(LField, JX3Default)) ) then
         begin
+          LObj := LField.GetValue(Self).AsObject;
           LJObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
           LInfoBlock.Init(LField.Name, LJObj, LField, AInfoBlock.Options);
-          TxRTTI.CallMethodProc('JSONDeserialize', LField.GetValue(Self).AsObject, [LInfoBlock, AInOutBlock]);
+          if LObj is TJX3String  then TJX3String(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+          else if LObj is TJX3Number  then TJX3Number(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+          else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+          else TxRTTI.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
           LJObj.Free;
           Continue;
         end;
@@ -442,6 +472,7 @@ procedure TJX3Object.JSONClone(ADest: TObject; AOptions: TJX3Options; AInOutBloc
 var
   LSrcField:  TRTTIField;
   LDestField: TRTTIField;
+  LObj:       TObject;
   LNewObj:    TObject;
   begin
   for LDestField in TxRTTI.GetFields(ADest) do
@@ -456,7 +487,11 @@ var
           LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
           TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         end;
-        TxRTTI.CallMethodProc('JSONClone', LSrcField.GetValue(Self).AsObject, [LNewObj,  TValue.From<TJX3Options>(AOptions), AInOutBlock]);
+        LObj := LSrcField.GetValue(Self).AsObject;
+        if LObj is TJX3String  then TJX3String(LObj).JSONClone(TJX3String(LNewObj), AOptions, AInOutBlock)
+        else if LObj is TJX3Number  then TJX3Number(LObj).JSONClone(TJX3Number(LNewObj), AOptions, AInOutBlock)
+        else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONClone(TJX3Boolean(LNewObj), AOptions, AInOutBlock)
+        else TxRTTI.CallMethodProc('JSONClone', LObj, [LNewObj,  TValue.From<TJX3Options>(AOptions), AInOutBlock]);
         LDestField.SetValue(ADest, LNewObj);
         continue;
       end;
@@ -483,6 +518,10 @@ begin
           LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
           TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
         end;
+        if LObj is TJX3String  then TJX3String(LObj).JSONMerge(TJX3String(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
+        else if LObj is TJX3Number  then TJX3Number(LObj).JSONMerge(TJX3Number(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
+        else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONMerge(TJX3Boolean(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
+        else
         TxRTTI.CallMethodProc('JSONMerge', LObj, [ LSrcField.GetValue(ASrc).AsObject, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
         continue;
       end;
@@ -507,7 +546,7 @@ var
   LEndP: PChar;
   LSb: TStringBuilder;
 begin
-  LSb :=  TStringBuilder.Create;
+  LSb := TStringBuilder.Create;
   LP := PChar(Pointer(AStr));
   LEndP := LP + Length(AStr);
   while LP < LendP do

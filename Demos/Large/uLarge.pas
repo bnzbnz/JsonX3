@@ -104,7 +104,7 @@ uses
 
 procedure TForm4.ButtonClick( Sender : TObject );
   var
-    LJObj, LJObjClone: TfetchItemAspectsContentType;
+    LJObj, LJObjClone, LJObjMerge: TfetchItemAspectsContentType;
     LStream : TStringStream;
     LJsonStr : string;
     LWatch : TStopWatch;
@@ -134,8 +134,16 @@ procedure TForm4.ButtonClick( Sender : TObject );
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
-    Memo1.Lines.add( 'JSX3 Object Cloneing:' );
+    Memo1.Lines.add( 'JSX3 Object Cloning (RTTI):' );
     LJObjClone := TJX3Object.Clone<TfetchItemAspectsContentType>(LJObj, [joStats], LStats);
+    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
+
+    Memo1.Lines.add( '' );
+    LStats.Stats.Clear;
+    Memo1.Lines.add( 'JSX3 Object Cloning (Merging):' );
+    LJObjMerge := TfetchItemAspectsContentType.Create;
+    LJObjMerge.Merge(LJObj, [joStats], LStats);
+    LJObjMerge.Free;
     Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
