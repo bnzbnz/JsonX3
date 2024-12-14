@@ -156,7 +156,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LWatch := TStopWatch.StartNew;
     Memo1.Lines.add( 'Free Json Object :' );
     LJObj.Free;
-    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LWatch.ElapsedMilliseconds ] ) );
+    Memo1.Lines.add( Format( '  Freed in %d ms', [ LWatch.ElapsedMilliseconds ] ) );
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;

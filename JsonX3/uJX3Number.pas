@@ -286,8 +286,8 @@ end;
 
 procedure TJX3Number.SetUInt(AValue: Cardinal);
 begin
-   FKind := nkUInt;
-   SetValue(AValue.ToString);
+  FKind := nkUInt;
+  SetValue(AValue.ToString);
 end;
 
 function TJX3Number.GetUInt64: UInt64;
@@ -297,8 +297,8 @@ end;
 
 procedure TJX3Number.SetUInt64(AValue: UInt64);
 begin
-   FKind := nkUInt64;
-   SetValue(AValue.ToString);
+  FKind := nkUInt64;
+  SetValue(AValue.ToString);
 end;
 
 function TJX3Number.GetDouble: Double;
@@ -308,19 +308,19 @@ end;
 
 procedure TJX3Number.SetDouble(AValue: Double);
 begin
-   FKind := nkDouble;
-   SetValue(AValue.ToString);
+  FKind := nkDouble;
+  SetValue(AValue.ToString);
 end;
 
 function TJX3Number.GetCurrency: Currency;
 begin
-   FKind := nkCurrency;
-   Result := StrToCurr(FValue);
+  FKind := nkCurrency;
+  Result := StrToCurr(FValue);
 end;
 
 procedure TJX3Number.SetCurrency(AValue: Currency);
 begin
-   SetValue(AValue.ToString);
+  SetValue(CurrToStr(AValue));
 end;
 
 procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);

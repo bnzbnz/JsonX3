@@ -109,7 +109,7 @@ type
     class function  NameDecode(const ToDecode: string): string; static;
     class function  NameEncode(const ToEncode: string): string; static;
     class function  FormatJSON(const AJson: string; AIndentation: Integer = 4): string;
-    class function  JsonListToJsonString(AList: TList<string>): string;
+    class function  JsonListToJsonString(const AList: TList<string>): string;
 
   end;
 
@@ -180,15 +180,13 @@ end;
 
 constructor TJX3Object.Create;
 var
-  LFields:    TArray<TRttiField>;
   LField:     TRTTIField;
   LInstance:  TRttiInstanceType;
   LMethod:    TRTTIMEthod;
   LNewObj:    TObject;
 begin
   inherited Create;
-  LFields := TxRTTI.GetFields(Self);
-  for LField in LFields do
+  for LField in TxRTTI.GetFields(Self) do
   begin
     if  (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
     begin
@@ -317,7 +315,7 @@ begin
           LJObj := TJSONObject.Create(LJPair);
 
         LObj := LField.GetValue(Self).AsObject;
-        if  (LObj = nil) then
+        if  not Assigned(LObj) then
         begin
           LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
           TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
@@ -365,8 +363,8 @@ end;
 class function TJX3Object.FromJSON<T>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
 var
   LInfoBlock: TJX3InfoBlock;
-  LWatch: TStopWatch;
-  LJObj: TJSONObject;
+  LWatch:     TStopWatch;
+  LJObj:      TJSONObject;
 begin
   LInfoBlock := Nil;
   LJObj := Nil;
@@ -394,7 +392,7 @@ end;
 class function TJX3Object.ToJSON(AObj: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): string;
 var
   LInfoBlock: TJX3InfoBlock;
-  LWatch: TStopWatch;
+  LWatch:     TStopWatch;
 begin
   LInfoBlock := Nil;
   try
@@ -480,13 +478,13 @@ begin
         begin
           LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
           TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
+          LDestField.SetValue(ADest, LNewObj);
         end;
         LObj := LSrcField.GetValue(Self).AsObject;
         if LObj is TJX3String  then TJX3String(LObj).JSONClone(TJX3String(LNewObj), AOptions, AInOutBlock)
         else if LObj is TJX3Number  then TJX3Number(LObj).JSONClone(TJX3Number(LNewObj), AOptions, AInOutBlock)
         else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONClone(TJX3Boolean(LNewObj), AOptions, AInOutBlock)
         else TxRTTI.CallMethodProc('JSONClone', LObj, [LNewObj,  TValue.From<TJX3Options>(AOptions), AInOutBlock]);
-        LDestField.SetValue(ADest, LNewObj);
         continue;
       end;
     end;
@@ -516,9 +514,9 @@ begin
           LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
           TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
         end;
-        if LObj is TJX3String  then TJX3String(LObj).JSONMerge(TJX3String(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
-        else if LObj is TJX3Number  then TJX3Number(LObj).JSONMerge(TJX3Number(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
-        else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONMerge(TJX3Boolean(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
+        if LObj is TJX3String then TJX3String(LObj).JSONMerge(TJX3String(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
+        else if LObj is TJX3Number then TJX3Number(LObj).JSONMerge(TJX3Number(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
+        else if LObj is TJX3Boolean then TJX3Boolean(LObj).JSONMerge(TJX3Boolean(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
         else
         TxRTTI.CallMethodProc('JSONMerge', LObj, [ LSrcField.GetValue(ASrc).AsObject, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
         continue;
@@ -572,7 +570,7 @@ begin
   LSb.Free;
 end;
 
-class function TJX3Object.JsonListToJsonString(AList: TList<string>): string;
+class function TJX3Object.JsonListToJsonString(const AList: TList<string>): string;
 var
   LSb:  TStringBuilder;
   LIdx: integer;

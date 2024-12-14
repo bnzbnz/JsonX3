@@ -89,7 +89,7 @@ begin
   LMeth := TxRTTI.GetMethod(AObj, AMethod);
   if not Assigned(LMeth) then Exit(TValue.Empty);
   Result := LMeth.Invoke(AObj, AArgs);
-  if not Result.IsEmpty then Result := Result.AsType<TValue>(True);
+  if not Result.IsEmpty then Result := Result.AsType<TValue>;
 end;
 
 class function TxRTTI.CreateObject(AInstance: TRTTIInstanceType): TObject;

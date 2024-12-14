@@ -191,29 +191,32 @@ In this example we read, serialize, clone, deserialize and finally save a large 
 You will be able to benchmark and compare the output generated json file 'jsx3.json' vs 'aspects100.json' the original ebay's one :
 
 ```
+
 Loading ebay's Aspects json file :
   Stream size: 14358 KB
 
 Convert Json String to JSX3 Objects :
-  Processing duration 1150 ms
-
-==> 463527 Operations !!!
-==> 403066 /s
+==> 918196 ops in 1155 ms
+==> 794974 /s
 
 JSX3 Object Cloning (RTTI):
-  Processing duration 1126 ms
+==> 918196 ops in 1139 ms
+==> 806142 /s
 
 JSX3 Object Cloning (Merging):
-  Processing duration 1158 ms
+==> 918196 ops in 1160 ms
+==> 791548 /s
 
 Revert JSX3 Objects to Json String :
-  Processing duration 1158 ms
+==> 918196 ops in 1172 ms
+==> 783443 /s
 
 Free Json Object :
-  Processing duration 132 ms
+  Freed in 140 ms
 
 Saving ebay's Aspects Json file (jsx3.json) :
   Stream size: 14358 KB
+
 ```
 
 
