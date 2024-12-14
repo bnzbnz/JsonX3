@@ -79,7 +79,7 @@ begin
   LName := AInfoBlock.FieldName;
   if Assigned(AInfoBlock) and Assigned(AInfoBlock.Field) then
   begin
-    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    LNameAttr := JX3Name(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JX3Name));
     if Assigned(LNameAttr) then LName := LNameAttr.Name;
   end;
   LName := TJX3Object.NameDecode(LName);
@@ -87,7 +87,7 @@ begin
   if GetIsNull then
   begin
 
-    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+    if Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
       raise Exception.Create(Format('"%s" (TJX3List) : a value is required', [LName]));
 
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -101,7 +101,7 @@ begin
   for LEle in Self do
   begin
     LInfoBlock.Init('', Nil, Nil, AInfoBlock.Options);
-    LPart := JX3CallMethodFunc('JSONSerialize', LEle, [ LInfoBlock, AInOutBlock ]);
+    LPart := TxRTTI.CallMethodFunc('JSONSerialize', LEle, [ LInfoBlock, AInOutBlock ]);
     if not LPart.IsEmpty then LParts.Add(LPart.AsString);
   end;
   LInfoBlock.Free;
@@ -137,14 +137,14 @@ begin
         Add(LNewObj);
         LJObj :=  LEle as TJSONObject;
         LInfoBlock.Init(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
-        JX3CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
+        TxRTTI.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
       end else begin
         LNewObj := T.Create;
         Add(LNewObj);
         LEle.Owned := False;
         LJObj :=  TJSONObject.Create(TJSONPair.Create('', LEle));
         LInfoBlock.Init(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
-        JX3CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
+        TxRTTI.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
         LJObj.Free;;
         LEle.Owned := True;
       end;
@@ -167,7 +167,7 @@ begin
   for LList in Self do
   begin
     LNewObj := T.Create;
-    JX3CallMethodProc('JSONClone', LList, [LNewObj, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
+    TxRTTI.CallMethodProc('JSONClone', LList, [LNewObj, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
     ADest.Add(LNewObj);
   end;
 end;
@@ -182,12 +182,12 @@ constructor TJX3List<T>.Create;
 begin
   inherited Create;
   Self.OwnsObjects := True;
-  LFields := JX3GetFields(Self);
+  LFields := TxRTTI.GetFields(Self);
   for LField in LFields do
   begin
     if  (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
     begin
-      if not Assigned(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Unmanaged)) then
+      if not Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
         LInstance := LField.FieldType.AsInstance;
         if not Assigned(LInstance) then Continue;
@@ -195,7 +195,7 @@ begin
         if not Assigned(LMethod) then Continue;
         LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
         if not Assigned(LNewObj) then Continue;
-        JX3CallMethodProc('JSONCreate', LNewObj, [True]);
+        TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         LField.SetValue(Self, LNewObj);
       end else begin
         LField.SetValue(Self, Nil);
@@ -210,15 +210,15 @@ var
   LFields:  TArray<TRttiField>;
   LObj:     TOBject;
 begin
-  LFields := JX3GetFields(Self);
+  LFields := TxRTTI.GetFields(Self);
   for LField in LFields do
     if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
     begin
       LObj := LField.GetValue(Self).AsObject;
       if not Assigned(LObj) then Continue;
-      if Assigned(uJX3Rtti.JX3GetFieldAttribute(LField, JX3Unmanaged)) then
+      if Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        if JX3CallMethodFunc('JSONDestroy', LObj, []).AsBoolean then
+        if TxRTTI.CallMethodFunc('JSONDestroy', LObj, []).AsBoolean then
           FreeAndNil(LObj);
       end else
         FreeAndNil(LObj);
@@ -276,7 +276,8 @@ begin
   for AList in ASrc do
   begin
     LObj := T.Create;
-    JX3CallMethodProc('JSONMerge', LOBJ, [ AList, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
+    TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+    TxRTTI.CallMethodProc('JSONMerge', LOBJ, [ AList, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
     Self.Add(LObj);
   end;
 end;

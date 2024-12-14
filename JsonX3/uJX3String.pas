@@ -28,7 +28,7 @@ type
     function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONClone(ADest: TJX3String; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
-    function        JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
@@ -72,7 +72,7 @@ begin
   if Assigned(AInfoBlock.Field) then
   begin
     LName := AInfoBlock.Field.Name;
-    LAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    LAttr := JX3Name(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JX3Name));
     if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
   end else
     LName := AInfoBlock.FieldName;
@@ -84,12 +84,12 @@ begin
     LAttr := Nil;
     if Assigned(AInfoBlock.Field) then
     begin
-      LAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+      LAttr := JX3Default(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JX3Default));
       if Assigned(LAttr) then LValue := JX3Default(LAttr).Value;
     end;
     if not Assigned(LAttr) then
     begin
-      if Assigned(AInfoBlock.Field) and Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+      if Assigned(AInfoBlock.Field) and Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
         raise Exception.Create(Format('"%s" (TJX3String) : a value is required', [LName]));
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
       if LName.IsEmpty then Exit('null');
@@ -113,7 +113,7 @@ begin
     SetValue(LJPair.JsonValue.Value);
     Exit;
   end else begin
-    LDefaultAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+    LDefaultAttr := JX3Default(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JX3Default));
     if Assigned(LDefaultAttr) then
       SetValue(LDefaultAttr.Value)
     else
@@ -132,19 +132,13 @@ begin
   ADest.SetValue(Self.FValue);
 end;
 
-function TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock): TValue;
+procedure TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  Result := False;
-
-  if ASrc.GetIsNull then
+  if (not ASrc.GetIsNull) then
   begin
-    Self.SetIsNull(True);
-    Result := True;
-    Exit;
+    if (Self.GetIsNull) or (jomOverload in AMergeOpts) then
+      Self.SetValue(ASrc.GetValue);
   end;
-
-  if Self.GetIsNull then
-    Self.SetValue(ASrc.GetValue);
 end;
 
 class function TJX3String.C: TJX3String;

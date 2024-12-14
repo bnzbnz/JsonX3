@@ -97,7 +97,7 @@ begin
   if Assigned(AInfoBlock.Field) then
   begin
     LName := AInfoBlock.Field.Name;
-    LNameAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    LNameAttr := JX3Name(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JX3Name));
     if Assigned(LNameAttr) then LName := LNameAttr.Name;
   end else
     LName := AInfoBlock.FieldName;
@@ -105,7 +105,7 @@ begin
 
   if GetIsNull then
   begin
-    if Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+    if Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
       raise Exception.Create(Format('"%s" (TJX3Dic) : a value is required', [LName]));
 
     if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -122,7 +122,7 @@ begin
     if Assigned(LObj) then
     begin
       LInfoBlock.Init(LKp.Key, Nil, Nil, AInfoBlock.Options);
-      LPart :=  JX3CallMethodFunc('JSONSerialize', LObj, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
+      LPart := TxRTTI.CallMethodFunc('JSONSerialize', LObj, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
       if not LPart.IsEmpty then LParts.Add(LPart.AsString);
     end;
   end;
@@ -171,7 +171,7 @@ begin
       LJObj := TJSONObject.Create(LPair);
 
     LInfoBlock.Init(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
-    JX3CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
+    TxRTTI.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ]);
 
     if LJObjDestroy then FreeAndNil(LJObj);
     LPair.Owned := True;
@@ -194,7 +194,7 @@ begin
   for LPair in Self do
   begin
     LNewObj := V.Create;
-    JX3CallMethodProc('JSONClone', LPair.Value, [LNewObj, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
+    TxRTTI.CallMethodProc('JSONClone', LPair.Value, [LNewObj, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
     ADest.Add(LPair.Key, LNewObj);
   end;
 end;
@@ -214,7 +214,8 @@ begin
     if not Self.ContainsKey(ADic.Key) then
     begin
       LObj := V.Create;
-      JX3CallMethodProc('JSONMerge', LObj, [ ADic.Value, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
+      TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+      TxRTTI.CallMethodProc('JSONMerge', LObj, [ ADic.Value, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
       Self.Add(ADic.Key, LObj)
     end;
   end

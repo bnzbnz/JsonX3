@@ -66,7 +66,7 @@ begin
   if Assigned(AInfoBlock.Field) then
   begin
     LName := AInfoBlock.Field.Name;
-    LAttr := JX3Name(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Name));
+    LAttr := JX3Name(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JX3Name));
     if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
   end else
     LName := AInfoBlock.FieldName;
@@ -78,12 +78,12 @@ begin
     LAttr := Nil;
     if Assigned(AInfoBlock.Field) then
     begin
-      LAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+      LAttr := JX3Default(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JX3Default));
       if Assigned(LAttr) then LValue := JX3Default(LAttr).Value.ToBoolean();
     end;
     if not Assigned(LAttr) then
     begin
-      if Assigned(AInfoBlock.Field) and Assigned(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
+      if Assigned(AInfoBlock.Field) and Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
         raise Exception.Create(Format('"%s" (TJX3Boolean) : a value is required', [LName]));
 
       if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
@@ -109,7 +109,7 @@ begin
     Exit;
   end else begin
   	LAttr := Nil;
-    if  Assigned(AInfoBlock.Field) then LAttr := JX3Default(uJX3Rtti.JX3GetFieldAttribute(AInfoBlock.Field, JX3Default));
+    if  Assigned(AInfoBlock.Field) then LAttr := JX3Default(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JX3Default));
     if Assigned(LAttr) then
       SetValue(JX3Default(LAttr).Value.ToBoolean())
     else

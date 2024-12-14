@@ -7,17 +7,24 @@ uses
   , RTTI
   ;
 
-{$DEFINE JX3RTTICACHE}
+  {$DEFINE JX3RTTICACHE}
 
-function  JX3GetFields(aObj: TObject): TArray<TRTTIField>;
-function  JX3GetProps(aObj: TObject): TArray<TRTTIProperty>;
-function  JX3GetMethods(aObj: TObject): TArray<TRTTIMethod>;
-function  JX3GetMethod(aObj: TObject; const AName: string): TRTTIMethod; overload;
-function  JX3GetMethod(AInstance: TRttiInstanceType; const AName: string): TRTTIMethod overload;
-function  JX3GetFieldAttribute(Field: TRTTIField; AttrClass: TClass): TCustomAttribute;
-function  JX3GetFieldInstance(Field: TRTTIField) : TRttiInstanceType;
+type
+  TxRTTI = class abstract
+    class function  GetFields(aObj: TObject): TArray<TRTTIField>; static;
+    class function  GetProps(aObj: TObject): TArray<TRTTIProperty>; static;
+    class function  GetMethods(aObj: TObject): TArray<TRTTIMethod>; static;
+    class function  GetMethod(aObj: TObject; const AName: string): TRTTIMethod; overload; static;
+    class function  GetMethod(AInstance: TRttiInstanceType; const AName: string): TRTTIMethod overload; static;
+    class function  GetFieldAttribute(Field: TRTTIField; AttrClass: TClass): TCustomAttribute; static;
+    class function  GetFieldInstance(Field: TRTTIField) : TRttiInstanceType; static;
+    class function  CreateObject(AInstance: TRTTIInstanceType): TObject; overload; inline;
+    class function  CreateObject(AClass: TClass): TObject; overload; inline;
+    class procedure CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue);
+    class function  CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
+  end;
 
-{$IFDEF JX3RTTICACHE}
+  {$IFDEF JX3RTTICACHE}
 var
   _RTTIctx: TRttiContext;
   _RTTILock1: TCriticalSection;
@@ -37,35 +44,31 @@ var
 var
   _RTTIctx: TRttiContext;
 {$ENDIF}
-  function JX3CreateObject(AInstance: TRTTIInstanceType): TObject; overload; inline;
-  function JX3CreateObject(AClass: TClass): TObject; overload; inline;
-  procedure JX3CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue);
-  function  JX3CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
 implementation
 uses
     StrUtils
   , Sysutils
   ;
 
-procedure JX3CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue);
+class procedure TxRTTI.CallMethodProc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue);
 var
   LMeth: TRttiMethod;
 begin
-  LMeth := JX3GetMethod(AObj, AMethod);
+  LMeth := TxRTTI.GetMethod(AObj, AMethod);
   if Assigned(LMeth) then LMeth.Invoke(AObj, AArgs);
 end;
 
-function JX3CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
+class function TxRTTI.CallMethodFunc(const AMethod: string; const AObj: TObject; const AArgs: array of TValue): TValue;
 var
   LMeth: TRttiMethod;
 begin
-  LMeth := JX3GetMethod(AObj, AMethod);
+  LMeth := TxRTTI.GetMethod(AObj, AMethod);
   if not Assigned(LMeth) then Exit(TValue.Empty);
   Result := LMeth.Invoke(AObj, AArgs);
   if not Result.IsEmpty then Result := Result.AsType<TValue>(True);
 end;
 
-function JX3CreateObject(AInstance: TRTTIInstanceType): TObject;
+class function TxRTTI.CreateObject(AInstance: TRTTIInstanceType): TObject;
 var
   LMethod: TRTTIMethod;
 begin
@@ -76,12 +79,12 @@ begin
   Result := LMethod.Invoke(AInstance.MetaclassType,[]).AsObject
 end;
 
-function JX3CreateObject(AClass: TClass): TObject;
+class function TxRTTI.CreateObject(AClass: TClass): TObject;
 begin
-   Result := JX3CreateObject(_RTTIctx.GetType(AClass).AsInstance);
+   Result := TxRTTI.CreateObject(_RTTIctx.GetType(AClass).AsInstance);
 end;
 
-function JX3GetFields(aObj: TObject): TArray<TRTTIField>;
+class function TxRTTI.GetFields(aObj: TObject): TArray<TRTTIField>;
 {$IFDEF JX3RTTICACHE}
 
 var
@@ -102,7 +105,7 @@ begin
 end;
 {$ENDIF}
 
-function JX3GetProps(aObj: TObject): TArray<TRTTIProperty>;
+class function TxRTTI.GetProps(aObj: TObject): TArray<TRTTIProperty>;
 {$IFDEF JX3RTTICACHE}
 var
   CType: TClass;
@@ -122,7 +125,7 @@ begin
 end;
 {$ENDIF}
 
-function JX3GetMethods(aObj: TObject): TArray<TRTTIMethod>;
+class function TxRTTI.GetMethods(aObj: TObject): TArray<TRTTIMethod>;
 {$IFDEF JX3RTTICACHE}
 var
   CType: TClass;
@@ -142,7 +145,7 @@ begin
 end;
 {$ENDIF}
 
-function JX3GetMethod(AObj: TObject; const AName: string): TRTTIMethod;
+class function TxRTTI.GetMethod(AObj: TObject; const AName: string): TRTTIMethod;
 {$IFDEF JX3RTTICACHE}
 var
   Lx: NativeInt;
@@ -163,7 +166,7 @@ end;
 {$IFEND}
 
 
-function JX3GetMethod(AInstance: TRttiInstanceType; const AName: string): TRTTIMethod;
+class function TxRTTI.GetMethod(AInstance: TRttiInstanceType; const AName: string): TRTTIMethod;
 {$IFDEF JX3RTTICACHE}
 begin
   _RTTILock5.Enter;
@@ -180,7 +183,7 @@ begin
 end;
 {$IFEND}
 
-function JX3GetFieldAttribute(Field: TRTTIField; AttrClass: TClass): TCustomAttribute;
+class function TxRTTI.GetFieldAttribute(Field: TRTTIField; AttrClass: TClass): TCustomAttribute;
 
   function GetRTTIFieldAttribute(RTTIField: TRTTIField; AttrClass: TClass): TCustomAttribute; inline;
   begin
@@ -201,7 +204,7 @@ begin
   Result := GetRTTIFieldAttribute(Field, AttrClass);
 end;
 
-function JX3GetFieldInstance(Field: TRTTIField) : TRttiInstanceType;
+class function TxRTTI.GetFieldInstance(Field: TRTTIField) : TRttiInstanceType;
 {$IFDEF JX3RTTICACHE}
 begin
   _RTTILock6.Enter;
