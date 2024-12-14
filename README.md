@@ -36,13 +36,13 @@ Example : using primitives (Demo01)
 ```
   JX3 will take care of all owned objects (Constructor/Destrutor), for exmaple 'Primitives.Str" is created and will be destroyed automatically , you don't have take care of it!
 ```Delphi
-  Json := Primitives.ToJson; // Serialization
+   Json := TJX3Object.ToJson(Primitives, []); // Serialization
 ```
 ```Json
 {"Str":"testing 😜","Bool":true,"Num":-99}
 ```
 ```Delphi
-  DeserPrim :=  TJX3Object.FromJSON<TPrimitives>(Json);  // Deserialization
+  DeserPrim :=  TJX3Object.FromJSON<TPrimitives>(Json, []);  // Deserialization
  ```
   By deserializing from the Json string we made a copy of the TPrimtive object
 ```Delphi
@@ -67,7 +67,7 @@ end;
 
 ```
 ```Delphi
- Json := Demo.ToJson([joNullToEmpty]);  // Remove null fields
+  Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);  // Remove null fields
 ```
 ```Json
    {"S":"~~😃~~","SubClass":{"X":222}}
@@ -168,8 +168,8 @@ As simple as that :
     "q2":{"question":"12 - 8 = ?","options":["1","2","3","4"],"answer":"4"}}}}
     ''';
 
-  var Game := TJX3Object.FromJSON<TGame>(GameStr);        // Get the Object from Json
-  Memo1.Text := TJX3Tools.FormatJSON( Game.ToJSON() );    // Get the Json from the Object, and print the formated result
+  var Game := TJX3Object.FromJSON<TGame>(GameStr);         // Get the Object from Json
+  Memo1.Text := TJX3.FormatJSON(  TJX3.ToJSON(Game) );     // Get the Json from the Object, and print the formated result
 
   Memo1.Lines.Add('');
   Memo1.Lines.Add('Questions - Options :');
@@ -183,6 +183,13 @@ As simple as that :
 
   Game.Free; 
 ```
-```
 Example : Parse an Array as payload (Demo07)
 -
+Example : Large JSON, Benchmark.
+-
+In this example we read, serialize, clone, deserialize and finally save a large ebay's aspects json file (around 450K json fields)
+You will be able to benchmark JsonX3, my result on my humble lappy are : 1352, 1361, 1540, 130 ms... finnaly you may compare the output generated json file 'jsx3.json' vs 'aspects100.json' the original ebay's one.
+
+
+
+
