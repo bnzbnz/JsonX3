@@ -153,6 +153,7 @@ end;
 
 procedure TJX3Boolean.JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
+  if (joStats in AMergeOpts) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
   if ASrc.GetIsNull then
   begin
     Self.SetIsNull(True);

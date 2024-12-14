@@ -157,6 +157,7 @@ end;
 
 procedure TJX3String.JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
+  if (joStats in AMergeOpts) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
   if (not ASrc.GetIsNull) then
   begin
     if (Self.GetIsNull) or (jomOverload in AMergeOpts) then

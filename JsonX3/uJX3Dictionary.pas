@@ -115,8 +115,6 @@ var
   LName:      string;
   LNameAttr:  JX3Name;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicCount);
-
   if Assigned(AInfoBlock.Field) then
   begin
     LName := AInfoBlock.Field.Name;
@@ -167,8 +165,6 @@ var
   LJObj: TJSONObject;
   LJObjDestroy: Boolean;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicCount);
-
   if not Assigned(AInfoBlock.Obj) then begin SetIsNull(True); Exit end;;
   if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin SetIsNull(True); Exit end;
   if AInfoBlock.Obj.Pairs[0].JsonValue.Null then begin SetIsNull(True); Exit end;;
@@ -208,7 +204,6 @@ var
   LNewObj: TObject;
   LPair:  TPair<string, V>;
 begin
-  if (joStats in AOptions) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.DicCount);
   if GetIsNull then
   begin
     ADest.SetIsNull(True);

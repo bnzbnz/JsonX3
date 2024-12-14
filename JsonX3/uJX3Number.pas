@@ -325,6 +325,7 @@ end;
 
 procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
+  if (joStats in AMergeOpts) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
   if ASrc.GetIsNull then
   begin
     Self.SetIsNull(True);

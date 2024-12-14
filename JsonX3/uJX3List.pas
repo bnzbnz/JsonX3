@@ -97,8 +97,6 @@ var
   LName:      string;
   LNameAttr:  JX3Name;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.ListCount);
-
   LName := AInfoBlock.FieldName;
   if Assigned(AInfoBlock) and Assigned(AInfoBlock.Field) then
   begin
@@ -144,7 +142,6 @@ var
   LInfoBlock: TJX3InfoBlock;
   LJObj:      TJSONObject;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.ListCount);
   if not Assigned(AInfoBlock.Obj) then begin SetIsNull(True); Exit end;;
   if AInfoBlock.Obj.Count = 0 then begin SetIsNull(True); Exit end;;
   if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin SetIsNull(True); Exit end;
@@ -157,12 +154,14 @@ begin
       if LELe is TJSONObject then
       begin
         LNewObj := T.Create;
+        TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         Add(LNewObj);
         LJObj :=  LEle as TJSONObject;
         LInfoBlock.Init(AInfoBlock.FieldName, LJObj, AInfoBlock.Field, AInfoBlock.Options);
         TxRTTI.CallMethodProc( 'JSONDeserialize', LNewObj, [ TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock) ] );
       end else begin
         LNewObj := T.Create;
+        TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         Add(LNewObj);
         LEle.Owned := False;
         LJObj :=  TJSONObject.Create(TJSONPair.Create('', LEle));
@@ -181,7 +180,6 @@ var
   LNewObj: TObject;
   LList: TObject;
 begin
-  if (joStats in AOptions) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.ListCount);
   if GetIsNull then
   begin
     ADest.SetIsNull(True);
@@ -190,6 +188,7 @@ begin
   for LList in Self do
   begin
     LNewObj := T.Create;
+    TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
     TxRTTI.CallMethodProc('JSONClone', LList, [LNewObj, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
     ADest.Add(LNewObj);
   end;
@@ -212,11 +211,7 @@ begin
     begin
       if not Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        LInstance := LField.FieldType.AsInstance;
-        if not Assigned(LInstance) then Continue;
-        LMethod := LInstance.GetMethod('Create');
-        if not Assigned(LMethod) then Continue;
-        LNewObj := LMethod.Invoke(LInstance.MetaclassType,[]).AsObject;
+        LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
         if not Assigned(LNewObj) then Continue;
         TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         LField.SetValue(Self, LNewObj);

@@ -126,31 +126,31 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Convert Json String to JSX3 Objects :' );
     LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joStats ], LStats );
-    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
-
-    Memo1.Lines.add( '' );
-    Memo1.Lines.add( '==> ' + LStats.Stats.OpCount.toString + ' Operations !!!' );
-    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.OpCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+    Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
+    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'JSX3 Object Cloning (RTTI):' );
     LJObjClone := TJX3Object.Clone<TfetchItemAspectsContentType>(LJObj, [joStats], LStats);
-    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
+    Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
+    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'JSX3 Object Cloning (Merging):' );
     LJObjMerge := TfetchItemAspectsContentType.Create;
     LJObjMerge.Merge(LJObj, [joStats], LStats);
+    Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
+    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
     LJObjMerge.Free;
-    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Revert JSX3 Objects to Json String :' );
     LJsonStr := TJX3Object.ToJson( LJObj, [ joNullToEmpty, joStats ], LStats );
-    Memo1.Lines.add( Format( '  Processing duration %d ms', [ LStats.Stats.ProcessingTimeMS ] ) );
+    Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
+    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;

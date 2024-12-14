@@ -2,15 +2,15 @@ object Form4: TForm4
   Left = 0
   Top = 0
   Caption = 'Large JSON'
-  ClientHeight = 363
-  ClientWidth = 636
+  ClientHeight = 511
+  ClientWidth = 514
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
   DesignerMasterStyle = 0
   object Button: TButton
     Align = Top
-    Size.Width = 636.000000000000000000
+    Size.Width = 514.000000000000000000
     Size.Height = 41.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 2
@@ -22,11 +22,11 @@ object Form4: TForm4
     Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
     DataDetectorTypes = []
     Align = Client
-    Size.Width = 636.000000000000000000
-    Size.Height = 322.000000000000000000
+    Size.Width = 514.000000000000000000
+    Size.Height = 470.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 3
-    Viewport.Width = 632.000000000000000000
-    Viewport.Height = 318.000000000000000000
+    Viewport.Width = 510.000000000000000000
+    Viewport.Height = 466.000000000000000000
   end
 end

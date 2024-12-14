@@ -1,4 +1,4 @@
-JsonX3 (Json eXtended version 3)
+﻿JsonX3 (Json eXtended version 3)
 =================
 
 JsonX3 is a Delphi Json to Objects, Objects to Json parser. It is fast, light still simple to use
@@ -188,26 +188,29 @@ Example : Parse an Array as payload (Demo07)
 Example : Large JSON, Benchmark.
 -
 In this example we read, serialize, clone, deserialize and finally save a large ebay's aspects json file (around 450K json fields)
-You will be able to benchmark JsonX3, my result on my humble lappy are : 1352, 1361, 1540, 130 ms... finnaly you may compare the output generated json file 'jsx3.json' vs 'aspects100.json' the original ebay's one :
+You will be able to benchmark and compare the output generated json file 'jsx3.json' vs 'aspects100.json' the original ebay's one :
 
 ```
 Loading ebay's Aspects json file :
   Stream size: 14358 KB
 
 Convert Json String to JSX3 Objects :
-  Processing duration 1352 ms
+  Processing duration 1150 ms
 
 ==> 463527 Operations !!!
-==> 342845 /s
+==> 403066 /s
 
-JSX3 Object Cloning:
-  Processing duration 1361 ms
+JSX3 Object Cloning (RTTI):
+  Processing duration 1126 ms
+
+JSX3 Object Cloning (Merging):
+  Processing duration 1158 ms
 
 Revert JSX3 Objects to Json String :
-  Processing duration 1540 ms
+  Processing duration 1158 ms
 
 Free Json Object :
-  Processing duration 130 ms
+  Processing duration 132 ms
 
 Saving ebay's Aspects Json file (jsx3.json) :
   Stream size: 14358 KB

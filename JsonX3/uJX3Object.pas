@@ -72,11 +72,8 @@ type
   TJX3InOutStats = class
     ProcessingTimeMS: Int64;
     PrimitiveCount: Int64;
-    ListCount: Int64;
-    DicCount: Int64;
-    BooleanCount: Int64;
-    NumCount: Int64;
-    function OpCount: Int64;
+    EmptyFieldCount: Int64;
+    FieldCount: Int64;
     procedure Clear;
   end;
 
@@ -162,19 +159,8 @@ procedure TJX3InOutStats.Clear;
 begin
   ProcessingTimeMS  := 0;
   PrimitiveCount    := 0;
-  ListCount         := 0;
-  DicCount          := 0;
-  BooleanCount      := 0;
-  NumCount          := 0;
-end;
-
-function TJX3InOutStats.OpCount: Int64;
-begin
-  Result := PrimitiveCount;
-  Result := Result + ListCount;
-  Result := Result + DicCount;
-  Result := Result + BooleanCount;
-  Result := Result + NumCount;
+  EmptyFieldCount   := 0;
+  FieldCount        := 0;
 end;
 
 constructor TJX3InOutBlock.Create;
@@ -261,6 +247,7 @@ begin
     for LField in LFields do
       if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
       begin
+        if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
         LObj := LField.GetValue(Self).AsObject;
         if  not Assigned(LObj) then
         begin
@@ -313,6 +300,8 @@ begin
   try
     for LField in TxRTTI.GetFields(Self) do
     begin
+      if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
+
       LName :=  NameDecode(LField.Name);
       LAttr := JX3Name(TxRTTI.GetFieldAttribute(LField, JX3Name));
       if Assigned(LAttr) then LName := LAttr.Name;
@@ -325,7 +314,7 @@ begin
         if (LJPair.JsonValue is TJSONObject) then
           LJObj := (LJPair.JsonValue as TJSONObject)
         else
-          LJObj :=  TJSONObject.Create(LJPair);
+          LJObj := TJSONObject.Create(LJPair);
 
         LObj := LField.GetValue(Self).AsObject;
         if  (LObj = nil) then
@@ -340,12 +329,14 @@ begin
         else if LObj is TJX3Number  then TJX3Number(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
         else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
         else TxRTTI.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
-        if (Assigned(LJObj)) and not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
+
+        if not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
         LJPair.JsonValue.Owned := True;
         LJPair.Owned := True;
 
       end else begin
 
+        if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.EmptyFieldCount);
         if Assigned( JX3Default(TxRTTI.GetFieldAttribute(LField, JX3Default)) ) then
         begin
           LObj := LField.GetValue(Self).AsObject;
@@ -474,13 +465,16 @@ var
   LDestField: TRTTIField;
   LObj:       TObject;
   LNewObj:    TObject;
-  begin
+  LSrc:       TArray<TRTTIField>;
+begin
+  LSrc := TxRTTI.GetFields(Self);
   for LDestField in TxRTTI.GetFields(ADest) do
     begin
-    for LSrcField in TxRTTI.GetFields(Self) do
+    for LSrcField in LSrc do
     begin
       if LSrcField.Name = LDestField.Name then
       begin
+        if (joStats in AOptions) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
         LNewObj := LDestField.GetValue(ADest).AsObject;
         if not Assigned(LNewObj) then
         begin
@@ -505,13 +499,17 @@ var
   LInstance:  TRttiInstanceType;
   LMethod:    TRTTIMEthod;
   LObj:       TObject;
+  LSrcField:  TRTTIField;
+  LSrc:       TArray<TRTTIField>;
 begin
+  LSrc := TxRTTI.GetFields(ASrc);
   for LField in TxRTTI.GetFields(Self) do
   begin
-    for var LSrcField in TxRTTI.GetFields(ASrc) do
+    for LSrcField in LSrc do
     begin
       if LField.Name = LSrcField.Name then
       begin
+        if (joStats in AMergeOpts) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
         LObj := LField.GetValue(Self).AsObject;
         if not Assigned(LObj) then
         begin

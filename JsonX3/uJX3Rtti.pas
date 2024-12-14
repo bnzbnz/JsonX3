@@ -34,6 +34,7 @@ uses
 
 type
   TxRTTI = class abstract
+    class function  GetField(AObj: TObject; AField: string): TRTTIFIeld;
     class function  GetFields(aObj: TObject): TArray<TRTTIField>; static;
     class function  GetProps(aObj: TObject): TArray<TRTTIProperty>; static;
     class function  GetMethods(aObj: TObject): TArray<TRTTIMethod>; static;
@@ -107,9 +108,13 @@ begin
    Result := TxRTTI.CreateObject(_RTTIctx.GetType(AClass).AsInstance);
 end;
 
+class function TxRTTI.GetField(AObj: TObject; AField: string): TRTTIFIeld;
+begin
+  Result := _RTTIctx.GetType(AObj.ClassType).GetField(AField);
+end;
+
 class function TxRTTI.GetFields(aObj: TObject): TArray<TRTTIField>;
 {$IFDEF JX3RTTICACHE}
-
 var
   CType: TClass;
 begin
