@@ -46,7 +46,7 @@ type
     function        First:T;
     function        Last: T;
 
-    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock =Nil);
     procedure       JSONClone(ADest: TJX3List<T>; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONMerge(ASrc: TJX3List<T>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
@@ -87,7 +87,7 @@ uses
   , TypInfo
   ;
 
-function TJX3List<T>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+procedure TJX3List<T>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LParts:     TList<string>;
   LPart:      TValue;
@@ -110,10 +110,13 @@ begin
 
     if Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
       raise Exception.Create(Format('"%s" (TJX3List) : a value is required', [LName]));
-
-    if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-    if AInfoBlock.FieldName.IsEmpty then EXit('null');
-    Exit('"' + LName + '":null');
+    if joNullToEmpty in AInfoBlock.Options then Exit;
+    AInfoBlock.IsEmpty := False;
+    if LName.IsEmpty then
+      AInfoBlock.Part := 'null'
+    else
+      AInfoBlock.Part := '"' + LName + '":null';
+    Exit;
   end;
 
   LParts := TList<string>.Create;
@@ -122,16 +125,17 @@ begin
   for LEle in Self do
   begin
     LInfoBlock.Init('', Nil, Nil, AInfoBlock.Options);
-    LPart := TxRTTI.CallMethodFunc('JSONSerialize', LEle, [ LInfoBlock, AInOutBlock ]);
-    if not LPart.IsEmpty then LParts.Add(LPart.AsString);
+    TxRTTI.CallMethodFunc('JSONSerialize', LEle, [ LInfoBlock, AInOutBlock ]);
+    if not LInfoBlock.IsEmpty then LParts.Add(LInfoBlock.Part);
   end;
   LInfoBlock.Free;
   LRes := TJX3Object.JsonListToJsonString(LParts);
 
+  AInfoBlock.IsEmpty := False;
   if LName.IsEmpty then
-    Result := '[' + LRes + ']'
+    AInfoBlock.Part := '[' + LRes + ']'
   else
-    Result := '"' + LName + '":[' + LRes + ']';
+    AInfoBlock.Part := '"' + LName + '":[' + LRes + ']';
   LParts.Free;
 end;
 

@@ -47,7 +47,7 @@ type
   public
     constructor     Create;
 
-    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONClone(ADest: TJX3Boolean; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONMerge(ASrc: TJX3Boolean; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
@@ -78,7 +78,7 @@ begin
   FValue := False;
 end;
 
-function TJX3Boolean.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+procedure TJX3Boolean.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LName: string;
   LValue: Boolean;
@@ -109,14 +109,21 @@ begin
       if Assigned(AInfoBlock.Field) and Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
         raise Exception.Create(Format('"%s" (TJX3Boolean) : a value is required', [LName]));
 
-      if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-      if LName.IsEmpty then Exit('null');
-      Exit(Format('"%s":null', [LName]))
+      if joNullToEmpty in AInfoBlock.Options then Exit;
+      AInfoBlock.IsEmpty := False;
+      if LName.IsEmpty then
+        AInfoBlock.Part := 'null'
+      else
+        AInfoBlock.Part := '"' + LName + '":null';
+      Exit;
     end;
   end;
 
-  if AInfoBlock.FieldName.IsEmpty then Exit(cBoolToStr[LValue]);
-  Result := Format('"%s":%s', [LName, cBoolToStr[LValue]])
+  AInfoBlock.IsEmpty := False;
+  if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then
+    AInfoBlock.Part := cBoolToStr[LValue]
+  else
+    AInfoBlock.Part := '"' + LName + '":' + cBoolToStr[LValue];
 end;
 
 procedure TJX3Boolean.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);

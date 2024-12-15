@@ -41,7 +41,7 @@ type
   public
     constructor Create;
 
-    function  JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure JSONClone(ADest: TJX3Dic<V>; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure JSONMerge(ASrc: TJX3Dic<V>; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
@@ -104,7 +104,7 @@ begin
   Result := TJX3Dic<V>.Create;
 end;
 
-function TJX3Dic<V>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+procedure TJX3Dic<V>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LParts:     TList<string>;
   LPart:      TValue;
@@ -129,9 +129,13 @@ begin
     if Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
       raise Exception.Create(Format('"%s" (TJX3Dic) : a value is required', [LName]));
 
-    if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-    if AInfoBlock.FieldName.IsEmpty then EXit('null');
-    Exit(Format('"%s":null', [LName]));
+    if joNullToEmpty in AInfoBlock.Options then Exit;
+    AInfoBlock.IsEmpty := False;
+    if AInfoBlock.FieldName.IsEmpty then
+      AInfoBlock.Part := 'null'
+    else
+      AInfoBlock.Part := '"' + LName + '":null';
+    Exit;
   end;
 
   LParts := TList<string>.Create;
@@ -143,18 +147,19 @@ begin
     if Assigned(LObj) then
     begin
       LInfoBlock.Init(LKp.Key, Nil, Nil, AInfoBlock.Options);
-      LPart := TxRTTI.CallMethodFunc('JSONSerialize', LObj, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
-      if not LPart.IsEmpty then LParts.Add(LPart.AsString);
+      TxRTTI.CallMethodFunc('JSONSerialize', LObj, [TValue.From<TJX3InfoBlock>(LInfoBlock), TValue.From<TJX3InOutBlock>(AInOutBlock)]);
+      if not LInfoBlock.IsEmpty then LParts.Add(LInfoBlock.Part);
     end;
   end;
   LInfoBlock.Free;
   LRes := TJX3Object.JsonListToJsonString(LParts);
   LParts.Free;
 
+  AInfoBlock.IsEmpty := False;
   if AInfoBlock.FieldNAme.IsEmpty then
-    Result := '{' + LRes + '}'
+    AInfoBlock.Part := '{' + LRes + '}'
   else
-    Result := '"' + LName + '":{'+ LRes + '}';
+    AInfoBlock.Part := '"' + LName + '":{'+ LRes + '}';
 end;
 
 procedure TJX3Dic<V>.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);

@@ -59,7 +59,7 @@ type
   public
     constructor Create;
 
-    function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure   JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure   JSONClone(ADest: TJX3Number; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
@@ -105,7 +105,7 @@ begin
   FValue := '0';
 end;
 
-function TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+procedure TJX3Number.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LName:    string;
   LValue:   string;
@@ -139,17 +139,25 @@ begin
       if Assigned(AInfoBlock.Field) and Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
         raise Exception.Create(Format('"%s" (TJX3Number) : a value is required', [LName]));
 
-      if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-      if LName.IsEmpty then Exit('null');
-      Exit(Format('"%s":null', [LName]))
+      if joNullToEmpty in AInfoBlock.Options then Exit;
+      AInfoBlock.IsEmpty := False;
+      if LName.IsEmpty then
+        AInfoBlock.Part := 'null'
+      else
+        AInfoBlock.Part := '"' + LName + '":null';
+      Exit;
     end;
   end;
 
   LJValue := TJSONNumber.Create(LValue);
   try
-    if AInfoBlock.FieldName.IsEmpty then Exit(LJValue.Value);
-    if LName.IsEmpty then Exit(Format('%s', [LName, LJValue.Value]));
-    Result := Format('"%s":%s', [LName, LJValue.Value]);
+    AInfoBlock.IsEmpty := False;
+    if AInfoBlock.FieldName.IsEmpty then
+      AInfoBlock.Part := LJValue.ToString
+    else if LName.IsEmpty then
+      AInfoBlock.Part := LJValue.Value
+    else
+      AInfoBlock.Part := '"' + LName + '":' + LJValue.Value;
   finally
     LJValue.Free;
   end;

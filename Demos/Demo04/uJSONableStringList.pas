@@ -16,7 +16,7 @@ type
     FIsManaged: Boolean;
   public
     procedure   JSONCreate(AManaged: Boolean);
-    function    JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+    procedure   JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
     procedure   JSONClone(ADest: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
     procedure   JSONMerge(ASrc: TJSONableStringList; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
@@ -38,16 +38,24 @@ begin
   Result := FIsManaged; // send it back to the engine
 end;
 
-function TJSONableStringList.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+procedure TJSONableStringList.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LArr: TJSONArray;
   LStr: string;
 begin
   // Custom serialization
-  LArr := TJSONArray.Create;
-  for LStr in Self do LArr.Add(LStr);
-  Result := Format('"%s":%s', [AInfoBlock.FieldName, LArr.ToJSON]);
-  LArr.Free;
+  if count = 0 then  // null;
+    AInfoBlock.SetJSON( Format('"%s":null', [AInfoBlock.FieldName]) )
+  else begin
+    LArr := TJSONArray.Create;
+    for LStr in Self do
+    begin
+      TJX3Object.EscapeJSONStr(LStr); // Escapte the string to JSON Format
+      LArr.Add(LStr);
+    end;
+    AInfoBlock.SetJSON( Format('"%s":"%s"', [AInfoBlock.FieldName, LArr.ToJSON]) );
+    LArr.Free;
+  end;
 end;
 
 procedure TJSONableStringList.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);

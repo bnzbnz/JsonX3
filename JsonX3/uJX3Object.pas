@@ -59,14 +59,19 @@ type
 
   JX3Unmanaged = class(TCustomAttribute);
 
-    TJX3InfoBlock = class
+  TJX3InfoBlock = class
     Obj: TJSONObject;
     FieldName: string;
     Field: TRttiField;
     Options: TJX3Options;
+    //  Result :
+    IsEmpty: Boolean;
+    Part: string;
+    // Helpers
     constructor Create; overload;
     constructor Create( AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options); overload;
     procedure   Init( AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
+    procedure   SetJSON(AJson: string; AToEmpty: Boolean = False);
   end;
 
   TJX3InOutStats = class
@@ -93,19 +98,20 @@ type
     destructor      Destroy; override;
 
     // procedure    JSONCreate(AManaged: Boolean);
-    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONClone(ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONMerge(ASrc: TObject; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
     // function     JSONDestroy: Boolean;
 
-    class function  FromJSON<T:class, constructor>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+    class function  FromJSON<T:class, constructor>(const AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     class function  ToJSON(AObj: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     class function  Clone<T:class, constructor>(AObj: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     function        Merge(ASrc: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
 
-    //Utils
-    class procedure EscapeJSONStr(var AStr: string); static;
+    // Internals / Utils
+    class procedure VarEscapeJSONStr(var AStr: string); overload; static;
+    class function  EscapeJSONStr(const AStr: string): string; overload; static;
     class function  NameDecode(const ToDecode: string): string; static;
     class function  NameEncode(const ToEncode: string): string; static;
     class function  FormatJSON(const AJson: string; AIndentation: Integer = 4): string;
@@ -141,6 +147,7 @@ end;
 
 constructor TJX3InfoBlock.Create;
 begin
+  IsEmpty := True;
 end;
 
 constructor TJX3InfoBlock.Create(AFieldName: string; AObj: TJSONObject; AField: TRttiField; AOptions: TJX3Options);
@@ -154,6 +161,13 @@ begin
   FieldName := AFieldName;
   Field := AField;
   Options := AOptions;
+  IsEmpty := True;
+end;
+
+procedure TJX3InfoBlock.SetJSON(AJson: string; AToEmpty: Boolean);
+begin
+  Self.IsEmpty := AToEmpty;
+  Part := AJson;
 end;
 
 procedure TJX3InOutStats.Clear;
@@ -227,7 +241,7 @@ begin
   inherited;
 end;
 
-function TJX3Object.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+procedure TJX3Object.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LField:     TRTTIField;
   LFields:    TArray<TRTTIField>;
@@ -237,7 +251,6 @@ var
   LInfoBlock: TJX3InfoBlock;
   LObj:       TOBject;
 begin
-  Result := '';
   LInfoBlock := TJX3InfoBlock.Create;
   LParts := TList<string>.Create;
   try
@@ -255,11 +268,11 @@ begin
           LField.SetValue(Self, LObj);
         end;
         LInfoBlock.Init(LField.Name, Nil, LField, AInfoBlock.Options);
-        if LObj is TJX3String  then LPart := TJX3String(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
-        else if LObj is TJX3Number  then LPart := TJX3Number(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
-        else if LObj is TJX3Boolean  then LPart := TJX3Boolean(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
-        else LPart := TxRTTI.CallMethodFunc('JSONSerialize', LObj, [LInfoBlock, AInOutBlock]);
-        if not LPart.IsEmpty then LParts.Add(LPart.AsString);
+        if LObj is TJX3String  then TJX3String(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
+        else if LObj is TJX3Number  then TJX3Number(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
+        else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
+        else TxRTTI.CallMethodFunc('JSONSerialize', LObj, [LInfoBlock, AInOutBlock]);
+        if not LInfoBlock.IsEmpty then LParts.Add(LInfoBlock.Part);
         Continue;
       end;
       LRes := JsonListToJsonString(LParts);
@@ -270,15 +283,18 @@ begin
           if Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
             raise Exception.Create(Format('"%s" (TJX3Object) : a value is required', [AInfoBlock.FieldName]));
 
-          if joNullToEmpty in AInfoBlock.Options then
-            Result := TValue.Empty
-          else
-            Result := '"' + AInfoBlock.FieldName + '":null';
-        end else
-          Result := '"' + AInfoBlock.FieldName + '":{' + LRes + '}';
+          if joNullToEmpty in AInfoBlock.Options then Exit;
+          AInfoBlock.IsEmpty := False;
+          AInfoBlock.Part := '"' + AInfoBlock.FieldName + '":null';
+        end else begin
+          AInfoBlock.IsEmpty := False;
+          AInfoBlock.Part := '"' + AInfoBlock.FieldName + '":{' + LRes + '}';
+        end;
       end
-    else
-      Result := '{' + LRes + '}';
+      else begin
+        AInfoBlock.IsEmpty := False;
+        AInfoBlock.Part := '{' + LRes + '}';
+      end;
   finally
     LParts.Free;
     LInfoBlock.Free;
@@ -301,7 +317,7 @@ begin
     begin
       if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
 
-      LName :=  NameDecode(LField.Name);
+      LName := NameDecode(LField.Name);
       LAttr := JX3Name(TxRTTI.GetFieldAttribute(LField, JX3Name));
       if Assigned(LAttr) then LName := LAttr.Name;
 
@@ -313,8 +329,9 @@ begin
         if (LJPair.JsonValue is TJSONObject) then
           LJObj := (LJPair.JsonValue as TJSONObject)
         else
+        begin
           LJObj := TJSONObject.Create(LJPair);
-
+        end;
         LObj := LField.GetValue(Self).AsObject;
         if  not Assigned(LObj) then
         begin
@@ -324,9 +341,9 @@ begin
         end;
 
         LInfoBlock.Init(LField.Name, LJObj, LField, AInfoBlock.Options);
-        if LObj is TJX3String  then TJX3String(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
-        else if LObj is TJX3Number  then TJX3Number(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
-        else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+        if LObj is TJX3String then TJX3String(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+        else if LObj is TJX3Number then TJX3Number(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+        else if LObj is TJX3Boolean then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
         else TxRTTI.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
 
         if not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
@@ -361,7 +378,7 @@ begin
   end;
 end;
 
-class function TJX3Object.FromJSON<T>(AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
+class function TJX3Object.FromJSON<T>(const AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
 var
   LInfoBlock: TJX3InfoBlock;
   LWatch:     TStopWatch;
@@ -400,7 +417,8 @@ begin
   try
     if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     LInfoBlock := TJX3InfoBlock.Create('', nil, nil, AOptions);
-    Result := TxRTTI.CallMethodFunc('JSONSerialize', AObj, [LInfoBlock, AInOutBlock]).AsString;
+    TxRTTI.CallMethodProc('JSONSerialize', AObj, [LInfoBlock, AInOutBlock]);
+    if not LInfoBlock.IsEmpty then Result := LInfoBlock.Part;
   finally
     LInfoBlock.Free;
     if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
@@ -535,7 +553,7 @@ begin
   FreeAndNil(TmpJson);
 end;
 
-class procedure TJX3Object.EscapeJSONStr(var AStr: string);
+class procedure TJX3Object.VarEscapeJSONStr(var AStr: string);
 const
   HexChars: array[0..15] of Char = '0123456789abcdef';
 var
@@ -582,6 +600,12 @@ begin
   end;
   AStr := LSb.ToString;
   LSb.Free;
+end;
+
+class function TJX3Object.EscapeJSONStr(const AStr: string): string;
+begin
+  Result := AStr;
+  VarEscapeJSONStr(Result);
 end;
 
 class function TJX3Object.JsonListToJsonString(const AList: TList<string>): string;

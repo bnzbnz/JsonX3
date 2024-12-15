@@ -48,7 +48,7 @@ type
   public
     constructor     Create; override;
 
-    function        JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil): TValue;
+    procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONClone(ADest: TJX3String; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONMerge(ASrc: TJX3String; AMergeOpts: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
@@ -84,7 +84,7 @@ begin
   SetIsNull(True);
 end;
 
-function TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock): TValue;
+procedure TJX3String.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LName: string;
   LValue: string;
@@ -114,15 +114,22 @@ begin
     begin
       if Assigned(AInfoBlock.Field) and Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
         raise Exception.Create(Format('"%s" (TJX3String) : a value is required', [LName]));
-      if joNullToEmpty in AInfoBlock.Options then Exit(TValue.Empty);
-      if LName.IsEmpty then Exit('null');
-      Exit('"' + LName + '":null');
+      if joNullToEmpty in AInfoBlock.Options then Exit;
+      AInfoBlock.IsEmpty := False;
+      if LName.IsEmpty then
+        AInfoBlock.Part := 'null'
+      else
+        AInfoBlock.Part := '"' + LName + '":null';
+      Exit;
     end;
   end;
 
-  TJX3Object.EscapeJSONStr(LValue);
-  if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then Exit( '"' + LValue + '"');
-  Result := '"' + LName + '":"' + LValue  +'"';
+  TJX3Object.VarEscapeJSONStr(LValue);
+  AInfoBlock.IsEmpty := False;
+  if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then
+    AInfoBlock.Part := '"' + LValue + '"'
+  else
+    AInfoBlock.Part := '"' + LName + '":"' + LValue  +'"';
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
