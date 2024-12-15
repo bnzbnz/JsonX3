@@ -120,8 +120,9 @@ begin
     end;
   end;
 
-  if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then Exit( '"' + TJX3Object.EscapeJSONStr(LValue) + '"');
-  Result := '"' + LName + '":"' + TJX3Object.EscapeJSONStr(LValue)  +'"';
+  TJX3Object.EscapeJSONStr(LValue);
+  if Assigned(AInfoBlock) and AInfoBlock.FieldName.IsEmpty then Exit( '"' + LValue + '"');
+  Result := '"' + LName + '":"' + LValue  +'"';
 end;
 
 procedure TJX3String.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);

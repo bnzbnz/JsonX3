@@ -105,7 +105,7 @@ type
     function        Merge(ASrc: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
 
     //Utils
-    class function  EscapeJSONStr(const AStr: string): string; static;
+    class procedure EscapeJSONStr(var AStr: string); static;
     class function  NameDecode(const ToDecode: string): string; static;
     class function  NameEncode(const ToEncode: string): string; static;
     class function  FormatJSON(const AJson: string; AIndentation: Integer = 4): string;
@@ -534,17 +534,30 @@ begin
   FreeAndNil(TmpJson);
 end;
 
-class function TJX3Object.EscapeJSONStr(const AStr: string): string;
+class procedure TJX3Object.EscapeJSONStr(var AStr: string);
 const
   HexChars: array[0..15] of Char = '0123456789abcdef';
 var
   LP: PChar;
   LEndP: PChar;
   LSb: TStringBuilder;
+  LMatch: Pointer;
 begin
-  LSb := TStringBuilder.Create;
+  LMatch := nil ;
   LP := PChar(Pointer(AStr));
   LEndP := LP + Length(AStr);
+  while LP < LendP do
+  begin
+    case LP^ of
+      #0..#31, '\', '"' : begin LMatch := LP; Break; end;
+    end;
+    Inc(LP);
+  end;
+
+  if not Assigned(LMatch) then Exit;
+
+  LSb := TStringBuilder.Create( Copy(AStr, 1, LMatch - PChar(Pointer(AStr))) );
+  LP :=  LMatch;
   while LP < LendP do
   begin
     case LP^ of
@@ -566,7 +579,7 @@ begin
     end;
     Inc(LP);
   end;
-  Result := LSb.ToString;
+  AStr := LSb.ToString;
   LSb.Free;
 end;
 
