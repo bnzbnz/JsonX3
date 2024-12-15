@@ -119,6 +119,7 @@ type
 implementation
 uses
     System.Diagnostics
+  , System.Character
   , SysUtils
   , Classes
   , TypInfo
@@ -628,7 +629,7 @@ var
 begin
   Result := ''; Encoded := False;
   for var i := 1 to Length(ToEncode) do
-    if true then //ToEncode[i].IsLetterOrDigit  then
+    if ToEncode[i].IsLetterOrDigit  then
       Result := Result + ToEncode[i]
     else begin
       Encoded := True;
