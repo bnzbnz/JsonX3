@@ -288,14 +288,13 @@ begin
           else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
             LObj := JSX3AsyncNum.Get<TJX3Num>
           else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-           LObj := JSX3AsyncBool.Get<TJX3Bool>
+            LObj := JSX3AsyncBool.Get<TJX3Bool>
           else
         {$ENDIF JX3SPEEDUP}
           begin
             LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
             TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
           end;
-          LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
           LField.SetValue(Self, LObj);
         end;
         LInfoBlock.Init(LField.Name, Nil, LField, AInfoBlock.Options);
