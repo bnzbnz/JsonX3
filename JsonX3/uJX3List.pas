@@ -90,7 +90,6 @@ uses
 procedure TJX3List<T>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LParts:     TList<string>;
-  LPart:      TValue;
   LRes:       string;
   LEle:       T;
   LInfoBlock: TJX3InfoBlock;
@@ -107,7 +106,6 @@ begin
 
   if GetIsNull then
   begin
-
     if Assigned(TxRTTI.GetFieldAttribute(AInfoBlock.Field, JS3Required)) then
       raise Exception.Create(Format('"%s" (TJX3List) : a value is required', [LName]));
     if joNullToEmpty in AInfoBlock.Options then Exit;
@@ -202,8 +200,6 @@ constructor TJX3List<T>.Create;
   var
   LFields:    TArray<TRttiField>;
   LField:     TRTTIField;
-  LInstance:  TRttiInstanceType;
-  LMethod:    TRTTIMEthod;
   LNewObj:    TObject;
 begin
   inherited Create;

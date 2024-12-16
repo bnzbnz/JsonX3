@@ -23,11 +23,16 @@ SOFTWARE.
 *****************************************************************************)
 unit uJX3Object;
 
+{$DEFINE JX3SPEEDUP} // Speed vs Memory, only if you parse large Json... (10-15% faster)
+
 interface
 uses
   System.Generics.Collections
   , RTTI
   , JSON
+  {$IFDEF JX3SPEEDUP}
+  , uJX3AsyncObj
+  {$ENDIF JX3SPEEDUP}
   ;
 
 type
@@ -64,7 +69,7 @@ type
     FieldName: string;
     Field: TRttiField;
     Options: TJX3Options;
-    //  Result :
+    //  Results
     IsEmpty: Boolean;
     Part: string;
     // Helpers
@@ -121,6 +126,14 @@ type
 
   TJX3Obj = TJX3Object;
   TJX3    = TJX3Object;
+
+{$IFDEF JX3SPEEDUP}
+var
+  JSX3AsyncStr:  TJX3AsycObjectLoader;
+  JSX3AsyncNum:  TJX3AsycObjectLoader;
+  JSX3AsyncBool: TJX3AsycObjectLoader;
+  JSX3AsyncJObj: TJX3AsycObjectLoader;
+{$ENDIF JX3SPEEDUP}
 
 implementation
 uses
@@ -196,20 +209,27 @@ end;
 constructor TJX3Object.Create;
 var
   LField:     TRTTIField;
-  LInstance:  TRttiInstanceType;
-  LMethod:    TRTTIMEthod;
   LNewObj:    TObject;
 begin
   inherited Create;
   for LField in TxRTTI.GetFields(Self) do
   begin
-    if  (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
+    if  (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then
     begin
       if not Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
+        {$IFDEF JX3SPEEDUP}
+        if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
+           LNewObj := JSX3AsyncStr.Get<TJX3String>
+        else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
+           LNewObj := JSX3AsyncNum.Get<TJX3Num>
+        else  if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
+           LNewObj := JSX3AsyncBool.Get<TJX3Bool>
+        else
+        {$ENDIF JX3SPEEDUP}
+           LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
         if not Assigned(LNewObj) then Continue;
-        if not((LNewObj is TJX3String) or (LNewObj is TJX3Number) or (LNewObj is TJX3Boolean)) then
+        if not (LNewObj is TJX3Object) then
           TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         LField.SetValue(Self, LNewObj);
       end else begin
@@ -227,7 +247,7 @@ var
 begin
   LFields := TxRTTI.GetFields(Self);
   for LField in LFields do
-    if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
+    if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then
     begin
       LObj := LField.GetValue(Self).AsObject;
       if not Assigned(LObj) then Continue;
@@ -246,7 +266,6 @@ var
   LField:     TRTTIField;
   LFields:    TArray<TRTTIField>;
   LParts:     TList<string>;
-  LPart:      TValue;
   LRes:       string;
   LInfoBlock: TJX3InfoBlock;
   LObj:       TOBject;
@@ -257,14 +276,26 @@ begin
     LFields := TxRTTI.GetFields(Self);
     LParts.Capacity := Length(LFields);
     for LField in LFields do
-      if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
+      if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then
       begin
         if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
         LObj := LField.GetValue(Self).AsObject;
         if  not Assigned(LObj) then
         begin
+        {$IFDEF JX3SPEEDUP}
+          if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
+            LObj := JSX3AsyncStr.Get<TJX3String>
+          else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
+            LObj := JSX3AsyncNum.Get<TJX3Num>
+          else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
+           LObj := JSX3AsyncBool.Get<TJX3Bool>
+          else
+        {$ENDIF JX3SPEEDUP}
+          begin
+            LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
+            TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+          end;
           LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-          TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
           LField.SetValue(Self, LObj);
         end;
         LInfoBlock.Init(LField.Name, Nil, LField, AInfoBlock.Options);
@@ -325,13 +356,20 @@ begin
       if LJPair <> Nil then
       begin
         LJPair.Owned := False;
+         LJPair.JsonString.Owned := False;
         LJPair.JsonValue.Owned := False;
         if (LJPair.JsonValue is TJSONObject) then
           LJObj := (LJPair.JsonValue as TJSONObject)
         else
         begin
+        {$IFNDEF JX3SPEEDUP}
           LJObj := TJSONObject.Create(LJPair);
+        {$ELSE}
+          LJObj := TJSONObject(JSX3AsyncJObj.Get<TJSONObject>);
+          LJObj.AddPair(LJPair);
+        {$ENDIF}
         end;
+
         LObj := LField.GetValue(Self).AsObject;
         if  not Assigned(LObj) then
         begin
@@ -346,7 +384,13 @@ begin
         else if LObj is TJX3Boolean then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
         else TxRTTI.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
 
-        if not (LJPair.JsonValue is TJSONObject) then FreeAndNil(LJObj);
+        if not (LJPair.JsonValue is TJSONObject) then
+        begin
+          LJObj.Pairs[0].JsonString.Owned := False;
+          LJObj.Pairs[0].JsonValue.Owned := False;
+          FreeAndNil(LJObj);
+        end;
+        LJPair.JsonString.Owned := True;
         LJPair.JsonValue.Owned := True;
         LJPair.Owned := True;
 
@@ -495,8 +539,19 @@ begin
         LNewObj := LDestField.GetValue(ADest).AsObject;
         if not Assigned(LNewObj) then
         begin
-          LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
-          TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
+        {$IFDEF JX3SPEEDUP}
+          if  LDestField.FieldType.AsInstance.MetaclassType = TJX3String then
+            LNewObj := JSX3AsyncStr.Get<TJX3String>
+          else if  LDestField.FieldType.AsInstance.MetaclassType = TJX3Num then
+            LNewObj := JSX3AsyncNum.Get<TJX3Num>
+          else if  LDestField.FieldType.AsInstance.MetaclassType = TJX3Bool then
+            LNewObj := JSX3AsyncBool.Get<TJX3Bool>
+          else
+        {$ENDIF JX3SPEEDUP}
+          begin
+            LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
+            TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
+          end;
           LDestField.SetValue(ADest, LNewObj);
         end;
         LObj := LSrcField.GetValue(Self).AsObject;
@@ -513,8 +568,6 @@ end;
 procedure TJX3Object.JSONMerge(ASrc: TObject; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 var
   LField:     TRTTIField;
-  LInstance:  TRttiInstanceType;
-  LMethod:    TRTTIMEthod;
   LObj:       TObject;
   LSrcField:  TRTTIField;
   LSrc:       TArray<TRTTIField>;
@@ -530,8 +583,19 @@ begin
         LObj := LField.GetValue(Self).AsObject;
         if not Assigned(LObj) then
         begin
-          LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-          TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+        {$IFDEF JX3SPEEDUP}
+          if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
+            LObj := JSX3AsyncStr.Get<TJX3String>
+          else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
+            LObj := JSX3AsyncNum.Get<TJX3Num>
+          else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
+           LObj := JSX3AsyncBool.Get<TJX3Bool>
+          else
+        {$ENDIF JX3SPEEDUP}
+          begin
+            LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
+            TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+          end;
         end;
         if LObj is TJX3String then TJX3String(LObj).JSONMerge(TJX3String(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
         else if LObj is TJX3Number then TJX3Number(LObj).JSONMerge(TJX3Number(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
@@ -662,4 +726,22 @@ begin
   if Encoded then Result := '_' + Result;
 end;
 
+initialization
+  {$IFDEF JX3SPEEDUP}
+  JSX3AsyncStr  := TJX3AsycObjectLoader.Create(25000, 2500);
+  JSX3AsyncStr.Fill<TJX3Str>;
+  JSX3AsyncNum  := TJX3AsycObjectLoader.Create(10000, 100);
+  JSX3AsyncStr.Fill<TJX3Num>;
+  JSX3AsyncBool := TJX3AsycObjectLoader.Create(1000, 100);
+  JSX3AsyncStr.Fill<TJX3Bool>;
+  JSX3AsyncJObj := TJX3AsycObjectLoader.Create(10000, 1000);
+  JSX3AsyncJObj.Fill<TJSONObject>;
+  {$ENDIF JX3SPEEDUP}
+finalization
+  {$IFDEF JX3SPEEDUP}
+  JSX3AsyncJObj.Free;
+  JSX3AsyncStr.Free;
+  JSX3AsyncNum.Free;
+  JSX3AsyncBool.Free;
+  {$ENDIF JX3SPEEDUP}
 end.

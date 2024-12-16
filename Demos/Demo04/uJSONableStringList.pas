@@ -29,28 +29,26 @@ uses System.Generics.Collections;
 procedure TJSONableStringList.JSONCreate(AManaged: Boolean);
 begin
   FIsManaged := AManaged;  // AManaged : true if the object is created by the json engine.
-  OwnsObjects := False;
 end;
 
 function TJSONableStringList.JSONDestroy: Boolean;
 begin
-  Clear;
   Result := FIsManaged; // send it back to the engine
 end;
 
 procedure TJSONableStringList.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
-  LArr: TJSONArray;
+  LArr: TJSONArray;   // using std JSON libraries
   LStr: string;
 begin
   // Custom serialization
-  if count = 0 then  // null;
+  if Count = 0 then  // null;
     AInfoBlock.SetJSON( Format('"%s":null', [AInfoBlock.FieldName]) )
   else begin
     LArr := TJSONArray.Create;
     for LStr in Self do
     begin
-      TJX3Object.EscapeJSONStr(LStr); // Escapte the string to JSON Format
+      TJX3Object.EscapeJSONStr(LStr); // String escape to JSON Format
       LArr.Add(LStr);
     end;
     AInfoBlock.SetJSON( Format('"%s":"%s"', [AInfoBlock.FieldName, LArr.ToJSON]) );

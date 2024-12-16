@@ -99,7 +99,6 @@ uses
 
 constructor TJX3Number.Create;
 begin
-  inherited;
   FKind := nkNull;
   FIsNull := True;
   FValue := '0';

@@ -107,7 +107,6 @@ end;
 procedure TJX3Dic<V>.JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LParts:     TList<string>;
-  LPart:      TValue;
   LRes:       string;
   Lkp:        TPair<string,V>;
   LObj:       TObject;

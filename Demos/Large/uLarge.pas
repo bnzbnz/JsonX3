@@ -2,6 +2,8 @@ unit uLarge;
 
 interface
 
+
+
 uses
   System.SysUtils,
   System.Types,
@@ -124,8 +126,8 @@ procedure TForm4.ButtonClick( Sender : TObject );
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
-    Memo1.Lines.add( 'Convert Json String to JSX3 Objects :' );
-    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joStats ], LStats );
+    Memo1.Lines.add( 'Convert Json String to JSX3 Objects (Deserialize):' );
+    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joStats, joRaiseException], LStats );
     Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
     Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
@@ -147,8 +149,8 @@ procedure TForm4.ButtonClick( Sender : TObject );
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
-    Memo1.Lines.add( 'Revert JSX3 Objects to Json String :' );
-    LJsonStr := TJX3Object.ToJson( LJObj, [ joNullToEmpty, joStats ], LStats );
+    Memo1.Lines.add( 'Revert JSX3 Objects to Json String (Serialize)):' );
+    LJsonStr := TJX3Object.ToJson( LJObjClone, [ joNullToEmpty, joStats ], LStats );
     Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
     Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
@@ -160,7 +162,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;
-    Memo1.Lines.add( 'Saving ebay''s Aspects Json file (jsx3.json) :' );
+    Memo1.Lines.add( 'Saving Cloned Json file (jsx3.json) :' );
     LStream := TStringStream.Create( LJsonStr, TEncoding.UTF8, True );
     LStream.SaveToFile( ( 'jsx3.json' ) );
     Memo1.Lines.add( Format( '  Stream size: %s KB', [ ( LStream.Size div 1024 ).toString ] ) );

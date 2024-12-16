@@ -10,7 +10,8 @@ uses
   uJX3Object in '..\..\JsonX3\uJX3Object.pas',
   uJX3Number in '..\..\JsonX3\uJX3Number.pas',
   uJX3Dictionary in '..\..\JsonX3\uJX3Dictionary.pas',
-  uJX3Rtti in '..\..\JsonX3\uJX3Rtti.pas';
+  uJX3Rtti in '..\..\JsonX3\uJX3Rtti.pas',
+  uJX3AsyncObj in '..\..\JsonX3\uJX3AsyncObj.pas';
 
 {$R *.res}
 

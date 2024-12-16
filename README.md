@@ -1,22 +1,16 @@
 ﻿JsonX3 (Json eXtended version 3)
 =================
 
-JsonX3 is a Delphi Json to Objects, Objects to Json parser. It is fast, light still simple to use
-It supports Delphi 10.3 to 12.2 on all the platforms. This is supporting 100% of the json format...
+JsonX3 is a Delphi Json to Objects, Objects to Json parser. It is fast (1M/s Ops), light still simple to use
+It supports Delphi 10.3 to 12.2 on all the platforms. And, of course, 100% of the json format is supported...
 
-- This project is sponsored by EA4D "Ebay API 4 Delphi" (https://www.ea4d.com)
+- This project is sponsored by EA4D "Ebay Api 4 Delphi" (https://www.ea4d.com)
 - Contact : Laurent MEYER JsonX3@lmeyer.fr
-
-Clone with GIT
---------------
-```
-> git clone https://github.com/bnzbnz/JsonX3.git
-```
 
 How to install
 --------------
 1. Clone the JsonX3 repository
-2. Add the the unit from the JsonX3 folder to your project.
+2. Add the the unit from the JsonX3/JsonX3 folder to your project.
 
 Usage
 -----
@@ -88,7 +82,7 @@ It's where JX3 excel ! You can create any complex types
     W: TJX3List<TJX3Dic<TJX3List<TPrimitives>>>;  // ouch ! A List of dictionaries of TPrimitives Objects Lists !!!
   end;
 ```
-Please note that JX3 uses TLists instead of arrays, TList being way easier to use.
+Please note that JX3 uses TLists instead of arrays, qTList being way easier to use.
 Filled with value, serializing this (joNullToEmpty), will give you ;
 ```Json
 
@@ -98,7 +92,7 @@ This is perfectly deserializable back to a TObjectDemo Object! You may validate 
 
 -----
 Example : mapping any type of Objects for JSON serialization/deserialization (Demo04)
-JX3 is able to handle any type of Objects as long as they implement 4 public methods
+JX3 is able to handle any type of Objects as long as they implement 4 mandatory public methods
 ```Delphi
   TJSONableStringList = class(TStringList)  // A SringList to be parsed.
   private
@@ -119,7 +113,7 @@ JX3 is able to handle any type of Objects as long as they implement 4 public met
     StringListNotManaged : TJSONableStringList; // NOT MANAGED : You have to take care of the Creation/Destruction of this Object;
   end;                                          // It will still be serialized/deserialized and created if necessary (clone for ex.)
 
-  MyList :=  TJSONableStringList.Create; // In your code, create and use your Object
+  MyList :=  TJSONableStringList.Create; // In your code, create and use your own Object
   ...Fill the List
   
   Obj := TDemoContainer.Create; // Create the container
@@ -144,7 +138,7 @@ It's where JX3 excel ! You can create any complex types
     Num1:    TJX3Num;
     __23href2: TJX3Str;                 // name encoding :  __23href = #hef  ('_'+'_'+Hex('#')+'href')
                                         // instead of usin JX3Name attribute you may use this inline encoding 
-    [JX3Default('true')]                // functions NameEncode in uJX3Tools...
+    [JX3Default('true')]                // functions NameEncode in uJX3OBject...
     [JX3Name('NewMix')]
     Mix: TJX3Bool;                      // Using NewMix as JSON field name with a default value of True;
   end;
@@ -187,7 +181,7 @@ Example : Parse an Array as payload (Demo07)
 -
 Example : Large JSON, Benchmark.
 -
-In this example we read, serialize, clone, deserialize and finally save a large ebay's aspects json file (around 450K json fields)
+In this example we read, serialize, clone (RTTI/Meerging), deserialize and finally save a large ebay's aspects json file (around 1M json fields)
 You will be able to benchmark and compare the output generated json file 'jsx3.json' vs 'aspects100.json' the original ebay's one :
 
 ```
@@ -195,26 +189,26 @@ You will be able to benchmark and compare the output generated json file 'jsx3.j
 Loading ebay's Aspects json file :
   Stream size: 14358 KB
 
-Convert Json String to JSX3 Objects :
-==> 918196 ops in 1155 ms
-==> 794974 /s
+Convert Json String to JSX3 Objects (Deserialize):
+==> 918196 ops in 1031 ms
+==> 890587 /s
 
 JSX3 Object Cloning (RTTI):
-==> 918196 ops in 1139 ms
-==> 806142 /s
+==> 918196 ops in 905 ms
+==> 1014581 /s
 
 JSX3 Object Cloning (Merging):
-==> 918196 ops in 1160 ms
-==> 791548 /s
+==> 918196 ops in 917 ms
+==> 1001304 /s
 
-Revert JSX3 Objects to Json String :
-==> 918196 ops in 1172 ms
-==> 783443 /s
+Revert JSX3 Objects to Json String (Serialize)):
+==> 918196 ops in 692 ms
+==> 1326872 /s
 
 Free Json Object :
-  Freed in 140 ms
+  Freed in 147 ms
 
-Saving ebay's Aspects Json file (jsx3.json) :
+Saving Cloned Json file (jsx3.json) :
   Stream size: 14358 KB
 
 ```

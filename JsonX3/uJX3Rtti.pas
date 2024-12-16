@@ -30,7 +30,7 @@ uses
   , RTTI
   ;
 
-  {$DEFINE JX3RTTICACHE}
+  {$DEFINE JX3RTTICACHE} // Highly recommended : 200% SpeedUp !
 
 type
   TxRTTI = class abstract
@@ -97,10 +97,9 @@ var
   LMethod: TRTTIMethod;
 begin
   Result := Nil;
-  if not Assigned(AInstance) then Exit;
-  LMethod := AInstance.GetMethod('Create');
+  LMethod := GetMethod(AInstance, 'Create');
   if not Assigned(LMethod) then Exit;
-  Result := LMethod.Invoke(AInstance.MetaclassType,[]).AsObject
+  Result := LMethod.Invoke(AInstance.MetaclassType,[]).AsObject;
 end;
 
 class function TxRTTI.CreateObject(AClass: TClass): TObject;

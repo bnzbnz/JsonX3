@@ -80,7 +80,6 @@ uses
 
 constructor TJX3String.Create;
 begin
-  inherited;
   SetIsNull(True);
 end;
 

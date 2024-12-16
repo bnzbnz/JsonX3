@@ -204,6 +204,7 @@
         <DCCReference Include="..\..\JsonX3\uJX3Dictionary.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Rtti.pas"/>
         <DCCReference Include="uJSONableStringList.pas"/>
+        <DCCReference Include="..\..\JsonX3\uJX3AsyncObj.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

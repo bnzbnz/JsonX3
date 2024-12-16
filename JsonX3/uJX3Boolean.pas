@@ -73,7 +73,6 @@ uses
 
 constructor TJX3Boolean.Create;
 begin
-  inherited;
   FIsNull := True;
   FValue := False;
 end;
