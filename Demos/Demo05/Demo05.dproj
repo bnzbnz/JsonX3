@@ -205,7 +205,7 @@
         <DCCReference Include="..\..\JsonX3\uJX3Rtti.pas">
             <Form>$R *.res</Form>
         </DCCReference>
-        <DCCReference Include="..\..\JsonX3\uJX3AsyncObj.pas"/>
+        <DCCReference Include="..\..\JsonX3\uJX3MiniPool.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

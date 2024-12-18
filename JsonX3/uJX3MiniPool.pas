@@ -21,45 +21,41 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************)
-unit uJX3AsyncObj;
+unit uJX3MiniPool;
 
 interface
 uses
     System.Generics.Collections
-  ,  SyncObjs
+  , SyncObjs
   ;
 
 type
 
-  TJX3AsycObjectLoader = class(TObject)
+  TJX3MiniPool = class(TObject)
   private
-    FSize: integer;
-    FThreshold: integer;
     FCache: TStack<TObject>;
     FLock: TCriticalSection;
-    FIsFilling: Boolean;
+    constructor Create; overload;
+    procedure PreLoad<T:class, constructor>(ASize: Integer);
   public
-    constructor Create(ASize: integer; AThreshold: integer); overload;
     destructor Destroy; override;
-    procedure Fill<T:class, constructor>;
-    function Get<T:class, constructor>: TObject;
+    function Get<T:class, constructor>: T;
+    procedure Put(AObj:TObject);
+    class function GetInstance<T:class, constructor>(ASize: Integer): TJX3MiniPool;
   end;
 
 implementation
 uses
-     System.Threading
-   ;
+      SysUtils
+    ;
 
-constructor TJX3AsycObjectLoader.Create(ASize: integer; AThreshold: integer);
+constructor TJX3MiniPool.Create;
 begin
-  FSize := ASize;
-  FThreshold := AThreshold;
   FCache := TStack<TObject>.Create;
   FLock := TCriticalSection.Create;
-  FIsFilling := False;
 end;
 
-destructor TJX3AsycObjectLoader.Destroy;
+destructor TJX3MiniPool.Destroy;
 begin
   FLock.Enter;
   while FCache.Count > 0 do FCache.pop.Free;
@@ -68,35 +64,36 @@ begin
   FLock.Free;
 end;
 
-procedure TJX3AsycObjectLoader.Fill<T>;
-var
-  Buf: TArray<TObject>;
+procedure TJX3MiniPool.PreLoad<T>(ASize: Integer);
 begin
-  if FIsFilling then Exit;
-  FIsFilling := True;
-  TTask.Future<Boolean>(
-    function:Boolean
-    begin
-      try
-        SetLength(Buf, FSize - FCache.Count);
-        for var i := 0 to FSize - FCache.Count -1 do Buf[i] := T.Create;
-        FLock.Enter;
-        for var i := 0 to FSize - FCache.Count -1 do FCache.Push(Buf[i]);
-        FLock.Leave;
-      finally
-        FIsFilling := False;
-        Result := False;
-      end;
-    end
-  );
+  while FCache.Count < ASize do FCache.Push(T.Create);
 end;
 
-function TJX3AsycObjectLoader.Get<T>: TObject;
+function TJX3MiniPool.Get<T>: T;
 begin
-  While FCache.Count <= FThreshold do Fill<T>;
-  While FCache.Count = 0 do ;
   FLock.Enter;
-  Result := FCache.Pop;
+  try
+    if FCache.Count = 0  then
+    begin
+      Result := T.Create;
+      Exit;
+    end;
+    Result := T(FCache.Pop);
+  finally
+  FLock.Leave;
+  end;
+end;
+
+class function TJX3MiniPool.GetInstance<T>(ASize: Integer): TJX3MiniPool;
+begin
+  Result := TJX3MiniPool.Create;
+  Result.PreLoad<T>(ASize);
+end;
+
+procedure TJX3MiniPool.Put(AObj:TObject);
+begin
+  FLock.Enter;
+  FCache.Push(AObj);
   FLock.Leave;
 end;
 

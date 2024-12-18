@@ -23,7 +23,7 @@ SOFTWARE.
 *****************************************************************************)
 unit uJX3Object;
 
-{$DEFINE JX3SPEEDUP} // Speed vs Memory, only if you parse large Json... (10-15% faster)
+{$DEFINE JX3SPEEDUP} // Speed vs Memory, only if you parse large Json... (15-20% faster)
 
 interface
 uses
@@ -31,8 +31,8 @@ uses
   , RTTI
   , JSON
   {$IFDEF JX3SPEEDUP}
-  , uJX3AsyncObj
-  {$ENDIF JX3SPEEDUP}
+  , uJX3MiniPool
+   {$ENDIF JX3SPEEDUP}
   ;
 
 type
@@ -129,10 +129,10 @@ type
 
 {$IFDEF JX3SPEEDUP}
 var
-  JSX3AsyncStr:  TJX3AsycObjectLoader;
-  JSX3AsyncNum:  TJX3AsycObjectLoader;
-  JSX3AsyncBool: TJX3AsycObjectLoader;
-  JSX3AsyncJObj: TJX3AsycObjectLoader;
+  JSX3PooledStr:  TJX3MiniPool;
+  JSX3PooledNum:  TJX3MiniPool;
+  JSX3PooledBool: TJX3MiniPool;
+  JSX3PooledJSON: TJX3MiniPool;
 {$ENDIF JX3SPEEDUP}
 
 implementation
@@ -220,11 +220,11 @@ begin
       begin
         {$IFDEF JX3SPEEDUP}
         if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
-           LNewObj := JSX3AsyncStr.Get<TJX3String>
+           LNewObj := JSX3PooledStr.Get<TJX3String>
         else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
-           LNewObj := JSX3AsyncNum.Get<TJX3Num>
+           LNewObj := JSX3PooledNum.Get<TJX3Num>
         else  if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-           LNewObj := JSX3AsyncBool.Get<TJX3Bool>
+           LNewObj := JSX3PooledBool.Get<TJX3Bool>
         else
         {$ENDIF JX3SPEEDUP}
            LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
@@ -253,10 +253,19 @@ begin
       if not Assigned(LObj) then Continue;
       if Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        if TxRTTI.CallMethodFunc('JSONDestroy', LObj, []).AsBoolean then
-          FreeAndNil(LObj);
+        if not (LObj is TJX3Object) then
+          if TxRTTI.CallMethodFunc('JSONDestroy', LObj, []).AsBoolean then
+            FreeAndNil(LObj);
       end else
+        {$IFDEF JX3SPEEDUP}
+        if LObj.ClassType = TJX3String then begin TJX3String(LObj).IsNull := True; JSX3PooledStr.Put(LObj); end
+        else if LObj.ClassType = TJX3Num then begin TJX3Num(LObj).IsNull := True; JSX3PooledNum.Put(LObj); end
+        else if LObj.ClassType = TJX3Bool then begin TJX3Bool(LObj).IsNull := True; JSX3PooledBool.Put(LObj); end
+        else FreeAndNil(LObj);
+        {$ELSE}
         FreeAndNil(LObj);
+        {$ENDIF}
+        LField.SetValue(Self,Nil);
       end;
   inherited;
 end;
@@ -284,11 +293,11 @@ begin
         begin
         {$IFDEF JX3SPEEDUP}
           if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
-            LObj := JSX3AsyncStr.Get<TJX3String>
+            LObj := JSX3PooledStr.Get<TJX3String>
           else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
-            LObj := JSX3AsyncNum.Get<TJX3Num>
+            LObj := JSX3PooledNum.Get<TJX3Num>
           else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-            LObj := JSX3AsyncBool.Get<TJX3Bool>
+            LObj := JSX3PooledBool.Get<TJX3Bool>
           else
         {$ENDIF JX3SPEEDUP}
           begin
@@ -345,6 +354,8 @@ begin
   try
     for LField in TxRTTI.GetFields(Self) do
     begin
+      if not (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then Continue;
+
       if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
 
       LName := NameDecode(LField.Name);
@@ -355,22 +366,22 @@ begin
       if LJPair <> Nil then
       begin
         LJPair.Owned := False;
-         LJPair.JsonString.Owned := False;
+        LJPair.JsonString.Owned := False;
         LJPair.JsonValue.Owned := False;
         if (LJPair.JsonValue is TJSONObject) then
           LJObj := (LJPair.JsonValue as TJSONObject)
         else
         begin
-        {$IFNDEF JX3SPEEDUP}
+          {$IFNDEF JX3SPEEDUP}
           LJObj := TJSONObject.Create(LJPair);
-        {$ELSE}
-          LJObj := TJSONObject(JSX3AsyncJObj.Get<TJSONObject>);
+          {$ELSE}
+          LJObj := JSX3PooledJSON.Get<TJSONObject>;
           LJObj.AddPair(LJPair);
-        {$ENDIF}
+          {$ENDIF}
         end;
 
         LObj := LField.GetValue(Self).AsObject;
-        if  not Assigned(LObj) then
+        if not Assigned(LObj) then
         begin
           LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
           TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
@@ -385,9 +396,14 @@ begin
 
         if not (LJPair.JsonValue is TJSONObject) then
         begin
+          {$IFDEF JX3SPEEDUP}
           LJObj.Pairs[0].JsonString.Owned := False;
           LJObj.Pairs[0].JsonValue.Owned := False;
+          LJObj.RemovePair(LJObj.Pairs[0].JsonString.Value);
+          JSX3PooledJSON.Put(LJObj);
+          {$ELSE}
           FreeAndNil(LJObj);
+          {$ENDIF}
         end;
         LJPair.JsonString.Owned := True;
         LJPair.JsonValue.Owned := True;
@@ -540,11 +556,11 @@ begin
         begin
         {$IFDEF JX3SPEEDUP}
           if  LDestField.FieldType.AsInstance.MetaclassType = TJX3String then
-            LNewObj := JSX3AsyncStr.Get<TJX3String>
+            LNewObj := JSX3PooledStr.Get<TJX3String>
           else if  LDestField.FieldType.AsInstance.MetaclassType = TJX3Num then
-            LNewObj := JSX3AsyncNum.Get<TJX3Num>
+            LNewObj := JSX3PooledNum.Get<TJX3Num>
           else if  LDestField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-            LNewObj := JSX3AsyncBool.Get<TJX3Bool>
+            LNewObj := JSX3PooledBool.Get<TJX3Bool>
           else
         {$ENDIF JX3SPEEDUP}
           begin
@@ -584,11 +600,11 @@ begin
         begin
         {$IFDEF JX3SPEEDUP}
           if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
-            LObj := JSX3AsyncStr.Get<TJX3String>
+            LObj := JSX3PooledStr.Get<TJX3String>
           else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
-            LObj := JSX3AsyncNum.Get<TJX3Num>
+            LObj := JSX3PooledNum.Get<TJX3Num>
           else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-           LObj := JSX3AsyncBool.Get<TJX3Bool>
+           LObj := JSX3PooledBool.Get<TJX3Bool>
           else
         {$ENDIF JX3SPEEDUP}
           begin
@@ -638,8 +654,8 @@ begin
 
   if not Assigned(LMatch) then Exit;
 
-  LSb := TStringBuilder.Create( Copy(AStr, 1, LMatch - PChar(Pointer(AStr))) );
-  LP :=  LMatch;
+  LSb := TStringBuilder.Create(Copy(AStr, 1, LMatch - PChar(Pointer(AStr))));
+  LP := LMatch;
   while LP < LendP do
   begin
     case LP^ of
@@ -727,20 +743,16 @@ end;
 
 initialization
   {$IFDEF JX3SPEEDUP}
-  JSX3AsyncStr  := TJX3AsycObjectLoader.Create(25000, 2500);
-  JSX3AsyncStr.Fill<TJX3Str>;
-  JSX3AsyncNum  := TJX3AsycObjectLoader.Create(10000, 100);
-  JSX3AsyncStr.Fill<TJX3Num>;
-  JSX3AsyncBool := TJX3AsycObjectLoader.Create(1000, 100);
-  JSX3AsyncStr.Fill<TJX3Bool>;
-  JSX3AsyncJObj := TJX3AsycObjectLoader.Create(10000, 1000);
-  JSX3AsyncJObj.Fill<TJSONObject>;
+  JSX3PooledStr  := TJX3MiniPool.GetInstance<TJX3String>(40000);
+  JSX3PooledNum  := TJX3MiniPool.GetInstance<TJX3Number>(10000);
+  JSX3PooledBool := TJX3MiniPool.GetInstance<TJX3Boolean>(5000);
+  JSX3PooledJSON := TJX3MiniPool.GetInstance<TJSONObject>(100);
   {$ENDIF JX3SPEEDUP}
 finalization
   {$IFDEF JX3SPEEDUP}
-  JSX3AsyncJObj.Free;
-  JSX3AsyncStr.Free;
-  JSX3AsyncNum.Free;
-  JSX3AsyncBool.Free;
+  JSX3PooledJSON.Free;
+  JSX3PooledStr.Free;
+  JSX3PooledNum.Free;
+  JSX3PooledBool.Free;
   {$ENDIF JX3SPEEDUP}
 end.

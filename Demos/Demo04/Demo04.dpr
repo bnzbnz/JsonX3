@@ -12,7 +12,7 @@ uses
   uJX3Dictionary in '..\..\JsonX3\uJX3Dictionary.pas',
   uJX3Rtti in '..\..\JsonX3\uJX3Rtti.pas',
   uJSONableStringList in 'uJSONableStringList.pas',
-  uJX3AsyncObj in '..\..\JsonX3\uJX3AsyncObj.pas';
+  uJX3MiniPool in '..\..\JsonX3\uJX3MiniPool.pas';
 
 {$R *.res}
 

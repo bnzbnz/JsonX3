@@ -202,8 +202,10 @@
         <DCCReference Include="..\..\JsonX3\uJX3Object.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Number.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Dictionary.pas"/>
-        <DCCReference Include="..\..\JsonX3\uJX3Rtti.pas"/>
-        <DCCReference Include="..\..\JsonX3\uJX3AsyncObj.pas"/>
+        <DCCReference Include="..\..\JsonX3\uJX3Rtti.pas">
+            <Form>$R *.res</Form>
+        </DCCReference>
+        <DCCReference Include="..\..\JsonX3\uJX3MiniPool.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -254,6 +256,12 @@
                 <DeployFile LocalName="..\Large.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64">
                         <RemoteName>Large.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\Large.rsm" Configuration="Debug" Class="DebugSymbols">
+                    <Platform Name="Win64">
+                        <RemoteName>Large.rsm</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

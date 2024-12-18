@@ -190,23 +190,23 @@ Loading ebay's Aspects json file :
   Stream size: 14358 KB
 
 Convert Json String to JSX3 Objects (Deserialize):
-==> 918196 ops in 1031 ms
-==> 890587 /s
+==> 918196 ops in 916 ms
+==> 1002397 /s
 
 JSX3 Object Cloning (RTTI):
-==> 918196 ops in 905 ms
-==> 1014581 /s
+==> 918196 ops in 912 ms
+==> 1006793 /s
 
 JSX3 Object Cloning (Merging):
-==> 918196 ops in 917 ms
-==> 1001304 /s
+==> 918196 ops in 907 ms
+==> 1012343 /s
 
 Revert JSX3 Objects to Json String (Serialize)):
 ==> 918196 ops in 692 ms
 ==> 1326872 /s
 
 Free Json Object :
-  Freed in 147 ms
+  Freed in 206 ms
 
 Saving Cloned Json file (jsx3.json) :
   Stream size: 14358 KB

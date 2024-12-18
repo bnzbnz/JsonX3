@@ -201,11 +201,11 @@
         <DCCReference Include="..\..\JsonX3\uJX3List.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Object.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Number.pas"/>
+        <DCCReference Include="..\..\JsonX3\uJX3Rtti.pas"/>
         <DCCReference Include="..\..\JsonX3\uJX3Dictionary.pas"/>
-        <DCCReference Include="..\..\JsonX3\uJX3Rtti.pas">
+        <DCCReference Include="..\..\JsonX3\uJX3MiniPool.pas">
             <Form>$R *.res</Form>
         </DCCReference>
-        <DCCReference Include="..\..\JsonX3\uJX3AsyncObj.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

@@ -137,27 +137,28 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LJObjClone := TJX3Object.Clone<TfetchItemAspectsContentType>(LJObj, [joStats], LStats);
     Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
     Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+    LJObj.Free;
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'JSX3 Object Cloning (Merging):' );
     LJObjMerge := TfetchItemAspectsContentType.Create;
-    LJObjMerge.Merge(LJObj, [joStats], LStats);
+    LJObjMerge.Merge(LJObjClone, [joStats], LStats);
     Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
     Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
-    LJObjMerge.Free;
+    LJObjClone.Free;
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Revert JSX3 Objects to Json String (Serialize)):' );
-    LJsonStr := TJX3Object.ToJson( LJObjClone, [ joNullToEmpty, joStats ], LStats );
+    LJsonStr := TJX3Object.ToJson( LJObjMerge, [ joNullToEmpty, joStats ], LStats );
     Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
     Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;
     Memo1.Lines.add( 'Free Json Object :' );
-    LJObj.Free;
+    LJObjMerge.Free;
     Memo1.Lines.add( Format( '  Freed in %d ms', [ LWatch.ElapsedMilliseconds ] ) );
 
     Memo1.Lines.add( '' );
@@ -167,8 +168,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LStream.SaveToFile( ( 'jsx3.json' ) );
     Memo1.Lines.add( Format( '  Stream size: %s KB', [ ( LStream.Size div 1024 ).toString ] ) );
     LStream.Free;
-
-    LJObjClone.Free;
+;
     LStats.Free;
   end;
 
