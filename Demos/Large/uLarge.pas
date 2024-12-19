@@ -5,29 +5,30 @@ interface
 
 
 uses
-  System.SysUtils,
-  System.Types,
-  System.UITypes,
-  System.Classes,
-  System.Variants,
-  FMX.Types,
-  FMX.Controls,
-  FMX.Forms,
-  FMX.Graphics,
-  FMX.Dialogs,
-  FMX.Memo.Types,
-  FMX.Controls.Presentation,
-  FMX.ScrollBox,
-  FMX.Memo,
-  FMX.StdCtrls,
-  System.Generics.Defaults,
-  System.Generics.Collections,
-  uJX3Number,
-  uJX3Boolean,
-  uJX3String,
-  uJX3List,
-  uJX3Dictionary,
-  uJX3Object;
+    System.SysUtils
+  , System.Types
+  , System.UITypes
+  , System.Classes
+  , System.Variants
+  , FMX.Types
+  , FMX.Controls
+  , FMX.Forms
+  , FMX.Graphics
+  , FMX.Dialogs
+  , FMX.Memo.Types
+  , FMX.Controls.Presentation
+  , FMX.ScrollBox
+  , FMX.Memo
+  , FMX.StdCtrls
+  , System.Generics.Defaults
+  , System.Generics.Collections
+  , uJX3Number
+  , uJX3Boolean
+  , uJX3String
+  , uJX3List
+  , uJX3Dictionary
+  , uJX3Object
+  ;
 
 type
 
@@ -100,7 +101,8 @@ var
 implementation
 
 uses
-  System.Diagnostics;
+    System.Diagnostics
+  ;
 
 {$R *.fmx}
 
