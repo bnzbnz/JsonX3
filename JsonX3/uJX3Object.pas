@@ -23,7 +23,7 @@ SOFTWARE.
 *****************************************************************************)
 unit uJX3Object;
 
-{$DEFINE JX3SPEEDUP} // Speed vs Memory, only if you parse large Json... (15-20% faster)
+{.$DEFINE JX3SPEEDUP} // Speed vs Memory, only if you parse multiple large Json... (15-20% faster)
 
 interface
 uses
@@ -372,11 +372,11 @@ begin
           LJObj := (LJPair.JsonValue as TJSONObject)
         else
         begin
-          {$IFNDEF JX3SPEEDUP}
-          LJObj := TJSONObject.Create(LJPair);
-          {$ELSE}
+          {$IFDEF JX3SPEEDUP}
           LJObj := JSX3PooledJSON.Get<TJSONObject>;
           LJObj.AddPair(LJPair);
+          {$ELSE}
+          LJObj := TJSONObject.Create(LJPair);
           {$ENDIF}
         end;
 

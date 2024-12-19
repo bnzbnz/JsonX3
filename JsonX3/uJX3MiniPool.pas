@@ -23,6 +23,8 @@ SOFTWARE.
 *****************************************************************************)
 unit uJX3MiniPool;
 
+{$DEFINE MINIPOOL}
+
 interface
 uses
     System.Generics.Collections
@@ -57,8 +59,10 @@ end;
 
 destructor TJX3MiniPool.Destroy;
 begin
+  {$IFDEF MINIPOOL}
   FLock.Enter;
   while FCache.Count > 0 do FCache.pop.Free;
+  {$ENDIF}
   FCache.Free;
   FLock.Leave;
   FLock.Free;
@@ -71,30 +75,40 @@ end;
 
 function TJX3MiniPool.Get<T>: T;
 begin
+  {$IFDEF MINIPOOL}
+  if FCache.Count = 0  then
+  begin
+    Result := T.Create;
+    Exit;
+  end;
   FLock.Enter;
   try
-    if FCache.Count = 0  then
-    begin
-      Result := T.Create;
-      Exit;
-    end;
     Result := T(FCache.Pop);
   finally
   FLock.Leave;
   end;
+  {$ELSE}
+    Result := T.Create;
+  {$ENDIF}
 end;
 
 class function TJX3MiniPool.GetInstance<T>(ASize: Integer): TJX3MiniPool;
 begin
   Result := TJX3MiniPool.Create;
+  {$IFDEF MINIPOOL}
   Result.PreLoad<T>(ASize);
+  {$ENDIF}
 end;
 
 procedure TJX3MiniPool.Put(AObj:TObject);
 begin
+  {$IFDEF MINIPOOL}
   FLock.Enter;
   FCache.Push(AObj);
   FLock.Leave;
+  {$ELSE}
+  AObj.Free;
+  {$ENDIF}
 end;
 
 end.
