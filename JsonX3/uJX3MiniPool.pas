@@ -53,8 +53,10 @@ uses
 
 constructor TJX3MiniPool.Create;
 begin
+  {$IFDEF MINIPOOL}
   FCache := TStack<TObject>.Create;
   FLock := TCriticalSection.Create;
+  {$ENDIF}
 end;
 
 destructor TJX3MiniPool.Destroy;
@@ -62,30 +64,30 @@ begin
   {$IFDEF MINIPOOL}
   FLock.Enter;
   while FCache.Count > 0 do FCache.pop.Free;
-  {$ENDIF}
   FCache.Free;
   FLock.Leave;
   FLock.Free;
+  {$ENDIF}
 end;
 
 procedure TJX3MiniPool.PreLoad<T>(ASize: Integer);
 begin
+  {$IFDEF MINIPOOL}
   while FCache.Count < ASize do FCache.Push(T.Create);
+  {$ENDIF}
 end;
 
 function TJX3MiniPool.Get<T>: T;
 begin
   {$IFDEF MINIPOOL}
-  if FCache.Count = 0  then
-  begin
-    Result := T.Create;
-    Exit;
-  end;
   FLock.Enter;
   try
+    if FCache.Count = 0  then
+      Result := T.Create
+  else
     Result := T(FCache.Pop);
   finally
-  FLock.Leave;
+    FLock.Leave;
   end;
   {$ELSE}
     Result := T.Create;

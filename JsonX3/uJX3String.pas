@@ -191,8 +191,8 @@ end;
 
 procedure TJX3String.SetIsNull(ANull: Boolean);
 begin
+  if not FIsNull and ANull then FValue := '';
   FIsNull := ANull;
-  if FIsNull then FValue := '';
 end;
 
 function TJX3String.GetIsNull: Boolean;

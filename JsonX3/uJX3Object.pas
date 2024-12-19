@@ -229,7 +229,7 @@ begin
         {$ENDIF JX3SPEEDUP}
            LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
         if not Assigned(LNewObj) then Continue;
-        if not (LNewObj is TJX3Object) then
+        if not( (LNewObj is TJX3String) and  (LNewObj is TJX3Number) and (LNewObj is TJX3Boolean)) then
           TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         LField.SetValue(Self, LNewObj);
       end else begin
@@ -302,7 +302,8 @@ begin
         {$ENDIF JX3SPEEDUP}
           begin
             LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-            TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+            if not( (LObj is TJX3String) and  (LObj is TJX3Number) and (LObj is TJX3Boolean)) then
+              TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
           end;
           LField.SetValue(Self, LObj);
         end;
@@ -384,7 +385,8 @@ begin
         if not Assigned(LObj) then
         begin
           LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-          TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+          if not( (LObj is TJX3String) and  (LObj is TJX3Number) and (LObj is TJX3Boolean)) then
+            TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
           LField.SetValue(Self, LObj);
         end;
 
@@ -500,7 +502,8 @@ begin
   try
     if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     Result := T.Create;
-    TxRTTI.CallMethodProc('JSONCreate', Result, [True]);
+    if not( (Result is TJX3String) and  (Result is TJX3Number) and (Result is TJX3Boolean)) then
+      TxRTTI.CallMethodProc('JSONCreate', Result, [True]);
     TxRTTI.CallMethodProc('JSONClone', AObj, [Result, TValue.From<TJX3Options>(AOptions), AInOutBlock])
   finally
     if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
@@ -565,7 +568,8 @@ begin
         {$ENDIF JX3SPEEDUP}
           begin
             LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
-            TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
+            if not( (LNewObj is TJX3String) and  (LNewObj is TJX3Number) and (LNewObj is TJX3Boolean)) then
+              TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
           end;
           LDestField.SetValue(ADest, LNewObj);
         end;
@@ -609,7 +613,8 @@ begin
         {$ENDIF JX3SPEEDUP}
           begin
             LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-            TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+            if not( (LObj is TJX3String) and  (LObj is TJX3Number) and (LObj is TJX3Boolean)) then
+              TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
           end;
         end;
         if LObj is TJX3String then TJX3String(LObj).JSONMerge(TJX3String(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
