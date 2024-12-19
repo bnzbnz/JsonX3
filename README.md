@@ -28,7 +28,7 @@ Example : using primitives (Demo01)
   Primitives.Bool.V := True;        // V being a shortcut for "Value"
   Primitives.Num.Int64 := -99;
 ```
-  JX3 will take care of all owned objects (Constructor/Destrutor), for exmaple 'Primitives.Str" is created and will be destroyed automatically , you don't have take care of it!
+  JX3 will take care of all owned objects (Constructor/Destrutor), for exmaple 'Primitives.Str" is created and will be destroyed automatically (or pooled) , you don't have take care of it!
 ```Delphi
    Json := TJX3Object.ToJson(Primitives, []); // Serialization
 ```
@@ -82,7 +82,7 @@ It's where JX3 excel ! You can create any complex types
     W: TJX3List<TJX3Dic<TJX3List<TPrimitives>>>;  // ouch ! A List of dictionaries of TPrimitives Objects Lists !!!
   end;
 ```
-Please note that JX3 uses TLists instead of arrays, qTList being way easier to use.
+Please note that JX3 uses TLists instead of arrays, TList being way easier to use.
 Filled with value, serializing this (joNullToEmpty), will give you ;
 ```Json
 
@@ -110,7 +110,7 @@ JX3 is able to handle any type of Objects as long as they implement 4 mandatory 
   public
     StringList : TJSONableStringList; // Creation and destruction will be handle automatically
     [JX3Unmanaged]
-    StringListNotManaged : TJSONableStringList; // NOT MANAGED : You have to take care of the Creation/Destruction of this Object;
+    StringListNotManaged : TJSONableStringList; // NOT MANAGED : You HAVE to take care of the Creation/Destruction of this Object;
   end;                                          // It will still be serialized/deserialized and created if necessary (clone for ex.)
 
   MyList :=  TJSONableStringList.Create; // In your code, create and use your own Object
@@ -137,7 +137,7 @@ It's where JX3 excel ! You can create any complex types
     [JX3Default('22')]                  // a default value to be used during deserialization if the field is null
     Num1:    TJX3Num;
     __23href2: TJX3Str;                 // name encoding :  __23href = #hef  ('_'+'_'+Hex('#')+'href')
-                                        // instead of usin JX3Name attribute you may use this inline encoding 
+                                        // instead of usin JX3Name attribute you may use this inline encoding, it is usefull for code generators like OpenAPI 
     [JX3Default('true')]                // functions NameEncode in uJX3OBject...
     [JX3Name('NewMix')]
     Mix: TJX3Bool;                      // Using NewMix as JSON field name with a default value of True;
@@ -146,10 +146,19 @@ It's where JX3 excel ! You can create any complex types
 ```Json
  {"Str":"Need a Value","#href":"http://","Num1":22,"#href2":"auto enc/dec oding","NewMix":true}
 ```
-Example : Random Json file parsing (Demo06)
+Example : A Random Json file parsing (Demo06)
 -
+Extract from : https://github.com/dmjio/json-test/blob/master/example.json
+
 As simple as that :
 ```Delphi
+
+  TQuestion = class(TJX3Object)
+    question: TJX3Str;
+    options:  TJX3List<TJX3Str>;
+    answer:   TJX3Str;
+  end;
+
   TGame = class(TJX3Object)
     quiz: TJX3Dic<TJX3Dic<TQuestion>>;   // << Double dictionaries
   end;
@@ -182,7 +191,7 @@ Example : Parse an Array as payload (Demo07)
 Example : Large JSON, Benchmark.
 -
 In this example we read, serialize, clone (RTTI/Meerging), deserialize and finally save a large ebay's aspects json file (around 1M json fields)
-You will be able to benchmark and compare the output generated json file 'jsx3.json' vs 'aspects100.json' the original ebay's one :
+You will be able to benchmark and compare the output generated json file 'jsx3.json' vs 'aspects100.json' the original ebay's on. (please note that you should enable $DEFINE JX3SPEEDUP in uTJX2Object.pas for large file caching...)  :
 
 ```
 
