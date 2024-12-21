@@ -37,13 +37,15 @@ type
   private
     FCache: TStack<TObject>;
     FLock: TCriticalSection;
-    constructor Create; overload;
+    FSize: Integer;
+    FGrow: Boolean;
+    constructor Create(AGrow: Boolean); overload;
     procedure PreLoad<T:class, constructor>(ASize: Integer);
   public
     destructor Destroy; override;
     function Get<T:class, constructor>: T;
     procedure Put(AObj:TObject);
-    class function GetInstance<T:class, constructor>(ASize: Integer): TJX3MiniPool;
+    class function GetInstance<T:class, constructor>(ASize: Integer; AGrow: Boolean = True): TJX3MiniPool;
   end;
 
 implementation
@@ -51,11 +53,12 @@ uses
       SysUtils
     ;
 
-constructor TJX3MiniPool.Create;
+constructor TJX3MiniPool.Create(AGrow: Boolean);
 begin
   {$IFDEF MINIPOOL}
   FCache := TStack<TObject>.Create;
   FLock := TCriticalSection.Create;
+  FGrow := AGrow;
   {$ENDIF}
 end;
 
@@ -73,6 +76,7 @@ end;
 procedure TJX3MiniPool.PreLoad<T>(ASize: Integer);
 begin
   {$IFDEF MINIPOOL}
+  FSize := ASize;
   while FCache.Count < ASize do FCache.Push(T.Create);
   {$ENDIF}
 end;
@@ -84,8 +88,8 @@ begin
   try
     if FCache.Count = 0  then
       Result := T.Create
-  else
-    Result := T(FCache.Pop);
+    else
+      Result := T(FCache.Pop);
   finally
     FLock.Leave;
   end;
@@ -94,9 +98,9 @@ begin
   {$ENDIF}
 end;
 
-class function TJX3MiniPool.GetInstance<T>(ASize: Integer): TJX3MiniPool;
+class function TJX3MiniPool.GetInstance<T>(ASize: Integer; AGrow: Boolean): TJX3MiniPool;
 begin
-  Result := TJX3MiniPool.Create;
+  Result := TJX3MiniPool.Create(AGrow);
   {$IFDEF MINIPOOL}
   Result.PreLoad<T>(ASize);
   {$ENDIF}
@@ -106,8 +110,14 @@ procedure TJX3MiniPool.Put(AObj:TObject);
 begin
   {$IFDEF MINIPOOL}
   FLock.Enter;
-  FCache.Push(AObj);
-  FLock.Leave;
+  try
+    if not FGrow and (FCache.Count >= FSize) then
+      AObj.Free
+    else
+      FCache.Push(AObj);
+  finally
+    FLock.Leave;
+  end;
   {$ELSE}
   AObj.Free;
   {$ENDIF}

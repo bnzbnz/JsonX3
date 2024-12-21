@@ -1,7 +1,7 @@
 object Form4: TForm4
   Left = 0
   Top = 0
-  Caption = 'Demo01: Primitives'
+  Caption = 'Demo08: GitHub Extract'
   ClientHeight = 363
   ClientWidth = 636
   FormFactor.Width = 320
@@ -17,8 +17,8 @@ object Form4: TForm4
     Size.Height = 314.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 2
-    Viewport.Width = 636.000000000000000000
-    Viewport.Height = 314.000000000000000000
+    Viewport.Width = 632.000000000000000000
+    Viewport.Height = 310.000000000000000000
   end
   object Button: TButton
     Align = Top

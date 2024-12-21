@@ -30,9 +30,7 @@ uses
   System.Generics.Collections
   , RTTI
   , JSON
-  {$IFDEF JX3SPEEDUP}
   , uJX3MiniPool
-   {$ENDIF JX3SPEEDUP}
   ;
 
 type
@@ -127,13 +125,13 @@ type
   TJX3Obj = TJX3Object;
   TJX3    = TJX3Object;
 
-{$IFDEF JX3SPEEDUP}
 var
+{$IFDEF JX3SPEEDUP}
   JSX3PooledStr:  TJX3MiniPool;
   JSX3PooledNum:  TJX3MiniPool;
   JSX3PooledBool: TJX3MiniPool;
-  JSX3PooledJSON: TJX3MiniPool;
 {$ENDIF JX3SPEEDUP}
+  JSX3PooledJSON: TJX3MiniPool;
 
 implementation
 uses
@@ -218,15 +216,25 @@ begin
     begin
       if not Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        {$IFDEF JX3SPEEDUP}
         if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
+        {$IFDEF JX3SPEEDUP}
            LNewObj := JSX3PooledStr.Get<TJX3String>
-        else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
-           LNewObj := JSX3PooledNum.Get<TJX3Num>
-        else  if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-           LNewObj := JSX3PooledBool.Get<TJX3Bool>
-        else
+        {$ELSE}
+           LNewObj := TJX3String.Create
         {$ENDIF JX3SPEEDUP}
+        else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
+        {$IFDEF JX3SPEEDUP}
+           LNewObj := JSX3PooledNum.Get<TJX3Num>
+        {$ELSE}
+           LNewObj := TJX3Num.Create
+        {$ENDIF JX3SPEEDUP}
+        else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
+        {$IFDEF JX3SPEEDUP}
+           LNewObj := JSX3PooledBool.Get<TJX3Bool>
+        {$ELSE}
+           LNewObj := TJX3Bool.Create
+        {$ENDIF JX3SPEEDUP}
+         else
            LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
         if not Assigned(LNewObj) then Continue;
         if not( (LNewObj is TJX3String) and  (LNewObj is TJX3Number) and (LNewObj is TJX3Boolean)) then
@@ -291,16 +299,26 @@ begin
         LObj := LField.GetValue(Self).AsObject;
         if  not Assigned(LObj) then
         begin
-        {$IFDEF JX3SPEEDUP}
           if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
+          {$IFDEF JX3SPEEDUP}
             LObj := JSX3PooledStr.Get<TJX3String>
+          {$ELSE}
+            LObj := TJX3String.Create
+          {$ENDIF JX3SPEEDUP}
           else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
+            {$IFDEF JX3SPEEDUP}
             LObj := JSX3PooledNum.Get<TJX3Num>
+            {$ELSE}
+            LObj := TJX3Num.Create
+            {$ENDIF JX3SPEEDUP}
           else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
+            {$IFDEF JX3SPEEDUP}
             LObj := JSX3PooledBool.Get<TJX3Bool>
-          else
-        {$ENDIF JX3SPEEDUP}
-          begin
+          {$ELSE}
+           LObj := TJX3Bool.Create
+          {$ENDIF JX3SPEEDUP}
+         else
+         begin
             LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
             if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
               TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
@@ -357,7 +375,7 @@ begin
   LInfoBlock := TJX3InfoBlock.Create;
   try
 
-    if (JoRaiseOnMissingField in AInfoBlock.Options) then LFieldNames := TStringList.Create(dupError, false, false);
+    if (JoRaiseOnMissingField in AInfoBlock.Options) then LFieldNames := TStringList.Create(dupError, false, false) else LFieldNames:= Nil;
 
     for LField in TxRTTI.GetFields(Self) do
     begin
@@ -378,7 +396,7 @@ begin
         begin
 
           LFieldFound := True;
-          if LJPair.JsonValue is TJSONNULL then Break;
+          if LJPair.JsonValue is TJSONNull then Break;
 
           LJPair.Owned := False;
           LJPair.JsonString.Owned := False;
@@ -387,12 +405,8 @@ begin
             LJObj := (LJPair.JsonValue as TJSONObject)
           else
           begin
-            {$IFDEF JX3SPEEDUP}
             LJObj := JSX3PooledJSON.Get<TJSONObject>;
             LJObj.AddPair(LJPair);
-            {$ELSE}
-            LJObj := TJSONObject.Create(LJPair);
-            {$ENDIF}
           end;
 
           LObj := LField.GetValue(Self).AsObject;
@@ -412,14 +426,10 @@ begin
 
           if not (LJPair.JsonValue is TJSONObject) then
           begin
-            {$IFDEF JX3SPEEDUP}
             LJObj.Pairs[0].JsonString.Owned := False;
             LJObj.Pairs[0].JsonValue.Owned := False;
             LJObj.RemovePair(LJObj.Pairs[0].JsonString.Value);
             JSX3PooledJSON.Put(LJObj);
-            {$ELSE}
-            FreeAndNil(LJObj);
-            {$ENDIF}
           end;
           LJPair.JsonString.Owned := True;
           LJPair.JsonValue.Owned := True;
@@ -594,7 +604,7 @@ begin
         {$ENDIF JX3SPEEDUP}
           begin
             LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
-            if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
+            if (not (LNewObj is TJX3Object)) and (not (LNewObj is TJX3String)) and (not (LNewObj is TJX3Number)) and (not (LNewObj is TJX3Boolean))  then
               TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
           end;
           LDestField.SetValue(ADest, LNewObj);
@@ -774,14 +784,14 @@ end;
 
 initialization
   {$IFDEF JX3SPEEDUP}
-  JSX3PooledStr  := TJX3MiniPool.GetInstance<TJX3String>(40000);
+  JSX3PooledStr  := TJX3MiniPool.GetInstance<TJX3String>(50000);
   JSX3PooledNum  := TJX3MiniPool.GetInstance<TJX3Number>(10000);
   JSX3PooledBool := TJX3MiniPool.GetInstance<TJX3Boolean>(5000);
-  JSX3PooledJSON := TJX3MiniPool.GetInstance<TJSONObject>(100);
   {$ENDIF JX3SPEEDUP}
+  JSX3PooledJSON := TJX3MiniPool.GetInstance<TJSONObject>(100);
 finalization
-  {$IFDEF JX3SPEEDUP}
   JSX3PooledJSON.Free;
+  {$IFDEF JX3SPEEDUP}
   JSX3PooledStr.Free;
   JSX3PooledNum.Free;
   JSX3PooledBool.Free;
