@@ -35,13 +35,13 @@ const
 
 type
 
-  TJX3Boolean = class(TObject)
+  TJX3Boolean = class(TJX3Primitive)
   private
     FIsNull:  Boolean;
     FValue: Boolean;
   protected
-    function        GetIsNull: Boolean;
-    procedure       SetIsNull(ANull: Boolean);
+    function        GetIsNull: Boolean; override;
+    procedure       SetIsNull(ANull: Boolean); override;
     function        GetValue: Boolean;
     procedure       SetValue(AValue: Boolean);
   public

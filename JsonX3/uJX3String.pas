@@ -32,13 +32,13 @@ uses
 
 type
 
-  TJX3String = class(TJX3Object)
+  TJX3String = class(TJX3Primitive)
   private
     FValue: string;
     FIsNull:  Boolean;
   protected
-    function        GetIsNull: Boolean;
-    procedure       SetIsNull(ANull: Boolean);
+    function        GetIsNull: Boolean; override;
+    procedure       SetIsNull(ANull: Boolean); override;
     function        GetValue: string;
     procedure       SetValue(AValue: string);
     function        GetIso8601: TDateTime;
@@ -46,7 +46,7 @@ type
     function        GetIso8601UTC: TDateTime;
     procedure       SetIso8601UTC(AValue: TDateTime);
   public
-    constructor     Create; override;
+    constructor     Create;
 
     procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
@@ -56,8 +56,6 @@ type
     class function  C(AValue: string): TJX3String; overload;
     class function  C: TJX3String; overload;
 
-    property IsNull:    Boolean read GetIsNull write SetIsNull;
-    property Null:      Boolean read GetIsNull write SetIsNull;
     property N:         Boolean read GetIsNull write SetIsNull;
     property Value:     string read GetValue write Setvalue;
     property Val:       string read GetValue write Setvalue;

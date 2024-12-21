@@ -34,14 +34,14 @@ type
 
   TJX3NumKind   = (nkNull, nkInt, nkUInt, nkInt64, nkUInt64, nkDouble, nkCurrency);
 
-  TJX3Number    = class(TObject)
+  TJX3Number    = class(TJX3Primitive)
   private
     FIsNull:  Boolean;
     FValue: string;
     FKind: TJX3NumKind;
   protected
-    function    GetIsNull: Boolean;
-    procedure   SetIsNull(ANull: Boolean);
+    function    GetIsNull: Boolean; override;
+    procedure   SetIsNull(ANull: Boolean); override;
     function    GetInt: Integer;
     procedure   SetInt(AValue: Integer);
     function    GetInt64: Int64;

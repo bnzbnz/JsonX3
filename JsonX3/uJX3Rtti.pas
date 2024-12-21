@@ -30,7 +30,7 @@ uses
   , RTTI
   ;
 
-  {$DEFINE JX3RTTICACHE} // Highly recommended : 200% SpeedUp !
+{$DEFINE JX3RTTICACHE} // Highly recommended : 200% SpeedUp !
 
 type
   TxRTTI = class abstract
