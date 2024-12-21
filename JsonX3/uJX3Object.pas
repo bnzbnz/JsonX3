@@ -23,7 +23,7 @@ SOFTWARE.
 *****************************************************************************)
 unit uJX3Object;
 
-{.$DEFINE JX3SPEEDUP} // Speed vs Memory, only if you parse multiple large Json... (15-20% faster)
+{.$DEFINE JX3SPEEDUP} // Speed vs Memory, only if you parse multiple large Json... (10-20% faster)
 
 interface
 uses
@@ -302,7 +302,7 @@ begin
         {$ENDIF JX3SPEEDUP}
           begin
             LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-            if not( (LObj is TJX3String) and  (LObj is TJX3Number) and (LObj is TJX3Boolean)) then
+            if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
               TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
           end;
           LField.SetValue(Self, LObj);
@@ -343,97 +343,123 @@ end;
 
 procedure TJX3Object.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
-  LField:     TRTTIField;
-  LJPair:     TJSONPAir;
-  LJObj:      TJSONObject;
-  LInfoBlock: TJX3InfoBlock;
-  LAttr:      JX3Name;
-  LName:      string;
-  LObj:       TObject;
+  LField:       TRTTIField;
+  LJPair:       TJSONPAir;
+  LJObj:        TJSONObject;
+  LInfoBlock:   TJX3InfoBlock;
+  LName:        string;
+  LObj:         TObject;
+  LFieldNames:  TStringList;
+  LFieldFound:  Boolean;
+  LAttr:        TCustomAttribute;
+
 begin
   LInfoBlock := TJX3InfoBlock.Create;
   try
+
+    if (JoRaiseOnMissingField in AInfoBlock.Options) then LFieldNames := TStringList.Create(dupError, false, false);
+
     for LField in TxRTTI.GetFields(Self) do
     begin
-      if not (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then Continue;
 
+      if not (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then Continue;
       if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
 
       LName := NameDecode(LField.Name);
       LAttr := JX3Name(TxRTTI.GetFieldAttribute(LField, JX3Name));
-      if Assigned(LAttr) then LName := LAttr.Name;
+      if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
 
-      LJPair := AInfoBlock.Obj.Get(LName);
-      if LJPair <> Nil then
+      if (JoRaiseOnMissingField in AInfoBlock.Options)  then LFieldNames.Add(LName);
+      LFieldFound := False;
+      for LJPair in  AInfoBlock.Obj do
       begin
-        LJPair.Owned := False;
-        LJPair.JsonString.Owned := False;
-        LJPair.JsonValue.Owned := False;
-        if (LJPair.JsonValue is TJSONObject) then
-          LJObj := (LJPair.JsonValue as TJSONObject)
-        else
+
+        if LName = LJPair.JsonString.Value then
         begin
-          {$IFDEF JX3SPEEDUP}
-          LJObj := JSX3PooledJSON.Get<TJSONObject>;
-          LJObj.AddPair(LJPair);
-          {$ELSE}
-          LJObj := TJSONObject.Create(LJPair);
-          {$ENDIF}
-        end;
 
-        LObj := LField.GetValue(Self).AsObject;
-        if not Assigned(LObj) then
-        begin
-          LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-          if not( (LObj is TJX3String) and  (LObj is TJX3Number) and (LObj is TJX3Boolean)) then
-            TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
-          LField.SetValue(Self, LObj);
-        end;
+          LFieldFound := True;
+          if LJPair.JsonValue is TJSONNULL then Break;
 
-        LInfoBlock.Init(LField.Name, LJObj, LField, AInfoBlock.Options);
-        if LObj is TJX3String then TJX3String(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
-        else if LObj is TJX3Number then TJX3Number(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
-        else if LObj is TJX3Boolean then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
-        else TxRTTI.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
+          LJPair.Owned := False;
+          LJPair.JsonString.Owned := False;
+          LJPair.JsonValue.Owned := False;
+          if (LJPair.JsonValue is TJSONObject) then
+            LJObj := (LJPair.JsonValue as TJSONObject)
+          else
+          begin
+            {$IFDEF JX3SPEEDUP}
+            LJObj := JSX3PooledJSON.Get<TJSONObject>;
+            LJObj.AddPair(LJPair);
+            {$ELSE}
+            LJObj := TJSONObject.Create(LJPair);
+            {$ENDIF}
+          end;
 
-        if not (LJPair.JsonValue is TJSONObject) then
-        begin
-          {$IFDEF JX3SPEEDUP}
-          LJObj.Pairs[0].JsonString.Owned := False;
-          LJObj.Pairs[0].JsonValue.Owned := False;
-          LJObj.RemovePair(LJObj.Pairs[0].JsonString.Value);
-          JSX3PooledJSON.Put(LJObj);
-          {$ELSE}
-          FreeAndNil(LJObj);
-          {$ENDIF}
-        end;
-        LJPair.JsonString.Owned := True;
-        LJPair.JsonValue.Owned := True;
-        LJPair.Owned := True;
-
-      end else begin
-
-        if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.EmptyFieldCount);
-        if Assigned( JX3Default(TxRTTI.GetFieldAttribute(LField, JX3Default)) ) then
-        begin
           LObj := LField.GetValue(Self).AsObject;
-          LJObj := TJSONObject.Create(TJSONPair.Create('', TJSONNull.Create));
+          if not Assigned(LObj) then
+          begin
+            LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
+            if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
+              TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+            LField.SetValue(Self, LObj);
+          end;
+
           LInfoBlock.Init(LField.Name, LJObj, LField, AInfoBlock.Options);
-          if LObj is TJX3String  then TJX3String(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
-          else if LObj is TJX3Number  then TJX3Number(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
-          else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+          if LObj is TJX3String then TJX3String(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+          else if LObj is TJX3Number then TJX3Number(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
+          else if LObj is TJX3Boolean then TJX3Boolean(LObj).JSONDeserialize(LInfoBlock, AInOutBlock)
           else TxRTTI.CallMethodProc('JSONDeserialize', LObj, [LInfoBlock, AInOutBlock]);
-          LJObj.Free;
-          Continue;
+
+          if not (LJPair.JsonValue is TJSONObject) then
+          begin
+            {$IFDEF JX3SPEEDUP}
+            LJObj.Pairs[0].JsonString.Owned := False;
+            LJObj.Pairs[0].JsonValue.Owned := False;
+            LJObj.RemovePair(LJObj.Pairs[0].JsonString.Value);
+            JSX3PooledJSON.Put(LJObj);
+            {$ELSE}
+            FreeAndNil(LJObj);
+            {$ENDIF}
+          end;
+          LJPair.JsonString.Owned := True;
+          LJPair.JsonValue.Owned := True;
+          LJPair.Owned := True;
+
+          break;
         end;
 
-        if Assigned(JS3Required(TxRTTI.GetFieldAttribute(LField, JS3Required))) then
-          raise Exception.Create(Format('"%s" is required but not defined', [LName]));
+        if not LFieldFound then
+        begin
+          if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.EmptyFieldCount);
 
-        if (JoRaiseOnMissingField in AInfoBlock.Options)  then
-          raise Exception.Create(Format('Missing Field : %s', [LName]));
+          LAttr := TxRTTI.GetFieldAttribute(LField, JX3Default);
+          if Assigned(LAttr) then
+          begin
+            LObj := LField.GetValue(Self).AsObject;
+            if LObj is TJX3String then TJX3String(LObj).Value := JX3Default(LAttr).Value
+            else if LObj is TJX3Number then TJX3Number(LObj).Value := JX3Default(LAttr).Value
+            else if LObj is TJX3Boolean then TJX3Boolean(LObj).Value := JX3Default(LAttr).Value.ToBoolean
+            else raise Exception.Create(Format('Class: %s : "%s", only Primitives may have a default Value (%s)', [Self.ClassName, LName, JX3Default(LAttr).Value]));
+            continue;
+          end;
+
+          if Assigned(JS3Required(TxRTTI.GetFieldAttribute(LField, JS3Required))) then
+            raise Exception.Create(Format('Class: %s : "%s" is required but not defined', [Self.ClassName, LName]));
+
+        end;
+
+        Continue;
       end;
     end;
+
+    if (JoRaiseOnMissingField in AInfoBlock.Options)  then
+    begin
+      for LJPair in  AInfoBlock.Obj do
+        if LFieldNames.IndexOf(LJPair.JsonString.Value) = -1  then
+          raise Exception.Create(Format('Class: %s: "%s" definition is missing', [Self.ClassName, LJPair.JsonString.Value]));
+      LFieldNames.Free;
+    end;
+
   finally
     LInfoBlock.Free;
   end;
@@ -568,7 +594,7 @@ begin
         {$ENDIF JX3SPEEDUP}
           begin
             LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
-            if not( (LNewObj is TJX3String) and  (LNewObj is TJX3Number) and (LNewObj is TJX3Boolean)) then
+            if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
               TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
           end;
           LDestField.SetValue(ADest, LNewObj);
@@ -613,7 +639,7 @@ begin
         {$ENDIF JX3SPEEDUP}
           begin
             LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-            if not( (LObj is TJX3String) and  (LObj is TJX3Number) and (LObj is TJX3Boolean)) then
+            if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
               TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
           end;
         end;
