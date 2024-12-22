@@ -149,7 +149,6 @@ end;
 
 procedure TJX3String.JSONClone(ADest: TJX3String; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-
   if FIsNull then
   begin
     ADest.IsNull := True;

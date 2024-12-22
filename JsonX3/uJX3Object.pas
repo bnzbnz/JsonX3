@@ -79,7 +79,6 @@ type
 
   TJX3InOutStats = class
     ProcessingTimeMS: Int64;
-    FieldCount: Int64;
     procedure Clear;
   end;
 
@@ -191,7 +190,6 @@ end;
 procedure TJX3InOutStats.Clear;
 begin
   ProcessingTimeMS  := 0;
-  FieldCount        := 0;
 end;
 
 constructor TJX3InOutBlock.Create;
@@ -299,35 +297,8 @@ begin
     for LField in LFields do
       if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then
       begin
-        if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
         LObj := LField.GetValue(Self).AsObject;
-        if  not Assigned(LObj) then
-        begin
-          if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
-          {$IFDEF JX3SPEEDUP}
-            LObj := GJSX3PooledStr.Get<TJX3String>
-          {$ELSE}
-            LObj := TJX3String.Create
-          {$ENDIF JX3SPEEDUP}
-          else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
-            {$IFDEF JX3SPEEDUP}
-            LObj := GJSX3PooledNum.Get<TJX3Num>
-            {$ELSE}
-            LObj := TJX3Num.Create
-            {$ENDIF JX3SPEEDUP}
-          else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-            {$IFDEF JX3SPEEDUP}
-            LObj := GJSX3PooledBool.Get<TJX3Bool>
-          {$ELSE}
-           LObj := TJX3Bool.Create
-          {$ENDIF JX3SPEEDUP}
-         else
-         begin
-            LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-            if not (LObj is TJX3Primitive) then TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
-          end;
-          LField.SetValue(Self, LObj);
-        end;
+        if  not Assigned(LObj) then Continue;  // Unmanaged missing value
         LInfoBlock.Init(LField.Name, Nil, LField, AInfoBlock.Options);
         if LObj is TJX3String  then TJX3String(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
         else if LObj is TJX3Number  then TJX3Number(LObj).JSONSerialize(LInfoBlock, AInOutBlock)
@@ -403,7 +374,6 @@ begin
         begin
 
           if LJPair.JsonValue is TJSONNull then Break;
-          if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
           LFieldFound := True;  // ?? Hint: neve used ?? WHY ??
 
           LJPair.Owned := False;
@@ -461,8 +431,6 @@ begin
 
           if Assigned(JS3Required(TxRTTI.GetFieldAttribute(LField, JS3Required))) then
             raise Exception.Create(Format('Class: %s : "%s" is required but not defined', [Self.ClassName, LName]));
-
-          if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
 
         end;
         Continue;
@@ -588,7 +556,6 @@ begin
     begin
       if LSrcField.Name = LDestField.Name then
       begin
-        if (joStats in AOptions) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
         LNewObj := LDestField.GetValue(ADest).AsObject;
         if not Assigned(LNewObj) then
         begin
@@ -632,7 +599,6 @@ begin
     begin
       if LField.Name = LSrcField.Name then
       begin
-        if (joStats in AMergeOpts) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
         LObj := LField.GetValue(Self).AsObject;
         if not Assigned(LObj) then
         begin

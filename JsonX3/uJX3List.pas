@@ -207,7 +207,7 @@ begin
   LFields := TxRTTI.GetFields(Self);
   for LField in LFields do
   begin
-    if  (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic, mvPublished]) then
+    if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then
     begin
       if not Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
