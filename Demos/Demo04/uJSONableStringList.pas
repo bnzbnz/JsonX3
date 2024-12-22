@@ -51,7 +51,7 @@ begin
       TJX3Object.EscapeJSONStr(LStr); // String escape to JSON Format
       LArr.Add(LStr);
     end;
-    AInfoBlock.SetJSON( Format('"%s":"%s"', [AInfoBlock.FieldName, LArr.ToJSON]) );
+    AInfoBlock.SetJSON( Format('"%s":%s', [AInfoBlock.FieldName, LArr.ToJSON]) );
     LArr.Free;
   end;
 end;

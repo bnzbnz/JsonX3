@@ -112,6 +112,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LStream : TStringStream;
     LJsonStr : string;
     LWatch : TStopWatch;
+    KB: Integer;
 
     LStats: TJX3InOutBlock;
   begin
@@ -123,22 +124,22 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LStream := TStringStream.Create( '', TEncoding.UTF8, True );
     LStream.LoadFromFile( 'aspects100.json' );
     LJsonStr := LStream.DataString;
-    Memo1.Lines.add( Format( '  Stream size: %s KB', [ ( LStream.Size div 1024 ).toString ] ) );
+    KB :=  LStream.Size div 1024 ;
+    Memo1.Lines.add( Format( '  Stream size: %s KB', [ KB.ToString ]  ));
     LStream.Free;
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Convert Json String to JSX3 Objects (Deserialize):' );
     LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joStats, joRaiseException], LStats );
-    Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
-    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+    Memo1.Lines.add(Format('==> %d ms', [ LStats.Stats.ProcessingTimeMS ]));
+    Memo1.Lines.add('==> ' +  Trunc(KB / (LStats.Stats.ProcessingTimeMS / 1000)).ToString +  'KB/s' );
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'JSX3 Object Cloning (RTTI):' );
     LJObjClone := TJX3Object.Clone<TfetchItemAspectsContentType>(LJObj, [joStats], LStats);
-    Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
-    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+    Memo1.Lines.add(Format('==> %d ms', [ LStats.Stats.ProcessingTimeMS ]));
     LJObj.Free;
 
     Memo1.Lines.add( '' );
@@ -146,16 +147,13 @@ procedure TForm4.ButtonClick( Sender : TObject );
     Memo1.Lines.add( 'JSX3 Object Cloning (Merging):' );
     LJObjMerge := TfetchItemAspectsContentType.Create;
     LJObjMerge.Merge(LJObjClone, [joStats], LStats);
-    Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
-    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
-    LJObjClone.Free;
+    Memo1.Lines.add(Format('==> %d ms', [ LStats.Stats.ProcessingTimeMS ]));    LJObjClone.Free;
 
     Memo1.Lines.add( '' );
     LStats.Stats.Clear;
     Memo1.Lines.add( 'Revert JSX3 Objects to Json String (Serialize)):' );
     LJsonStr := TJX3Object.ToJson( LJObjMerge, [ joNullToEmpty, joStats ], LStats );
-    Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
-    Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+    Memo1.Lines.add(Format('==> %d ms', [ LStats.Stats.ProcessingTimeMS ]));
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;
