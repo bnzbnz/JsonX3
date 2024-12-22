@@ -112,48 +112,48 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LStream : TStringStream;
     LJsonStr : string;
     LWatch : TStopWatch;
-    KB: Integer;
-
-    LStats: TJX3InOutBlock;
-  begin
+    LKB: Integer;
+begin
     Memo1.Lines.Clear;
-    LStats := TJX3InOutBLock.Create;
 
     LWatch := TStopWatch.StartNew;
     Memo1.Lines.add( 'Loading ebay''s Aspects json file :' );
     LStream := TStringStream.Create( '', TEncoding.UTF8, True );
     LStream.LoadFromFile( 'aspects100.json' );
     LJsonStr := LStream.DataString;
-    KB :=  LStream.Size div 1024 ;
-    Memo1.Lines.add( Format( '  Stream size: %s KB', [ KB.ToString ]  ));
+    LKB := LStream.Size div 1024;
+    Memo1.Lines.add( Format( '  Stream size: %d KB', [ LKB ] ));
     LStream.Free;
 
     Memo1.Lines.add( '' );
-    LStats.Stats.Clear;
     Memo1.Lines.add( 'Convert Json String to JSX3 Objects (Deserialize):' );
-    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joStats, joRaiseException], LStats );
-    Memo1.Lines.add(Format('==> %d ms', [ LStats.Stats.ProcessingTimeMS ]));
-    Memo1.Lines.add('==> ' +  Trunc(KB / (LStats.Stats.ProcessingTimeMS / 1000)).ToString +  'KB/s' );
+    LWatch := TStopWatch.StartNew;
+    LJObj := TJX3Object.FromJSON<TfetchItemAspectsContentType>(LJsonStr, [ joStats, joRaiseException] );
+    Memo1.Lines.add(Format('==> %d ms', [ LWatch.ElapsedMilliseconds ]));
+    Memo1.Lines.add('==> ' +  Trunc(LKB / (LWatch.ElapsedMilliseconds / 1000)).ToString +  'KB/s' );
+
 
     Memo1.Lines.add( '' );
-    LStats.Stats.Clear;
     Memo1.Lines.add( 'JSX3 Object Cloning (RTTI):' );
-    LJObjClone := TJX3Object.Clone<TfetchItemAspectsContentType>(LJObj, [joStats], LStats);
-    Memo1.Lines.add(Format('==> %d ms', [ LStats.Stats.ProcessingTimeMS ]));
+    LWatch := TStopWatch.StartNew;
+    LJObjClone := TJX3Object.Clone<TfetchItemAspectsContentType>(LJObj, [joStats]);
+    Memo1.Lines.add(Format('==> %d ms', [ LWatch.ElapsedMilliseconds ]));
     LJObj.Free;
 
     Memo1.Lines.add( '' );
-    LStats.Stats.Clear;
+
     Memo1.Lines.add( 'JSX3 Object Cloning (Merging):' );
     LJObjMerge := TfetchItemAspectsContentType.Create;
-    LJObjMerge.Merge(LJObjClone, [joStats], LStats);
-    Memo1.Lines.add(Format('==> %d ms', [ LStats.Stats.ProcessingTimeMS ]));    LJObjClone.Free;
+    LWatch := TStopWatch.StartNew;
+    LJObjMerge.Merge(LJObjClone, [joStats]);
+    Memo1.Lines.add(Format('==> %d ms', [ LWatch.ElapsedMilliseconds ]));
+    LJObjClone.Free;
 
     Memo1.Lines.add( '' );
-    LStats.Stats.Clear;
     Memo1.Lines.add( 'Revert JSX3 Objects to Json String (Serialize)):' );
-    LJsonStr := TJX3Object.ToJson( LJObjMerge, [ joNullToEmpty, joStats ], LStats );
-    Memo1.Lines.add(Format('==> %d ms', [ LStats.Stats.ProcessingTimeMS ]));
+    LWatch := TStopWatch.StartNew;
+    LJsonStr := TJX3Object.ToJson( LJObjMerge, [ joNullToEmpty, joStats ] );
+    Memo1.Lines.add(Format('==> %d ms', [ LWatch.ElapsedMilliseconds ]));
 
     Memo1.Lines.add( '' );
     LWatch := TStopWatch.StartNew;
@@ -168,8 +168,7 @@ procedure TForm4.ButtonClick( Sender : TObject );
     LStream.SaveToFile( ( 'jsx3.json' ) );
     Memo1.Lines.add( Format( '  Stream size: %s KB', [ ( LStream.Size div 1024 ).toString ] ) );
     LStream.Free;
-;
-    LStats.Free;
+
   end;
 
 end.

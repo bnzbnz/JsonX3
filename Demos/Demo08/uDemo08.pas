@@ -310,31 +310,31 @@ procedure TForm4.ButtonClick(Sender: TObject);
   LStream : TStringStream;
   LJsonStr : string;
   LWatch : TStopWatch;
-  LStats: TJX3InOutBlock;
+  KB, Ms: Integer;
 begin
   Memo1.Lines.Clear;
-  LStats := TJX3InOutBLock.Create;
 
   LWatch := TStopWatch.StartNew;
   Memo1.Lines.add( 'Loading complex json file :' );
   LStream := TStringStream.Create( '', TEncoding.UTF8, True );
   LStream.LoadFromFile( 'GitHubExtract.json' );
   LJsonStr := LStream.DataString;
-  Memo1.Lines.add( Format( '  Stream size: %s KB', [ ( LStream.Size div 1024 ).toString ] ) );
+  KB :=  LStream.Size div 1024 ;
+  Memo1.Lines.add( Format( '  Stream size: %d KB', [ KB ] ) );
   LStream.Free;
 
   Memo1.Lines.add( '' );
-  LStats.Stats.Clear;
+  LWatch := TStopWatch.StartNew;
   Memo1.Lines.add( 'Convert Json String to JSX3 Objects (Deserialize):' );
-  LJObj := TJX3Object.FromJSON<TGitHub>(LJsonStr, [ joStats, joRaiseException, JoRaiseOnMissingField], LStats );
-  Memo1.Lines.add(Format('==> %d ops in %d ms', [ LStats.Stats.FieldCount,  LStats.Stats.ProcessingTimeMS]));
-  Memo1.Lines.add( '==> ' + Trunc(LStats.Stats.FieldCount / ( LStats.Stats.ProcessingTimeMS / 1000)).ToString +' /s');
+  LJObj := TJX3Object.FromJSON<TGitHub>(LJsonStr, [ joStats, joRaiseException, JoRaiseOnMissingField]);
+  Ms := LWatch.ElapsedMilliseconds;
+  Memo1.Lines.add(Format('==> %d ms', [ Ms ]));
+  Memo1.Lines.add('==> ' +  Trunc(KB /(Ms / 1000)).ToString + ' KB/s' );
 
   Memo1.Lines.add( '' );
   Memo1.Lines.Add(Format('Projects: %d', [LJObj.GitHub.Count]));
 
   LJObj.Free;
-  LStats.Free;
 
 end;
 

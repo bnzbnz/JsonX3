@@ -23,8 +23,6 @@ SOFTWARE.
 *****************************************************************************)
 unit uJX3Object;
 
-{.$DEFINE JX3SPEEDUP} // Speed vs Memory, only if you parse multiple large Json (10-20% faster, your mileage may vary...)
-
 interface
 uses
   System.Generics.Collections
@@ -77,13 +75,7 @@ type
     procedure   SetJSON(AJson: string; AToEmpty: Boolean = False);
   end;
 
-  TJX3InOutStats = class
-    ProcessingTimeMS: Int64;
-    procedure Clear;
-  end;
-
   TJX3InOutBlock = class
-    Stats: TJX3InOutStats;
     User1: TValue;
     User2: TValue;
     User3: TValue;
@@ -96,7 +88,7 @@ type
   protected
     function          GetIsNull: Boolean; virtual; abstract;
     procedure         SetIsNull(ANull: Boolean); virtual; abstract;
-  published
+  public
     property IsNull:  Boolean read GetIsNull write SetIsNull;
     property Null:    Boolean read GetIsNull write SetIsNull;
   end;
@@ -132,11 +124,6 @@ type
   TJX3    = TJX3Object;
 
 var
-{$IFDEF JX3SPEEDUP}
-  GJSX3PooledStr:  TJX3MiniPool;
-  GJSX3PooledNum:  TJX3MiniPool;
-  GJSX3PooledBool: TJX3MiniPool;
-{$ENDIF JX3SPEEDUP}
   GJSX3PooledJSON: TJX3MiniPool;
 
 implementation
@@ -187,23 +174,17 @@ begin
   Part := AJson;
 end;
 
-procedure TJX3InOutStats.Clear;
-begin
-  ProcessingTimeMS  := 0;
-end;
-
 constructor TJX3InOutBlock.Create;
 begin
   inherited;
-  Stats := TJX3InOutStats.Create;
-  Stats.Clear;
   User1 := TValue.Empty;
   User2 := TValue.Empty;
+  User3 := TValue.Empty;
+  User4 := TValue.Empty;
 end;
 
 destructor TJX3InOutBlock.Destroy;
 begin
-  Stats.Free;
   inherited;
 end;
 
@@ -219,26 +200,10 @@ begin
     begin
       if not Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
       begin
-        if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
-        {$IFDEF JX3SPEEDUP}
-           LNewObj := GJSX3PooledStr.Get<TJX3String>
-        {$ELSE}
-           LNewObj := TJX3String.Create
-        {$ENDIF JX3SPEEDUP}
-        else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
-        {$IFDEF JX3SPEEDUP}
-           LNewObj := GJSX3PooledNum.Get<TJX3Num>
-        {$ELSE}
-           LNewObj := TJX3Num.Create
-        {$ENDIF JX3SPEEDUP}
-        else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-        {$IFDEF JX3SPEEDUP}
-           LNewObj := GJSX3PooledBool.Get<TJX3Bool>
-        {$ELSE}
-           LNewObj := TJX3Bool.Create
-        {$ENDIF JX3SPEEDUP}
-         else
-           LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
+        if LField.FieldType.AsInstance.MetaclassType = TJX3String then LNewObj := TJX3String.Create
+        else if LField.FieldType.AsInstance.MetaclassType = TJX3Num then LNewObj := TJX3Num.Create
+        else if LField.FieldType.AsInstance.MetaclassType = TJX3Bool then LNewObj := TJX3Bool.Create
+        else LNewObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
         if not Assigned(LNewObj) then Continue;
         if not (LNewObj is TJX3Primitive) then TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
         LField.SetValue(Self, LNewObj);
@@ -266,16 +231,8 @@ begin
         if not (LObj is TJX3Object) then
           if TxRTTI.CallMethodFunc('JSONDestroy', LObj, []).AsBoolean then
             FreeAndNil(LObj);
-      end else
-        {$IFDEF JX3SPEEDUP}
-        if LObj.ClassType = TJX3String then begin TJX3String(LObj).IsNull := True; GJSX3PooledStr.Put(LObj); end
-        else if LObj.ClassType = TJX3Num then begin TJX3Num(LObj).IsNull := True; GJSX3PooledNum.Put(LObj); end
-        else if LObj.ClassType = TJX3Bool then begin TJX3Bool(LObj).IsNull := True; GJSX3PooledBool.Put(LObj); end
-        else FreeAndNil(LObj);
-        {$ELSE}
-        FreeAndNil(LObj);
-        {$ENDIF}
-        LField.SetValue(Self,Nil);
+      end else FreeAndNil(LObj);
+      LField.SetValue(Self,Nil);
       end;
   inherited;
 end;
@@ -446,13 +403,11 @@ end;
 class function TJX3Object.FromJSON<T>(const AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
 var
   LInfoBlock: TJX3InfoBlock;
-  LWatch:     TStopWatch;
   LJObj:      TJSONObject;
 begin
   LInfoBlock := Nil;
   LJObj := Nil;
   try
-    if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     Result := T.Create;
     try
       LJObj := TJSONObject.ParseJSONValue(AJson, True, joRaiseException in AOptions) as TJSONObject;
@@ -468,25 +423,21 @@ begin
   finally
     LJObj.Free;
     LInfoBlock.Free;
-    if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds;
   end;
 end;
 
 class function TJX3Object.ToJSON(AObj: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock): string;
 var
   LInfoBlock: TJX3InfoBlock;
-  LWatch:     TStopWatch;
 begin
   LInfoBlock := Nil;
   try
   try
-    if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
     LInfoBlock := TJX3InfoBlock.Create('', nil, nil, AOptions);
     TxRTTI.CallMethodProc('JSONSerialize', AObj, [LInfoBlock, AInOutBlock]);
     if not LInfoBlock.IsEmpty then Result := LInfoBlock.Part;
   finally
     LInfoBlock.Free;
-    if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
   end;
   except
     on Ex: Exception do
@@ -509,7 +460,6 @@ begin
     if not (Result is TJX3Primitive) then TxRTTI.CallMethodProc('JSONCreate', Result, [True]);
     TxRTTI.CallMethodProc('JSONClone', AObj, [Result, TValue.From<TJX3Options>(AOptions), AInOutBlock])
   finally
-    if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
   end;
   except
     on Ex: Exception do
@@ -531,7 +481,6 @@ begin
     TxRTTI.CallMethodProc('JSONMerge', Self, [ASrc, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
     Result := True;
   finally
-    if (joStats in AOptions) and Assigned(AInOutBlock) then AInOutBlock.Stats.ProcessingTimeMS := LWatch.ElapsedMilliseconds
   end;
   except
     on Ex: Exception do
@@ -559,19 +508,8 @@ begin
         LNewObj := LDestField.GetValue(ADest).AsObject;
         if not Assigned(LNewObj) then
         begin
-        {$IFDEF JX3SPEEDUP}
-          if  LDestField.FieldType.AsInstance.MetaclassType = TJX3String then
-            LNewObj := GJSX3PooledStr.Get<TJX3String>
-          else if  LDestField.FieldType.AsInstance.MetaclassType = TJX3Num then
-            LNewObj := GJSX3PooledNum.Get<TJX3Num>
-          else if  LDestField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-            LNewObj := GJSX3PooledBool.Get<TJX3Bool>
-          else
-        {$ENDIF JX3SPEEDUP}
-          begin
-            LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
-            if not (LNewObj is TJX3Primitive) then TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
-          end;
+          LNewObj := TxRTTI.CreateObject(LDestField.FieldType.AsInstance);
+          if not (LNewObj is TJX3Primitive) then TxRTTI.CallMethodProc('JSONCreate', LNewObj, [True]);
           LDestField.SetValue(ADest, LNewObj);
         end;
         LObj := LSrcField.GetValue(Self).AsObject;
@@ -602,20 +540,9 @@ begin
         LObj := LField.GetValue(Self).AsObject;
         if not Assigned(LObj) then
         begin
-        {$IFDEF JX3SPEEDUP}
-          if  LField.FieldType.AsInstance.MetaclassType = TJX3String then
-            LObj := GJSX3PooledStr.Get<TJX3String>
-          else if  LField.FieldType.AsInstance.MetaclassType = TJX3Num then
-            LObj := GJSX3PooledNum.Get<TJX3Num>
-          else if  LField.FieldType.AsInstance.MetaclassType = TJX3Bool then
-           LObj := GJSX3PooledBool.Get<TJX3Bool>
-          else
-        {$ENDIF JX3SPEEDUP}
-          begin
-            LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
-            if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
-              TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
-          end;
+          LObj := TxRTTI.CreateObject(LField.FieldType.AsInstance);
+          if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
+          TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
         end;
         if LObj is TJX3String then TJX3String(LObj).JSONMerge(TJX3String(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
         else if LObj is TJX3Number then TJX3Number(LObj).JSONMerge(TJX3Number(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
@@ -747,17 +674,7 @@ begin
 end;
 
 initialization
-  {$IFDEF JX3SPEEDUP}
-  GJSX3PooledStr  := TJX3MiniPool.GetInstance<TJX3String>(50000);
-  GJSX3PooledNum  := TJX3MiniPool.GetInstance<TJX3Number>(10000);
-  GJSX3PooledBool := TJX3MiniPool.GetInstance<TJX3Boolean>(5000);
-  {$ENDIF JX3SPEEDUP}
   GJSX3PooledJSON := TJX3MiniPool.GetInstance<TJSONObject>(100);
 finalization
   GJSX3PooledJSON.Free;
-  {$IFDEF JX3SPEEDUP}
-  GJSX3PooledStr.Free;
-  GJSX3PooledNum.Free;
-  GJSX3PooledBool.Free;
-  {$ENDIF JX3SPEEDUP}
 end.
