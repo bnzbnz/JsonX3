@@ -79,8 +79,6 @@ type
 
   TJX3InOutStats = class
     ProcessingTimeMS: Int64;
-    PrimitiveCount: Int64;
-    EmptyFieldCount: Int64;
     FieldCount: Int64;
     procedure Clear;
   end;
@@ -193,8 +191,6 @@ end;
 procedure TJX3InOutStats.Clear;
 begin
   ProcessingTimeMS  := 0;
-  PrimitiveCount    := 0;
-  EmptyFieldCount   := 0;
   FieldCount        := 0;
 end;
 
@@ -374,36 +370,41 @@ var
   LInfoBlock:   TJX3InfoBlock;
   LName:        string;
   LObj:         TObject;
-  LFieldNames:  TStringList;
   LFieldFound:  Boolean;
   LAttr:        TCustomAttribute;
-
+  LJPairList:   TStringList;
 begin
+  LJPairList := Nil;
   LInfoBlock := TJX3InfoBlock.Create;
   try
 
-    if (JoRaiseOnMissingField in AInfoBlock.Options) then LFieldNames := TStringList.Create(dupError, false, false) else LFieldNames:= Nil;
-
     for LField in TxRTTI.GetFields(Self) do
     begin
-
       if not (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then Continue;
-      if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
+
+      if (JoRaiseOnMissingField in AInfoBlock.Options) and (Length(TxRTTI.GetFields(Self)) < AInfoBlock.Obj.count) then
+      begin
+        LJPairList := TStringList.Create;
+        for LJPair in AInfoBlock.Obj do LJPairList.Add(LJPair.JsonString.Value);
+        raise Exception.Create(Format('Missing Property(ies) in class %s, from JOSN fields: %s%s', [Self.ClassName, sLineBreak, LJPairList.Text]));
+      end;
 
       LName := NameDecode(LField.Name);
       LAttr := JX3Name(TxRTTI.GetFieldAttribute(LField, JX3Name));
       if Assigned(LAttr) then LName := JX3Name(LAttr).Name;
 
-      if (JoRaiseOnMissingField in AInfoBlock.Options)  then LFieldNames.Add(LName);
       LFieldFound := False;
       for LJPair in  AInfoBlock.Obj do
       begin
 
+        if LJPair.JsonValue is TJSONNull then Break;
+
         if LName = LJPair.JsonString.Value then
         begin
 
-          LFieldFound := True;
           if LJPair.JsonValue is TJSONNull then Break;
+          if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
+          LFieldFound := True;  // ?? Hint: neve used ?? WHY ??
 
           LJPair.Owned := False;
           LJPair.JsonString.Owned := False;
@@ -441,12 +442,11 @@ begin
           LJPair.JsonValue.Owned := True;
           LJPair.Owned := True;
 
-          break;
+          Break;
         end;
 
         if not LFieldFound then
         begin
-          if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.EmptyFieldCount);
 
           LAttr := TxRTTI.GetFieldAttribute(LField, JX3Default);
           if Assigned(LAttr) then
@@ -462,21 +462,15 @@ begin
           if Assigned(JS3Required(TxRTTI.GetFieldAttribute(LField, JS3Required))) then
             raise Exception.Create(Format('Class: %s : "%s" is required but not defined', [Self.ClassName, LName]));
 
-        end;
+          if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.FieldCount);
 
+        end;
         Continue;
       end;
     end;
 
-    if (JoRaiseOnMissingField in AInfoBlock.Options)  then
-    begin
-      for LJPair in  AInfoBlock.Obj do
-        if LFieldNames.IndexOf(LJPair.JsonString.Value) = -1  then
-          raise Exception.Create(Format('Class: %s: "%s" definition is missing', [Self.ClassName, LJPair.JsonString.Value]));
-      LFieldNames.Free;
-    end;
-
   finally
+    LJPairList.Free;
     LInfoBlock.Free;
   end;
 end;

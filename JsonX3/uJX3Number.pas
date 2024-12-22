@@ -111,7 +111,6 @@ var
   LAttr:    TCustomAttribute;
   LJValue:  TJSONNumber;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
 
   if Assigned(AInfoBlock.Field) then
   begin
@@ -168,7 +167,7 @@ var
   LJPair: TJSONPair;
   LDefaultAttr:   JX3Default;
 begin
-  if (joStats in AInfoBlock.Options) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
+
   LJPair := AInfoBlock.Obj.Pairs[0];
   if (Assigned(LJPair)) and (not LJPair.null) and (not (LJPair.JsonValue is TJSONNull)) then
   begin
@@ -186,7 +185,7 @@ end;
 
 procedure TJX3Number.JSONClone(ADest: TJX3Number; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if Assigned(AInOutBlock) and (joStats in AOptions) then Inc(AInOutBlock.Stats.PrimitiveCount);
+
   if Self.FIsNull then
   begin
     ADest.IsNull := True;
@@ -332,7 +331,6 @@ end;
 
 procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (joStats in AMergeOpts) and Assigned(AInOutBlock) then Inc(AInOutBlock.Stats.PrimitiveCount);
   if ASrc.GetIsNull then
   begin
     Self.SetIsNull(True);
