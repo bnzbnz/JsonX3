@@ -27,7 +27,7 @@ type
   TDemo = class(TJX3Object)
     [JS3Required]
     Str:     TJX3Str;                   // A value is required when serializing (Exception)
-    [JX3Name('#href')]                  // a name of the json value whiw
+    [JX3Name('#href')]                  // a name of the matching json name
     HrefVar: TJX3Str;                   // a name of the json value mapped to "Bool"
     [JX3Default('22')]                  // a defualt value to be used at deserialization, if the field is null
     Num1:    TJX3Num;
