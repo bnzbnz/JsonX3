@@ -86,8 +86,8 @@ begin
 
   // Serializing the New Object
   Memo1.lines.add('');
-  Json := TJX3Object.ToJson(NewDemo, []);
-  Memo1.lines.add('New Optimized Object:');
+  Json := TJX3Object.ToJson(NewDemo, [joNullToEmpty]);
+  Memo1.lines.add('Duplicate Object:');
   Memo1.lines.add(Json);
 
   // Formatted Json

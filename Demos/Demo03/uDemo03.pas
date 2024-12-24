@@ -72,7 +72,7 @@ begin
   Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
   Memo1.lines.add(Json);
 
-  // TJX3Dic<TJX3Num> : Dictionary<string, number> (JSON only allows strings as keys)
+  //  + TJX3Dic<TJX3Num> : Dictionary<string, number> (JSON only allows strings as keys)
   Memo1.lines.add('');
   Memo1.lines.add('TJX3Dic<TJX3Num> : Dictionary<string, number> :');
   Demo.Y.Add('Value1', TJX3Num.CInt(1111));
@@ -82,7 +82,7 @@ begin
   Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
   Memo1.lines.add(Json);
 
-   // TJX3List<TPrimitives>  : Array<TPrimitives)
+   //  + TJX3List<TPrimitives>  : Array<TPrimitives)
   Memo1.lines.add('');
   Memo1.lines.add('TJX3List<TPrimitives>  : Array<TPrimitives) :');
   Demo.Z.Add(TPrimitives.Create);
@@ -94,7 +94,7 @@ begin
   Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
   Memo1.lines.add(Json);
 
-  // TJX3List<TJX3List<TJX3Str>> : Array<Array<string>>>
+  //  + TJX3List<TJX3List<TJX3Str>> : Array<Array<string>>>
   Memo1.lines.add('');
   Memo1.lines.add('TJX3List<TJX3List<TJX3Str>> : Array<Array<string>>> :');
   S := TJX3List<TJX3Str>.Create;
@@ -110,7 +110,7 @@ begin
   Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
   Memo1.lines.add(Json);
 
-  // TJX3List<TJX3Dic<TJX3List<TPrimitives>>>  : Array<Dictionary<string, Array<TPrimitives>>> :)
+  // +  TJX3List<TJX3Dic<TJX3List<TPrimitives>>>  : Array<Dictionary<string, Array<TPrimitives>>> :)
   Memo1.lines.add('');
   Memo1.lines.add('TJX3List<TJX3Dic<TJX3List<TPrimitives>>>  : Array<Dictionary<string, Array<TPrimitives>>>');
   var p1 := TJX3List<TPrimitives>.CAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
