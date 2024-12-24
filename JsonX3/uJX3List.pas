@@ -49,7 +49,7 @@ type
     procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock =Nil);
     procedure       JSONClone(ADest: TJX3List<T>; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONMerge(ASrc: TJX3List<T>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
+    procedure       JSONMerge(AMergedWith: TJX3List<T>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function  C: TJX3List<T>;
     class function  CAdd(AValue: T): TJX3List<T>;
@@ -281,18 +281,14 @@ begin
   Result := Self[Count - 1];
 end;
 
-procedure TJX3List<T>.JSONMerge(ASrc: TJX3List<T>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3List<T>.JSONMerge(AMergedWith: TJX3List<T>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 var
   AList: T;
   LObj: T;
 begin
-  if (jomTo in AOptions) then
+  if (not AMergedWith.GetIsNull) and  (Self.GetIsNull) then
   begin
-    raise Exception.Create(Format('Class %s, merging jmoTo not impemented',[Self.ClassType]));
-  end
-  else if (not ASrc.GetIsNull) and  (Self.GetIsNull) then
-  begin
-    for AList in ASrc do
+    for AList in AMergedWith do
     begin
       LObj := T.Create;
       TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);

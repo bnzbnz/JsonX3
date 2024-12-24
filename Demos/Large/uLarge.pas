@@ -142,7 +142,7 @@ begin
     Memo1.Lines.add( 'JSX3 Object Cloning (Merging):' );
     LJObjMerge := TfetchItemAspectsContentType.Create;
     LWatch := TStopWatch.StartNew;
-  LJObjClone.Merge(LJObjMerge, LJObj, [jomFrom]);
+  LJObjClone.Merge(LJObjMerge, LJObj);
     Memo1.Lines.add(Format('==> %d ms', [ LWatch.ElapsedMilliseconds ]));
     Memo1.Lines.add(Format('==> %n KB/s', [(LJSize / 1024) / (LWatch.ElapsedMilliseconds / 1000)]));
 

@@ -44,7 +44,7 @@ type
     procedure JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure JSONClone(ADest: TJX3Dic<V>; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure JSONMerge(ASrc: TJX3Dic<V>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
+    procedure JSONMerge(AMergedWith: TJX3Dic<V>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function C: TJX3Dic<V>;
     class function CAdd(AKey: string; AValue: V): TJX3Dic<V>;
@@ -221,18 +221,14 @@ begin
   end;
 end;
 
-procedure TJX3Dic<V>.JSONMerge(ASrc: TJX3Dic<V>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3Dic<V>.JSONMerge(AMergedWith: TJX3Dic<V>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 var
   ADic: TPair<string, V>;
   LObj: V;
 begin
-  if (jomTo in AOptions) then
+  if (not AMergedWith.GetIsNull) and  (Self.GetIsNull) then
   begin
-    raise Exception.Create(Format('Class %s, merging jmoTo not impemented',[Self.ClassType]));
-  end
-  else if (not ASrc.GetIsNull) and  (Self.GetIsNull) then
-  begin
-    for ADic in ASrc do
+    for ADic in AMergedWith do
     begin
       if not Self.ContainsKey(ADic.Key) then
       begin
