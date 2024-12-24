@@ -62,7 +62,7 @@ type
     procedure   JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure   JSONClone(ADest: TJX3Number; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure   JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
+    procedure   JSONMerge(ASrc: TJX3Number; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function C: TJX3Number;
     class function CInt(AValue: Integer):TJX3Number;
@@ -328,14 +328,13 @@ begin
   SetValue(CurrToStr(AValue));
 end;
 
-procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3Number.JSONMerge(ASrc: TJX3Number; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if ASrc.GetIsNull then
+  if (jomTo in AOptions) then
   begin
-    Self.SetIsNull(True);
-    Exit;
-  end;
-  if Self.GetIsNull then
+    raise Exception.Create(Format('Class %s, merging jmoTo not impemented',[Self.ClassType]));
+  end
+  else if (not ASrc.GetIsNull) and  (Self.GetIsNull) then
     Self.SetValue(ASrc.GetValue);
 end;
 

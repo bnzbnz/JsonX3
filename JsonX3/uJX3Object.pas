@@ -40,7 +40,8 @@ type
       , joRaiseOnMissingField
       , joStats
       // Merge,
-      , jomOverload
+      , jomFrom
+      , jomTo
   );
 
   TJX3Options = set of TJS3Option;
@@ -103,13 +104,13 @@ type
     procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONClone(ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONMerge(ASrc: TObject; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
+    procedure       JSONMerge(ASrc: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
     // function     JSONDestroy: Boolean;
 
     class function  FromJSON<T:class, constructor>(const AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     class function  ToJSON(AObj: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     class function  Clone<T:class, constructor>(AObj: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
-    class function  Merge(ASrc, ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
+    class function  Merge(ADest, ASrc: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
 
     // Internals / Utils
     class procedure VarEscapeJSONStr(var AStr: string); overload; static;
@@ -475,7 +476,7 @@ begin
   end;
 end;
 
-class function TJX3Object.Merge(ASrc, ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
+class function TJX3Object.Merge(ADest, ASrc: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
 var
   LWatch: TStopWatch;
 begin
@@ -528,7 +529,7 @@ begin
   end;
 end;
 
-procedure TJX3Object.JSONMerge(ASrc: TObject; AMergeOpts: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3Object.JSONMerge(ASrc: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 var
   LField:     TRTTIField;
   LObj:       TObject;
@@ -549,11 +550,11 @@ begin
           if (not (LObj is TJX3Object)) and (not (LObj is TJX3String)) and (not (LObj is TJX3Number)) and (not (LObj is TJX3Boolean))  then
           TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
         end;
-        if LObj is TJX3String then TJX3String(LObj).JSONMerge(TJX3String(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
-        else if LObj is TJX3Number then TJX3Number(LObj).JSONMerge(TJX3Number(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
-        else if LObj is TJX3Boolean then TJX3Boolean(LObj).JSONMerge(TJX3Boolean(LSrcField.GetValue(ASrc).AsObject), AMergeOpts, AInOutBlock)
+        if LObj is TJX3String then TJX3String(LObj).JSONMerge(TJX3String(LSrcField.GetValue(ASrc).AsObject), AOptions, AInOutBlock)
+        else if LObj is TJX3Number then TJX3Number(LObj).JSONMerge(TJX3Number(LSrcField.GetValue(ASrc).AsObject), AOptions, AInOutBlock)
+        else if LObj is TJX3Boolean then TJX3Boolean(LObj).JSONMerge(TJX3Boolean(LSrcField.GetValue(ASrc).AsObject), AOptions, AInOutBlock)
         else
-        TxRTTI.CallMethodProc('JSONMerge', LObj, [ LSrcField.GetValue(ASrc).AsObject, TValue.From<TJX3Options>(AMergeOpts), AInOutBlock]);
+        TxRTTI.CallMethodProc('JSONMerge', LObj, [ LSrcField.GetValue(ASrc).AsObject, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
         continue;
       end;
     end;
