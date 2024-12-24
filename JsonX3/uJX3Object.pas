@@ -28,6 +28,7 @@ uses
   System.Generics.Collections
   , RTTI
   , JSON
+  , SysUtils
   , uJX3MiniPool
   ;
 
@@ -108,15 +109,20 @@ type
     class function  FromJSON<T:class, constructor>(const AJson: string; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
     class function  ToJSON(AObj: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): string;
     class function  Clone<T:class, constructor>(AObj: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): T;
-    function        Merge(ASrc: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
+    class function  Merge(ASrc, ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
 
     // Internals / Utils
     class procedure VarEscapeJSONStr(var AStr: string); overload; static;
     class function  EscapeJSONStr(const AStr: string): string; overload; static;
     class function  NameDecode(const ToDecode: string): string; static;
     class function  NameEncode(const ToEncode: string): string; static;
-    class function  FormatJSON(const AJson: string; AIndentation: Integer = 4): string;
     class function  JsonListToJsonString(const AList: TList<string>): string;
+    class function  FormatJSON(const AJson: string; AIndentation: Integer = 4): string;
+
+    // Tools
+
+    class function LoadFromFile(const AFilename: string; var AStr: string; AEncoding: TEncoding): Int64;
+    class function SaveToFile(const Filename: string; const AStr: string; AEncoding: TEncoding): Int64;
 
   end;
 
@@ -130,9 +136,8 @@ implementation
 uses
     System.Diagnostics
   , System.Character
-  , SysUtils
-  , Classes
   , TypInfo
+  , Classes
   , uJX3String
   , uJX3Number
   , uJX3Boolean
@@ -470,7 +475,7 @@ begin
   end;
 end;
 
-function TJX3Object.Merge(ASrc: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
+class function TJX3Object.Merge(ASrc, ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil): Boolean;
 var
   LWatch: TStopWatch;
 begin
@@ -478,7 +483,7 @@ begin
   try
   try
     if (joStats in AOptions) and Assigned(AInOutBlock) then LWatch := TStopWatch.StartNew;
-    TxRTTI.CallMethodProc('JSONMerge', Self, [ASrc, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
+    TxRTTI.CallMethodProc('JSONMerge', ADest, [ASrc, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
     Result := True;
   finally
   end;
@@ -673,8 +678,45 @@ begin
   if Encoded then Result := '_' + Result;
 end;
 
+class function TJX3Object.LoadFromFile(const AFilename: string; var AStr: string; AEncoding: TEncoding): Int64;
+var
+  FS : TFileStream;
+  SS: TStringStream;
+begin
+  FS := nil;
+  SS := Nil;
+  try
+    FS := TFileStream.Create(AFilename, fmOpenRead or fmShareDenyWrite);
+    SS := TStringStream.Create('', AEncoding, True);
+    Result := SS.CopyFrom(FS, -1);
+    AStr := SS.DataString;
+  finally
+    SS.Free;
+    FS.Free;
+  end;
+end;
+
+class function TJX3Object.SaveToFile(const Filename: string; const AStr: string; AEncoding: TEncoding): Int64;
+var
+  FS: TFileStream;
+  SS: TStringStream;
+begin
+  FS := nil;
+  SS := Nil;
+  try
+    FS := TFileStream.Create(Filename, fmCreate or fmShareDenyWrite);
+    SS := TStringStream.Create(AStr, AEncoding);
+    Result := FS.CopyFrom(SS, -1);
+  finally
+    SS.Free;
+    FS.Free;
+  end;
+end;
+
+
 initialization
   GJSX3PooledJSON := TJX3MiniPool.GetInstance<TJSONObject>(100);
 finalization
   GJSX3PooledJSON.Free;
 end.
+

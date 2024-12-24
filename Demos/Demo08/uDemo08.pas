@@ -289,7 +289,7 @@ type
     org: TOrg;
   end;
 
-  TGitHub = class(TJX3Object)
+  TGitHubExtract = class(TJX3Object)
     GitHub:  TJX3List<TElement>
   end;
 
@@ -306,35 +306,32 @@ uses
 
 procedure TForm4.ButtonClick(Sender: TObject);
   var
-  LJObj: TGitHub;
+  LGitHubExtract: TGitHubExtract;
   LStream : TStringStream;
   LJsonStr : string;
   LWatch : TStopWatch;
   KB, Ms: Integer;
+  LJSize: Int64;
 begin
   Memo1.Lines.Clear;
 
   LWatch := TStopWatch.StartNew;
-  Memo1.Lines.add( 'Loading complex json file :' );
-  LStream := TStringStream.Create( '', TEncoding.UTF8, True );
-  LStream.LoadFromFile( 'GitHubExtract.json' );
-  LJsonStr := LStream.DataString;
-  KB :=  LStream.Size div 1024 ;
-  Memo1.Lines.add( Format( '  Stream size: %d KB', [ KB ] ) );
-  LStream.Free;
+  Memo1.Lines.add( 'Loading ebay''s Aspects json file :' );
+  LJSize := TJX3Object.LoadFromFile('GitHubExtract.json', LJsonStr, TEncoding.UTF8);
+  Memo1.Lines.add( Format( '  Stream size: %n KB', [ (LJSize / 1024) ] ));
+  Memo1.Lines.add(Format('==> %d ms', [ LWatch.ElapsedMilliseconds ]));
 
   Memo1.Lines.add( '' );
-  LWatch := TStopWatch.StartNew;
   Memo1.Lines.add( 'Convert Json String to JSX3 Objects (Deserialize):' );
-  LJObj := TJX3Object.FromJSON<TGitHub>(LJsonStr, [ joStats, joRaiseException, JoRaiseOnMissingField]);
-  Ms := LWatch.ElapsedMilliseconds;
-  Memo1.Lines.add(Format('==> %d ms', [ Ms ]));
-  Memo1.Lines.add('==> ' +  Trunc(KB /(Ms / 1000)).ToString + ' KB/s' );
+  LWatch := TStopWatch.StartNew;
+  LGitHubExtract := TJX3Object.FromJSON<TGitHubExtract>(LJsonStr, [ joStats, joRaiseException] );
+  Memo1.Lines.add(Format('==> %d ms', [ LWatch.ElapsedMilliseconds ]));
+  Memo1.Lines.add(Format('==> %n KB/s', [(LJSize / 1024) / (LWatch.ElapsedMilliseconds / 1000)]));
 
   Memo1.Lines.add( '' );
-  Memo1.Lines.Add(Format('Projects: %d', [LJObj.GitHub.Count]));
+  Memo1.Lines.Add(Format('Projects: %d', [LGitHubExtract.GitHub.Count]));
 
-  LJObj.Free;
+  LGitHubExtract.Free;
 
 end;
 
