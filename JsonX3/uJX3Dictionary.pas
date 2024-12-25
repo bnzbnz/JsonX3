@@ -46,6 +46,7 @@ type
     procedure JSONClone(ADest: TJX3Dic<V>; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure JSONMerge(AMergedWith: TJX3Dic<V>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
+    class function New: TJX3Dic<V>;
     class function C: TJX3Dic<V>;
     class function CAdd(AKey: string; AValue: V): TJX3Dic<V>;
     class function CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
@@ -98,6 +99,12 @@ procedure TJX3Dic<V>.SetIsNull(ANull: Boolean);
 begin
   Clear;
 end;
+
+class function TJX3Dic<V>.New: TJX3Dic<V>;
+begin
+  Result := TJX3Dic<V>.Create;
+end;
+
 
 class function TJX3Dic<V>.C: TJX3Dic<V>;
 begin

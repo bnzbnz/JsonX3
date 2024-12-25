@@ -334,7 +334,7 @@ begin
         begin
 
           if LJPair.JsonValue is TJSONNull then Break;
-          LFieldFound := True;  // ?? Hint: neve used ?? WHY ??
+          LFieldFound := True;  // ?? Hint: never used ?? WHY ??
 
           LJPair.Owned := False;
           LJPair.JsonString.Owned := False;
@@ -520,7 +520,7 @@ begin
         else if LObj is TJX3Number  then TJX3Number(LObj).JSONClone(TJX3Number(LNewObj), AOptions, AInOutBlock)
         else if LObj is TJX3Boolean  then TJX3Boolean(LObj).JSONClone(TJX3Boolean(LNewObj), AOptions, AInOutBlock)
         else TxRTTI.CallMethodProc('JSONClone', LObj, [LNewObj,  TValue.From<TJX3Options>(AOptions), AInOutBlock]);
-        continue;
+        Continue;
       end;
     end;
   end;
