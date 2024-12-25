@@ -47,16 +47,17 @@ type
     function        Last: T;
 
     procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock =Nil);
+    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONClone(ADest: TJX3List<T>; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
     procedure       JSONMerge(AMergedWith: TJX3List<T>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
+    class function  New: TJX3List<T>;
     class function  C: TJX3List<T>;
     class function  CAdd(AValue: T): TJX3List<T>;
     class function  CAddRange(const AValues: array of T): TJX3List<T>; overload;
 
-    property        IsNull: Boolean read GetIsNull write SetIsNull;
-    property        N: Boolean read GetIsNull write SetIsNull;
+    property IsNull:  Boolean write SetIsNull;
+    property Null:    Boolean read  GetIsNull;
   end;
 
   TJX3Lst<V:class, constructor> = class(TJX3List<V>);
@@ -267,6 +268,11 @@ begin
 end;
 
 class function TJX3List<T>.C: TJX3List<T>;
+begin
+  Result := TJX3List<T>.Create;
+end;
+
+class function TJX3List<T>.New: TJX3List<T>;
 begin
   Result := TJX3List<T>.Create;
 end;

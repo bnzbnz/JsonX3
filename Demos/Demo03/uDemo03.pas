@@ -66,9 +66,9 @@ begin
 
   // TJX3List<TJX3Str> : Array<string>
   Memo1.lines.add('TJX3List<TJX3Str> : Array<string> :');
-  Demo.X.Add(TJX3Str.C('@@@@'));  // "C" to Create with a Value
-  Demo.X.Add(TJX3Str.C('EEZZ'));
-  Demo.X.Add(TJX3Str.C('OOOO'));
+  Demo.X.Add(TJX3Str.New('@@@@'));  // "C" to Create with a Value
+  Demo.X.Add(TJX3Str.New('EEZZ'));
+  Demo.X.Add(TJX3Str.New('OOOO'));
   Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
   Memo1.lines.add(Json);
 
@@ -98,11 +98,11 @@ begin
   Memo1.lines.add('');
   Memo1.lines.add('TJX3List<TJX3List<TJX3Str>> : Array<Array<string>>> :');
   S := TJX3List<TJX3Str>.Create;
-  S.Add(TJX3Str.C('TTT'));
-  S.Add(TJX3Str.C('OOO'));
+  S.Add(TJX3Str.New('TTT'));
+  S.Add(TJX3Str.New('OOO'));
   Demo.Q.Add(S);
   S := TJX3List<TJX3Str>.C;
-  S.AddRange([TJX3Str.C('UUU'), TJX3Str.C('III')]);
+  S.AddRange([TJX3Str.New('UUU'), TJX3Str.New('III')]);
   Demo.Q.Add(S);
   Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
   Memo1.lines.add(Json);

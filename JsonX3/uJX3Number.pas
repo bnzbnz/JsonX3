@@ -34,7 +34,7 @@ type
 
   TJX3NumKind   = (nkNull, nkInt, nkUInt, nkInt64, nkUInt64, nkDouble, nkCurrency);
 
-  TJX3Number    = class(TJX3Primitive)
+  TJX3Number    = class(TJX3Abstract)
   private
     FIsNull:  Boolean;
     FValue: string;
@@ -56,13 +56,14 @@ type
     procedure   SetCurrency(AValue: Currency);
     function    GetValue: string;
     procedure   SetValue(AValue: string);
+    procedure   SetDefaultValue(AVal: string); override;
   public
     constructor Create;
 
-    procedure   JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure   JSONClone(ADest: TJX3Number; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure   JSONMerge(AMergedWith: TJX3Number; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
+    procedure   JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil); override;
+    procedure   JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);  override;
+    procedure   JSONClone(ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil); override;
+    procedure   JSONMerge(AMergedWith: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil); override;
 
     class function C: TJX3Number;
     class function CInt(AValue: Integer):TJX3Number;
@@ -73,8 +74,6 @@ type
     class function CCurrency(AValue: Currency):TJX3Number;
     class function CValue(AValue: string):TJX3Number;
 
-    property IsNull:    Boolean read GetIsNull write SetIsNull;
-    property N:         Boolean read GetIsNull write SetIsNull;
     property Int:       Integer read GetInt write SetInt;
     property UInt:      Cardinal read GetUInt write SetUInt;
     property Int64:     Int64 read GetInt64 write SetInt64;
@@ -183,14 +182,14 @@ begin
   end;
 end;
 
-procedure TJX3Number.JSONClone(ADest: TJX3Number; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3Number.JSONClone(ADest: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
   if Self.FIsNull then
   begin
-    ADest.IsNull := True;
+    TJX3Number(ADest).IsNull := True;
     Exit;
   end;
-  ADest.SetValue(Self.FValue);
+  TJX3Number(ADest).SetValue(Self.FValue);
 end;
 
 class function TJX3Number.C: TJX3Number;
@@ -255,6 +254,11 @@ procedure TJX3Number.SetValue(AValue: string);
 begin
   FIsNull := False;
   FValue := AValue;
+end;
+
+procedure TJX3Number.SetDefaultValue;
+begin
+  SetValue(AVal);
 end;
 
 function TJX3Number.GetInt: Integer;
@@ -328,10 +332,10 @@ begin
   SetValue(CurrToStr(AValue));
 end;
 
-procedure TJX3Number.JSONMerge(AMergedWith: TJX3Number; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3Number.JSONMerge(AMergedWith: TOBject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (not AMergedWith.GetIsNull) and  (Self.GetIsNull) then
-    Self.SetValue(AMergedWith.GetValue);
+  if (not TJX3Number(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
+    Self.SetValue(TJX3Number(AMergedWith).GetValue);
 end;
 
 end.

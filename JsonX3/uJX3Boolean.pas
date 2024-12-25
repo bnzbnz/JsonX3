@@ -35,7 +35,7 @@ const
 
 type
 
-  TJX3Boolean = class(TJX3Primitive)
+  TJX3Boolean = class(TJX3Abstract)
   private
     FIsNull:  Boolean;
     FValue: Boolean;
@@ -44,21 +44,21 @@ type
     procedure       SetIsNull(ANull: Boolean); override;
     function        GetValue: Boolean;
     procedure       SetValue(AValue: Boolean);
+    procedure       SetDefaultValue(AVal: string); override;
   public
     constructor     Create;
 
-    procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONClone(ADest: TJX3Boolean; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONMerge(AMergedWith: TJX3Boolean; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
+    procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil); override;
+    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil); override;
+    procedure       JSONClone(ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil); override;
+    procedure       JSONMerge(AMergedWith: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil); override;
 
-    class function  C(AValue: Boolean = False): TJX3Boolean;
+    class function  New: TJX3Boolean; overload;
+    class function  New(AValue: Boolean): TJX3Boolean; overload;
 
-    property        IsNull: Boolean read GetIsNull write SetIsNull;
-    property        N: Boolean read GetIsNull write SetIsNull;
-    property        Value: Boolean read GetValue write Setvalue;
-    property        Val: Boolean read GetValue write Setvalue;
-    property        V: Boolean read GetValue write Setvalue;
+    property        Value:  Boolean read GetValue write Setvalue;
+    property        Val:    Boolean read GetValue write Setvalue;
+    property        V:      Boolean read GetValue write Setvalue;
   end;
   TJX3Bool = TJX3Boolean;
 
@@ -144,25 +144,30 @@ begin
   end;
 end;
 
-procedure TJX3Boolean.JSONClone(ADest: TJX3Boolean; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3Boolean.JSONClone(ADest: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
   if FIsNull then
   begin
-    ADest.IsNull := True;
+    TJX3Boolean(ADest).SetIsNull(True);
     Exit;
   end;
-  ADest.SetValue(Self.FValue);
+  TJX3Boolean(ADest).SetValue(Self.FValue);
 end;
 
-procedure TJX3Boolean.JSONMerge(AMergedWith: TJX3Boolean; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3Boolean.JSONMerge(AMergedWith: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (not AMergedWith.GetIsNull) and  (Self.GetIsNull) then
-    Self.SetValue(AMergedWith.GetValue);
+  if (not TJX3Boolean(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
+    Self.SetValue(TJX3Boolean(AMergedWith).GetValue);
 end;
 
-class function TJX3Boolean.C(AValue: Boolean = False): TJX3Boolean;
+class function TJX3Boolean.New: TJX3Boolean;
 begin
   Result := TJX3Boolean.Create;
+end;
+
+class function TJX3Boolean.New(AValue: Boolean): TJX3Boolean;
+begin
+  Result := New;
   Result.SetValue(AValue);
 end;
 
@@ -181,6 +186,11 @@ procedure TJX3Boolean.SetValue(AValue: Boolean);
 begin
   FIsNull := False;
   FValue := AValue;
+end;
+
+procedure TJX3Boolean.SetDefaultValue(AVal: string);
+begin
+  SetValue(AVal.ToBoolean);
 end;
 
 function TJX3Boolean.GetValue: Boolean;

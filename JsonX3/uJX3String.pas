@@ -32,7 +32,7 @@ uses
 
 type
 
-  TJX3String = class(TJX3Primitive)
+  TJX3String = class(TJX3Abstract)
   private
     FValue: string;
     FIsNull:  Boolean;
@@ -41,6 +41,7 @@ type
     procedure       SetIsNull(ANull: Boolean); override;
     function        GetValue: string;
     procedure       SetValue(AValue: string);
+    procedure       SetDefaultValue(AVal: string); override;
     function        GetIso8601: TDateTime;
     procedure       SetIso8601(AValue: TDateTime);
     function        GetIso8601UTC: TDateTime;
@@ -48,15 +49,14 @@ type
   public
     constructor     Create;
 
-    procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONClone(ADest: TJX3String; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
-    procedure       JSONMerge(AMergedWith: TJX3String; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);
+    procedure       JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil); override;
+    procedure       JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil); override;
+    procedure       JSONClone(ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil); override;
+    procedure       JSONMerge(AMergedWith: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);  override;
 
-    class function  C(AValue: string): TJX3String; overload;
-    class function  C: TJX3String; overload;
+    class function  New(AValue: string): TJX3String; overload;
+    class function  New: TJX3String; overload;
 
-    property N:         Boolean read GetIsNull write SetIsNull;
     property Value:     string read GetValue write Setvalue;
     property Val:       string read GetValue write Setvalue;
     property V:         string read GetValue write Setvalue;
@@ -147,37 +147,42 @@ begin
   end;
 end;
 
-procedure TJX3String.JSONClone(ADest: TJX3String; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3String.JSONClone(ADest: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
   if FIsNull then
   begin
-    ADest.IsNull := True;
+    TJX3String(ADest).SetIsNull(True);
     Exit;
   end;
-  ADest.SetValue(Self.FValue);
+  TJX3String(ADest).SetValue(Self.FValue);
 end;
 
-procedure TJX3String.JSONMerge(AMergedWith: TJX3String; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
+procedure TJX3String.JSONMerge(AMergedWith: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (not AMergedWith.GetIsNull) and  (Self.GetIsNull) then
-    Self.SetValue(AMergedWith.GetValue);
+  if (not TJX3String(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
+    Self.SetValue(TJX3String(AMergedWith).GetValue);
 end;
 
-class function TJX3String.C: TJX3String;
+class function TJX3String.New: TJX3String;
 begin
   Result := TJX3String.Create;
 end;
 
-class function TJX3String.C(AValue: string): TJX3String;
+class function TJX3String.New(AValue: string): TJX3String;
 begin
-  Result := TJX3String.C;
-  REsult.SetValue(AValue);
+  Result := New;
+  Result.SetValue(AValue);
 end;
 
 procedure TJX3String.SetValue(AValue: string);
 begin
   FIsNull := False;
   FValue := AValue;
+end;
+
+procedure TJX3String.SetDefaultValue;
+begin
+  SetValue(AVal);
 end;
 
 procedure TJX3String.SetIsNull(ANull: Boolean);
