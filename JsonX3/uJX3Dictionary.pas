@@ -47,9 +47,8 @@ type
     procedure JSONMerge(AMergedWith: TJX3Dic<V>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function New: TJX3Dic<V>;
-    class function C: TJX3Dic<V>;
-    class function CAdd(AKey: string; AValue: V): TJX3Dic<V>;
-    class function CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
+    class function NewAdd(AKey: string; AValue: V): TJX3Dic<V>;
+    class function NewAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
 
     property IsNull:  Boolean write SetIsNull;
     property Null:    Boolean read  GetIsNull;
@@ -71,13 +70,13 @@ uses
   , uJX3Rtti
   ;
 
-class function TJX3Dic<V>.CAdd(AKey: string; AValue: V): TJX3Dic<V>;
+class function TJX3Dic<V>.NewAdd(AKey: string; AValue: V): TJX3Dic<V>;
 begin
   Result := TJX3Dic<V>.Create;
   Result.Add(AKey, AValue);
 end;
 
-class function TJX3Dic<V>.CAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
+class function TJX3Dic<V>.NewAddRange(const AKeys: array of string; const AValues: array of V): TJX3Dic<V>;
 var
   RCnt: Integer;
 begin
@@ -102,12 +101,6 @@ begin
 end;
 
 class function TJX3Dic<V>.New: TJX3Dic<V>;
-begin
-  Result := TJX3Dic<V>.Create;
-end;
-
-
-class function TJX3Dic<V>.C: TJX3Dic<V>;
 begin
   Result := TJX3Dic<V>.Create;
 end;

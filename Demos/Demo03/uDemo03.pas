@@ -75,10 +75,10 @@ begin
   //  + TJX3Dic<TJX3Num> : Dictionary<string, number> (JSON only allows strings as keys)
   Memo1.lines.add('');
   Memo1.lines.add('TJX3Dic<TJX3Num> : Dictionary<string, number> :');
-  Demo.Y.Add('Value1', TJX3Num.CInt(1111));
-  Demo.Y.Add('Value2', TJX3Num.CInt64(2222));
-  Demo.Y.Add('Value3', TJX3Num.CInt64(3333));
-  Demo.Y.Add('Value4', TJX3Num.CInt64(4444));
+  Demo.Y.Add('Value1', TJX3Num.NewInt(1111));
+  Demo.Y.Add('Value2', TJX3Num.NewInt64(2222));
+  Demo.Y.Add('Value3', TJX3Num.NewInt64(3333));
+  Demo.Y.Add('Value4', TJX3Num.NewInt64(4444));
   Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
   Memo1.lines.add(Json);
 
@@ -101,7 +101,7 @@ begin
   S.Add(TJX3Str.New('TTT'));
   S.Add(TJX3Str.New('OOO'));
   Demo.Q.Add(S);
-  S := TJX3List<TJX3Str>.C;
+  S := TJX3List<TJX3Str>.New;
   S.AddRange([TJX3Str.New('UUU'), TJX3Str.New('III')]);
   Demo.Q.Add(S);
   Json := TJX3Object.ToJson(Demo, [joNullToEmpty]);
@@ -113,10 +113,10 @@ begin
   // +  TJX3List<TJX3Dic<TJX3List<TPrimitives>>>  : Array<Dictionary<string, Array<TPrimitives>>> :)
   Memo1.lines.add('');
   Memo1.lines.add('TJX3List<TJX3Dic<TJX3List<TPrimitives>>>  : Array<Dictionary<string, Array<TPrimitives>>>');
-  var p1 := TJX3List<TPrimitives>.CAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
-  p1.First.Str.v := 'Boolean1';                                          // Acdess the Last item (which is the first also in this case)
+  var p1 := TJX3List<TPrimitives>.NewAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
+  p1.First.Str.v := 'Boolean1';                                            // Acdess the Last item (which is the first also in this case)
   p1.First.Bool.v := True;
-  var p2 := TJX3List<TPrimitives>.CAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
+  var p2 := TJX3List<TPrimitives>.NewAdd(TPrimitives.Create);              // Create a 2 elements Primitives array
   p2[0].Str.V := 'Boolean3';
   p2[0].Bool.v := True;
   var d1 := TJX3Dic<TJX3List<TPrimitives>>.Create;                        // Create the dictionary ownning the 2 lists

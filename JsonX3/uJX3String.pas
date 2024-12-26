@@ -54,8 +54,8 @@ type
     procedure       JSONClone(ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil); override;
     procedure       JSONMerge(AMergedWith: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil);  override;
 
-    class function  New(AValue: string): TJX3String; overload;
     class function  New: TJX3String; overload;
+    class function  New(AValue: string): TJX3String; overload;
 
     property Value:     string read GetValue write Setvalue;
     property Val:       string read GetValue write Setvalue;

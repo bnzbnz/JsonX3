@@ -65,14 +65,15 @@ type
     procedure   JSONClone(ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil); override;
     procedure   JSONMerge(AMergedWith: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil); override;
 
-    class function C: TJX3Number;
-    class function CInt(AValue: Integer):TJX3Number;
-    class function CUInt(AValue: Cardinal):TJX3Number;
-    class function CInt64(AValue: Int64):TJX3Number;
-    class function CUInt64(AValue:UInt64):TJX3Number;
-    class function CDouble(AValue: Double):TJX3Number;
-    class function CCurrency(AValue: Currency):TJX3Number;
-    class function CValue(AValue: string):TJX3Number;
+    class function  New: TJX3Number; overload;
+    class function  New(AValue: string): TJX3Number; overload;
+    class function  NewInt(AValue: Integer):TJX3Number;
+    class function  NewUInt(AValue: Cardinal):TJX3Number;
+    class function  NewInt64(AValue: Int64):TJX3Number;
+    class function  NewUInt64(AValue:UInt64):TJX3Number;
+    class function  NewDouble(AValue: Double):TJX3Number;
+    class function  NewCurrency(AValue: Currency):TJX3Number;
+    class function  NewValue(AValue: string):TJX3Number;
 
     property Int:       Integer read GetInt write SetInt;
     property UInt:      Cardinal read GetUInt write SetUInt;
@@ -161,6 +162,17 @@ begin
 
 end;
 
+class function TJX3Number.New: TJX3Number;
+begin
+  Result := TJX3Number.Create;
+end;
+
+class function TJX3Number.New(AValue: string): TJX3Number;
+begin
+  Result := New;
+  Result.SetValue(AValue);
+end;
+
 procedure TJX3Number.JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock);
 var
   LJPair: TJSONPair;
@@ -192,48 +204,43 @@ begin
   TJX3Number(ADest).SetValue(Self.FValue);
 end;
 
-class function TJX3Number.C: TJX3Number;
-begin
-  Result := TJX3Number.Create;
-end;
-
-class function TJX3Number.CInt(AValue:Integer): TJX3Number;
+class function TJX3Number.NewInt(AValue:Integer): TJX3Number;
 begin
   Result := TJX3Number.Create;
   Result.SetInt(AVAlue);
 end;
 
-class function TJX3Number.CInt64(AValue: Int64): TJX3Number;
+class function TJX3Number.NewInt64(AValue: Int64): TJX3Number;
 begin
   Result := TJX3Number.Create;
   Result.SetInt64(AVAlue);
 end;
 
-class function TJX3Number.CUInt(AValue: Cardinal): TJX3Number;
+class function TJX3Number.NewUInt(AValue: Cardinal): TJX3Number;
 begin
   Result := TJX3Number.Create;
   Result.SetUInt(AVAlue);
 end;
 
-class function TJX3Number.CUInt64(AValue: UInt64): TJX3Number;
+class function TJX3Number.NewUInt64(AValue: UInt64): TJX3Number;
 begin
   Result := TJX3Number.Create;
   Result.SetUInt64(AVAlue);
 end;
 
-class function TJX3Number.CDouble(AValue: Double): TJX3Number;
+class function TJX3Number.NewDouble(AValue: Double): TJX3Number;
 begin
   Result := TJX3Number.Create;
   Result.SetDouble(AValue);
 end;
 
-class function TJX3Number.CCurrency(AValue: Currency): TJX3Number;
+class function TJX3Number.NewCurrency(AValue: Currency): TJX3Number;
 begin
   Result := TJX3Number.Create;
   Result.SetCurrency(AValue);
 end;
 
-class function TJX3Number.CValue(AValue: string): TJX3Number;
+class function TJX3Number.NewValue(AValue: string): TJX3Number;
 begin
   Result := TJX3Number.Create;
   Result.SetValue(AValue);

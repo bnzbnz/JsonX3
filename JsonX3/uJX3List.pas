@@ -52,9 +52,8 @@ type
     procedure       JSONMerge(AMergedWith: TJX3List<T>; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil);
 
     class function  New: TJX3List<T>;
-    class function  C: TJX3List<T>;
-    class function  CAdd(AValue: T): TJX3List<T>;
-    class function  CAddRange(const AValues: array of T): TJX3List<T>; overload;
+    class function  NewAdd(AValue: T): TJX3List<T>;
+    class function  NEwAddRange(const AValues: array of T): TJX3List<T>; overload;
 
     property IsNull:  Boolean write SetIsNull;
     property Null:    Boolean read  GetIsNull;
@@ -245,13 +244,13 @@ begin
   inherited;
 end;
 
-class function TJX3List<T>.CAdd(AValue: T): TJX3List<T>;
+class function TJX3List<T>.NewAdd(AValue: T): TJX3List<T>;
 begin
   Result := TJX3List<T>.Create;
   Result.Add(AValue);
 end;
 
-class function TJX3List<T>.CAddRange(const AValues: array of T): TJX3List<T>;
+class function TJX3List<T>.NEwAddRange(const AValues: array of T): TJX3List<T>;
 begin
   Result := TJX3List<T>.Create;
   Result.AddRange(AValues);
@@ -265,11 +264,6 @@ end;
 procedure TJX3List<T>.SetIsNull(ANull: Boolean);
 begin
   Clear;
-end;
-
-class function TJX3List<T>.C: TJX3List<T>;
-begin
-  Result := TJX3List<T>.Create;
 end;
 
 class function TJX3List<T>.New: TJX3List<T>;
