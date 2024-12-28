@@ -32,13 +32,10 @@ uses
 
 type
 
-  TJX3NumKind   = (nkNull, nkInt, nkUInt, nkInt64, nkUInt64, nkDouble, nkCurrency);
-
   TJX3Number    = class(TJX3Abstract)
   private
     FIsNull:  Boolean;
     FValue: string;
-    FKind: TJX3NumKind;
   protected
     function    GetIsNull: Boolean; override;
     procedure   SetIsNull(ANull: Boolean); override;
@@ -99,7 +96,6 @@ uses
 
 constructor TJX3Number.Create;
 begin
-  FKind := nkNull;
   FIsNull := True;
   FValue := '0';
 end;
@@ -275,7 +271,6 @@ end;
 
 procedure TJX3Number.SetInt(AValue: Integer);
 begin
-  FKind := nkInt;
   SetValue(AValue.ToString);
 end;
 
@@ -286,7 +281,6 @@ end;
 
 procedure TJX3Number.SetInt64(AValue: Int64);
 begin
-  FKind := nkInt64;
   SetValue(AValue.ToString);
 end;
 
@@ -302,7 +296,6 @@ end;
 
 procedure TJX3Number.SetUInt(AValue: Cardinal);
 begin
-  FKind := nkUInt;
   SetValue(AValue.ToString);
 end;
 
@@ -313,7 +306,6 @@ end;
 
 procedure TJX3Number.SetUInt64(AValue: UInt64);
 begin
-  FKind := nkUInt64;
   SetValue(AValue.ToString);
 end;
 
@@ -324,13 +316,11 @@ end;
 
 procedure TJX3Number.SetDouble(AValue: Double);
 begin
-  FKind := nkDouble;
   SetValue(AValue.ToString);
 end;
 
 function TJX3Number.GetCurrency: Currency;
 begin
-  FKind := nkCurrency;
   Result := StrToCurr(FValue);
 end;
 
@@ -341,8 +331,14 @@ end;
 
 procedure TJX3Number.JSONMerge(AMergedWith: TOBject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (not TJX3Number(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
-    Self.SetValue(TJX3Number(AMergedWith).GetValue);
+  if jmoOverride in AOptions then
+  begin
+    if not(TJX3Number(AMergedWith).GetIsNull) then
+      Self.Value := TJX3Number(AMergedWith).Value;
+  end else
+    // null only
+    if (not TJX3Number(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
+      Self.SetValue(TJX3Number(AMergedWith).GetValue);
 end;
 
 end.

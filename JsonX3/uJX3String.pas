@@ -159,8 +159,14 @@ end;
 
 procedure TJX3String.JSONMerge(AMergedWith: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (not TJX3String(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
-    Self.SetValue(TJX3String(AMergedWith).GetValue);
+  if jmoOverride in AOptions then
+  begin
+    if not(TJX3String(AMergedWith).GetIsNull) then
+      Self.Value := TJX3String(AMergedWith).Value;
+  end else
+    // null only
+    if (not TJX3String(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
+      Self.SetValue(TJX3String(AMergedWith).GetValue);
 end;
 
 class function TJX3String.New: TJX3String;

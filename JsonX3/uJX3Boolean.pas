@@ -37,8 +37,8 @@ type
 
   TJX3Boolean = class(TJX3Abstract)
   private
-    FIsNull:  Boolean;
-    FValue: Boolean;
+    FIsNull:        Boolean;
+    FValue:         Boolean;
   protected
     function        GetIsNull: Boolean; override;
     procedure       SetIsNull(ANull: Boolean); override;
@@ -156,8 +156,14 @@ end;
 
 procedure TJX3Boolean.JSONMerge(AMergedWith: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock);
 begin
-  if (not TJX3Boolean(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
-    Self.SetValue(TJX3Boolean(AMergedWith).GetValue);
+  if jmoOverride in AOptions then
+  begin
+    if not(TJX3Boolean(AMergedWith).GetIsNull) then
+      Self.Value := TJX3Boolean(AMergedWith).Value;
+  end else
+    // null only
+    if (not TJX3Boolean(AMergedWith).GetIsNull) and  (Self.GetIsNull) then
+      Self.SetValue(TJX3Boolean(AMergedWith).GetValue);
 end;
 
 class function TJX3Boolean.New: TJX3Boolean;

@@ -35,11 +35,20 @@ type
 
   TObjectDictionary<V> = class(System.Generics.Collections.TObjectDictionary<string,V>);
   TJX3Dic<V:class, constructor> = class(TObjectDictionary<V>)
+  private
+
+    FMergeAdded: TList<string>;
+    FMergeModified: TList<string>;
+    FMergeDeleted: TList<string>;
+
   protected
+
     function  GetIsNull: Boolean;
     procedure SetIsNull(ANull: Boolean);
+
   public
     constructor Create;
+    destructor Destroy;
 
     procedure JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
     procedure JSONDeserialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil);
@@ -88,6 +97,16 @@ end;
 constructor TJX3Dic<V>.Create;
 begin
   inherited Create([doOwnsValues]);
+  FMergeAdded := TList<string>.Create;
+  FMergeModified := TList<string>.Create;
+  FMergeDeleted := TList<string>.Create;
+end;
+
+destructor TJX3Dic<V>.Destroy;
+begin
+  FMergeAdded.Free;
+  FMergeModified.Free;
+  FMergeDeleted.Free;
 end;
 
 function TJX3Dic<V>.GetIsNull: Boolean;
@@ -171,6 +190,7 @@ var
   LJObjDestroy: Boolean;
 begin
   if not Assigned(AInfoBlock.Obj) then begin SetIsNull(True); Exit end;;
+  if AInfoBlock.Obj.Count = 0 then begin SetIsNull(True); Exit end;
   if not Assigned(AInfoBlock.Obj.Pairs[0].JsonValue) then begin SetIsNull(True); Exit end;
   if AInfoBlock.Obj.Pairs[0].JsonValue.Null then begin SetIsNull(True); Exit end;;
 
@@ -227,19 +247,49 @@ var
   ADic: TPair<string, V>;
   LObj: V;
 begin
-  if (not AMergedWith.GetIsNull) and  (Self.GetIsNull) then
+  FMergeAdded.Clear;
+  FMergeModified.Clear;
+  FMergeDeleted.Clear;
+
+  if jmoOverride in AOptions then
   begin
+
     for ADic in AMergedWith do
     begin
-      if not Self.ContainsKey(ADic.Key) then
+      if Self.ContainsKey(ADic.Key) then
       begin
-        LObj := V.Create;
-        TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
-        TxRTTI.CallMethodProc('JSONMerge', LObj, [ ADic.Value, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
-        Self.Add(ADic.Key, LObj)
+        FMergeModified.Add(ADic.Key);
+        TxRTTI.CallMethodProc('JSONMerge', Self.Items[ADic.Key], [ADic.Value, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
+      end else begin
+        FMergeAdded.Add(ADic.Key);
+        TxRTTI.CallMethodProc('JSONClone', ADic.Value, [LObj, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
+        Self.Add(ADic.Key, TObject(LObj));
       end;
-    end
-  end;
+    end;
+
+    for ADic in Self do
+    begin
+      if not AMergedWith.ContainsKey(ADic.Key) then
+      begin
+        FMergeDeleted.Add(ADic.Key);
+       TxRTTI.CallMethodProc('JSONSetNull', ADic.Value, [True, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
+      end;
+    end;
+
+  end else
+    if (not AMergedWith.GetIsNull) and  (Self.GetIsNull) then
+    begin
+      for ADic in AMergedWith do
+      begin
+        if not Self.ContainsKey(ADic.Key) then
+        begin
+          LObj := V.Create;
+          TxRTTI.CallMethodProc('JSONCreate', LObj, [True]);
+          TxRTTI.CallMethodProc('JSONMerge', LObj, [ ADic.Value, TValue.From<TJX3Options>(AOptions), AInOutBlock]);
+          Self.Add(ADic.Key, LObj)
+        end;
+      end
+    end;
 end;
 
 end.

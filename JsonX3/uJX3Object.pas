@@ -39,6 +39,8 @@ type
       , joRaiseException
       , joRaiseOnMissingField
       , joStats
+      //Merge
+      , jmoOverride
   );
 
   TJX3Options = set of TJS3Option;
@@ -86,7 +88,7 @@ type
   TJX3Abstract = class(TObject)
   protected
     function          GetIsNull: Boolean; virtual; abstract;
-    procedure         SetIsNull(ANull: Boolean); virtual; abstract;
+    procedure         SetIsNull(ANull: Boolean = True); virtual; abstract;
     procedure         SetDefaultValue(AVal: string); virtual; abstract;
   public
     procedure         JSONSerialize(AInfoBlock: TJX3InfoBlock; AInOutBlock: TJX3InOutBlock = Nil); virtual; abstract;
@@ -94,8 +96,8 @@ type
     procedure         JSONClone(ADest: TObject; AOptions: TJX3Options = []; AInOutBlock: TJX3InOutBlock = Nil); virtual; abstract;
     procedure         JSONMerge(AMergedWith: TObject; AOptions: TJX3Options; AInOutBlock: TJX3InOutBlock = Nil); virtual; abstract;
 
-    property IsNull:  Boolean write SetIsNull;
-    property Null:    Boolean read  GetIsNull;
+    property Null:  Boolean read  GetIsNull write SetIsNull;
+    property IsNull:  Boolean read  GetIsNull write SetIsNull;
   end;
 
   TJX3Object = class(TJX3Abstract)
@@ -320,12 +322,17 @@ begin
     for LField in TxRTTI.GetFields(Self) do
     begin
       if not (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then Continue;
-
       if (JoRaiseOnMissingField in AInfoBlock.Options) and (Length(TxRTTI.GetFields(Self)) < AInfoBlock.Obj.count) then
       begin
-        LJPairList := TStringList.Create;
-        for LJPair in AInfoBlock.Obj do LJPairList.Add(LJPair.JsonString.Value);
-        raise Exception.Create(Format('Missing Property(ies) in class %s, from JOSN fields: %s%s', [Self.ClassName, sLineBreak, LJPairList.Text]));
+        LFieldFound := AInfoBlock.Obj.Count > 0;
+        for LJPair in  AInfoBlock.Obj do
+         if LField.Name = LJPair.JsonString.Value then
+         begin
+           LFieldFound := True;
+           Break;
+         end;
+        if Not LFieldFound then
+          raise Exception.Create(Format('Missing Property %S in class %s, from JOSN fields: %s%s', [LField.Name, Self.ClassName, sLineBreak, LJPairList.Text]));
       end;
 
       LName := NameDecode(LField.Name);
@@ -562,14 +569,31 @@ begin
   end;
 end;
 
-function  TJX3Object.GetIsNull: Boolean; 
+function  TJX3Object.GetIsNull: Boolean;
 begin        
   Result := False;
 end;
 
 procedure TJX3Object.SetIsNull(ANull: Boolean);
+var
+  LField:       TRTTIField;
+  LFields:      TArray<TRttiField>;
+  LObj:         TOBject;
 begin
-
+  LFields := TxRTTI.GetFields(Self);
+  for LField in LFields do
+    if (LField.FieldType.TypeKind in [tkClass]) and (LField.Visibility in [mvPublic]) then
+    begin
+      LObj := LField.GetValue(Self).AsObject;
+      if not Assigned(LObj) then Continue;
+      if not Assigned(TxRTTI.GetFieldAttribute(LField, JX3Unmanaged)) then
+      begin
+        if (LObj is TJX3Abstract) then
+            TJX3Abstract(LObj).Null := True;
+      end else begin
+        TxRTTI.CallMethodProc('JSONSetNull', LObj, [True]);
+      end;
+    end;
 end;
 
 procedure TJX3Object.SetDefaultValue(AVal: string);
@@ -577,7 +601,7 @@ begin
 
 end;
 
-    
+
 class function TJX3Object.FormatJSON(const AJson: string; AIndentation: Integer): string;
 var
   TmpJson: TJsonObject;
