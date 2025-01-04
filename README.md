@@ -1,4 +1,4 @@
-﻿JsonX3 (Json eXtended version 3)
+﻿JsonX3 has been superseed by JsonX4 : https://github.com/bnzbnz/JsonX4
 =================
 
 JsonX3 is a Delphi Json to Objects, Objects to Json parser. It is fast (1M/s Ops), light still simple to use
